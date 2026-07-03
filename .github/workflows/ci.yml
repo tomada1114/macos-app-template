@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+        with:
+          # XcodeGen/xcbeautify are macOS-only; install just the Linux-capable linters here.
+          install_args: swiftlint swiftformat actionlint
+
+      - name: SwiftFormat check
+        run: swiftformat --lint .
+
+      - name: SwiftLint
+        run: swiftlint lint --strict --quiet
+
+      - name: actionlint
+        run: actionlint
+
+  test:
+    name: Test & Coverage Gate
+    runs-on: macos-26
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.5.app
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+
+      - name: Run tests with coverage floor
+        run: scripts/coverage.sh
+
+  app:
+    name: App Build, UI Test & Smoke
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.5.app
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+
+      - name: Build app (Debug)
+        run: just build
+
+      - name: Run launch UI test
+        run: just uitest
+
+      - name: Smoke launch (Release)
+        run: just smoke
+
+  bootstrap-smoke:
+    name: Template Bootstrap Smoke
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.5.app
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          # Full history so the local `git clone` below works from a non-shallow source.
+          fetch-depth: 0
+
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+
+      - name: Bootstrap a pristine copy as DemoApp
+        run: |
+          git clone . "$RUNNER_TEMP/bootstrap-smoke"
+          mise trust "$RUNNER_TEMP/bootstrap-smoke/mise.toml"
+          cd "$RUNNER_TEMP/bootstrap-smoke"
+          scripts/bootstrap.sh DemoApp --bundle-id-prefix io.example --github-user demo
+
+      - name: Test the renamed package
+        run: |
+          cd "$RUNNER_TEMP/bootstrap-smoke/Packages/DemoAppKit"
+          swift test
+
+      - name: Build the renamed app
+        run: |
+          cd "$RUNNER_TEMP/bootstrap-smoke"
+          xcodegen generate
+          set -o pipefail
+          xcodebuild -project DemoApp.xcodeproj -scheme DemoApp -configuration Debug build | xcbeautify --quiet
+
+  spell-check:
+    name: Spell Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Spell check
+        uses: crate-ci/typos@37bb98842b0d8c4ffebdb75301a13db0267cef89 # v1.47.2
+        with:
+          config: typos.toml
+
+  zizmor:
+    name: Workflow Security Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: zizmor
+        uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
+        with:
+          # Plain annotations instead of SARIF upload — keeps permissions read-only.
+          advanced-security: false
