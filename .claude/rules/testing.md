@@ -1,6 +1,7 @@
 ---
 paths:
   - "Packages/**/Tests/**"
+  - "LaunchUITests/**"
 ---
 
 ## Framework and Structure

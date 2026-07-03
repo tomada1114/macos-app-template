@@ -3,6 +3,9 @@ paths:
   - "project.yml"
   - "Packages/**/Package.swift"
   - "mise.toml"
+  - ".swiftlint.yml"
+  - ".swiftformat"
+  - "scripts/coverage.sh"
 ---
 
 ## Dependency Policy

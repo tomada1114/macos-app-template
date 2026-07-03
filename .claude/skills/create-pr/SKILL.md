@@ -14,14 +14,13 @@ All PR titles, bodies, and commit messages MUST be written in English.
 
 ## Dynamic Context
 
-PR template:
-!cat .github/PULL_REQUEST_TEMPLATE.md
+Gather this context first (run each command):
 
-Commits in this PR:
-!git log main..HEAD --oneline
-
-Changed files:
-!git diff --stat main..HEAD
+```bash
+cat .github/PULL_REQUEST_TEMPLATE.md   # PR template
+git log main..HEAD --oneline           # commits in this PR
+git diff --stat main..HEAD             # changed files
+```
 
 ## Step 1: Pre-flight Checks
 

@@ -50,6 +50,8 @@ Before submitting a PR:
 2. New public APIs have `///` doc comments explaining *why*
 3. Tests cover the new functionality (happy path AND error path)
 4. No new dependencies without justification (see .claude/rules/project.md)
+5. User-facing changes have a `CHANGELOG.md` entry under `[Unreleased]`
+6. Commits and the PR title follow Conventional Commits (English)
 
 ## Important Reminders
 

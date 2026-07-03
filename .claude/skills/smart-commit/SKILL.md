@@ -14,20 +14,27 @@ All commit messages must be written in English.
 
 ## Dynamic Context
 
-Current branch:
-!git rev-parse --abbrev-ref HEAD
+Gather this context first (run each command):
 
-Working tree status:
-!git status --short
-
-Recent commit style:
-!git log --oneline -5
+```bash
+git rev-parse --abbrev-ref HEAD   # current branch
+git status --short                # working tree status
+git log --oneline -5              # recent commit style
+```
 
 ## Branch Guard
 
-**Never commit directly to `main`.** If the current branch is `main`, abort
-immediately and tell the user to create a feature branch first. There is no
-enforcing hook — this skill is the guard, so check before any staging work.
+Check the current branch before staging. Committing straight to `main` is
+fine for solo development — this template ships without branch protection,
+and its own early history is linear on `main`. Use a feature branch instead
+when either holds:
+
+- The user wants a PR for this change (the `create-pr` skill requires a
+  feature branch), or
+- The repository has branch protection / a team workflow (see
+  CONTRIBUTING.md's fork-and-branch process).
+
+When it is unclear which mode the user wants, ask before staging.
 
 ## Step 1: Analyze Changes
 
@@ -127,7 +134,7 @@ feat(core): add persistence for counter state
 fix: clamp counter at range bounds instead of overflowing
 test: add parameterized tests for boundary values
 docs: update architecture guide for new module
-chore: enable additional SwiftLint analyzer rules
+chore: bump pinned tool versions in mise.toml
 ```
 
 Stage specific files by name — avoid `git add .` or `git add -A` which can
@@ -176,8 +183,10 @@ the hook handles code quality, while the skill handles commit workflow.
 
 **Common hook failures and fixes:**
 - `swiftformat`: run `just fmt` and re-stage
-- `swiftlint`: fix the violation; only subjective style rules may be disabled
-  in `.swiftlint.yml`, each with a reason comment — NEVER safety rules
+- `swiftlint`: fix the violation in the code. Disabling a rule in
+  `.swiftlint.yml` requires explicit user approval (see
+  `.claude/rules/project.md`), is limited to subjective style rules with a
+  reason comment, and NEVER applies to safety rules
 
 ## Notes
 
