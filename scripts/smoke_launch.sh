@@ -30,13 +30,16 @@ codesign --verify --verbose=2 "${APP_BUNDLE}"
 echo "==> Launching ${APP_NAME} in the background"
 "${BINARY}" &
 APP_PID=$!
+# Reap the app if the script itself is interrupted or fails mid-poll.
+trap 'kill "${APP_PID}" 2>/dev/null || true' EXIT
 
 # Poll: the process must stay alive for the whole window; an early crash fails.
 for _ in $(seq 1 "${ALIVE_SECONDS}"); do
     sleep 1
     if ! kill -0 "${APP_PID}" 2>/dev/null; then
+        STATUS=0
         wait "${APP_PID}" || STATUS=$?
-        echo "SMOKE FAILED: ${APP_NAME} exited early (status ${STATUS:-unknown})" >&2
+        echo "SMOKE FAILED: ${APP_NAME} exited early (status ${STATUS})" >&2
         exit 1
     fi
 done
