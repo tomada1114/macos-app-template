@@ -21,7 +21,9 @@ jobs:
 
       - name: OSV scan
         if: ${{ hashFiles('**/Package.resolved') != '' }}
-        uses: google/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+        # The runnable action lives in the osv-scanner-action/ subdirectory;
+        # the repository root has no runs: section and fails at job setup.
+        uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
         with:
           scan-args: |-
             --recursive
