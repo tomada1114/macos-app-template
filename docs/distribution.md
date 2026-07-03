@@ -32,6 +32,11 @@ Signing and notarization require a paid
 [Apple Developer Program](https://developer.apple.com/programs/) membership
 ($99/year).
 
+The three `APPLE_*` secrets only take effect when the `DEVELOPER_ID_*` pair
+is also configured — Apple's notary service always rejects ad-hoc-signed
+submissions, so the workflow skips notarization (with a warning) rather than
+submit one.
+
 ## The unsigned-build caveat (be honest with your users)
 
 On Apple Silicon everything is at least ad-hoc signed, but a **downloaded**
