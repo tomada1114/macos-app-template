@@ -12,6 +12,10 @@ final class LaunchTests: XCTestCase {
 
     @MainActor
     func testAppLaunchesAndShowsCounter() {
+        // A failed launch assertion should end the test immediately instead of
+        // cascading through the remaining waits against a dead app.
+        continueAfterFailure = false
+
         let app = XCUIApplication()
         app.launch()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: Timeout.windowAppears))
