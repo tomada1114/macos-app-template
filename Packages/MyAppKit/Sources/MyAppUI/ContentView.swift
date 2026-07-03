@@ -1,6 +1,15 @@
 import MyAppCore
 import SwiftUI
 
+/// Layout metrics for ``ContentView``.
+private enum Layout {
+    static let stackSpacing: CGFloat = 16
+    static let valueFontSize: CGFloat = 48
+    static let windowPadding: CGFloat = 32
+    static let minWindowWidth: CGFloat = 320
+    static let minWindowHeight: CGFloat = 240
+}
+
 /// The app's single screen: a bounded counter with increment/decrement/reset.
 ///
 /// Deliberately thin — every behavior it renders is owned and unit-tested by
@@ -8,12 +17,10 @@ import SwiftUI
 public struct ContentView: View {
     @State private var model = CounterViewModel()
 
-    public init() {}
-
     public var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Layout.stackSpacing) {
             Text("\(model.value)")
-                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .font(.system(size: Layout.valueFontSize, weight: .bold, design: .rounded))
                 .accessibilityIdentifier("counterValue")
             HStack {
                 Button("−") { model.decrement() }
@@ -26,7 +33,11 @@ public struct ContentView: View {
                     .accessibilityIdentifier("incrementButton")
             }
         }
-        .padding(32)
-        .frame(minWidth: 320, minHeight: 240)
+        .padding(Layout.windowPadding)
+        .frame(minWidth: Layout.minWindowWidth, minHeight: Layout.minWindowHeight)
+    }
+
+    public init() {
+        // Nothing to configure — @State owns the view model.
     }
 }

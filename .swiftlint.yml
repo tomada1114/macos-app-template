@@ -1,0 +1,33 @@
+# Strict from day one — warnings are errors, every opt-in rule enabled,
+# each disable below carries a one-line reason (mirror of uv-template's ruff config).
+strict: true
+
+opt_in_rules:
+  - all
+
+analyzer_rules:
+  - unused_import
+  - unused_declaration
+
+disabled_rules:
+  - todo                        # TODOs are allowed during development
+  - file_header                 # no license-header requirement
+  - explicit_type_interface     # type inference is idiomatic Swift
+  - explicit_acl                # explicit-top-level-acl via other rules; full ACL noise
+  - explicit_top_level_acl      # same ACL-noise family: internal-by-default is idiomatic
+  - required_deinit             # value-type-first design
+  - prefixed_toplevel_constant  # k-prefix is not modern style
+  - no_grouping_extension       # extensions-for-conformance is idiomatic
+  - explicit_enum_raw_value     # implicit raw values fine
+  - one_declaration_per_file    # small helper types may colocate
+  - contrasted_opening_brace    # Allman braces conflict with SwiftFormat's K&R style
+  - incompatible_concurrency_annotation  # Swift 6-only package; no Swift 5 clients to appease
+
+# SwiftFormat inserts trailing commas in multiline literals (Swift 6.1+ style) — align with it.
+trailing_comma:
+  mandatory_comma: true
+
+excluded:
+  - .build
+  - "**/.build"
+  - MyApp.xcodeproj

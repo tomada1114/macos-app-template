@@ -4,22 +4,22 @@ import Testing
 @MainActor
 @Suite("CounterViewModel")
 struct CounterViewModelTests {
-    @Test("default init starts at 0 with movement enabled both ways")
-    func defaultInit() {
+    @Test
+    func `default init starts at 0 with movement enabled both ways`() {
         let model = CounterViewModel()
         #expect(model.value == 0)
         #expect(model.canIncrement)
         #expect(model.canDecrement)
     }
 
-    @Test("init with a custom counter passes its value through")
-    func customCounterInit() throws {
+    @Test
+    func `init with a custom counter passes its value through`() throws {
         let model = try CounterViewModel(counter: Counter(value: 7))
         #expect(model.value == 7)
     }
 
-    @Test("increment and decrement move the exposed value")
-    func incrementDecrement() {
+    @Test
+    func `increment and decrement move the exposed value`() {
         let model = CounterViewModel()
         model.increment()
         #expect(model.value == 1)
@@ -28,8 +28,8 @@ struct CounterViewModelTests {
         #expect(model.value == -1)
     }
 
-    @Test("canIncrement flips off only at the upper bound")
-    func canIncrementFlipsAtMax() throws {
+    @Test
+    func `canIncrement flips off only at the upper bound`() throws {
         let model = try CounterViewModel(counter: Counter(value: 9, range: 0 ... 10))
         #expect(model.canIncrement)
         model.increment()
@@ -38,8 +38,8 @@ struct CounterViewModelTests {
         #expect(model.canDecrement)
     }
 
-    @Test("canDecrement flips off only at the lower bound")
-    func canDecrementFlipsAtMin() throws {
+    @Test
+    func `canDecrement flips off only at the lower bound`() throws {
         let model = try CounterViewModel(counter: Counter(value: 1, range: 0 ... 10))
         #expect(model.canDecrement)
         model.decrement()
@@ -48,8 +48,8 @@ struct CounterViewModelTests {
         #expect(model.canIncrement)
     }
 
-    @Test("a full walk to max stays clamped and reports the bound")
-    func fullWalkToMax() throws {
+    @Test
+    func `a full walk to max stays clamped and reports the bound`() throws {
         let model = try CounterViewModel(counter: Counter(value: 0, range: 0 ... 5))
         for _ in 1 ... 8 {
             model.increment()
@@ -58,8 +58,8 @@ struct CounterViewModelTests {
         #expect(!model.canIncrement)
     }
 
-    @Test("reset returns to 0 for the default range")
-    func resetDefaultRange() {
+    @Test
+    func `reset returns to 0 for the default range`() {
         let model = CounterViewModel()
         model.increment()
         model.increment()
@@ -67,8 +67,8 @@ struct CounterViewModelTests {
         #expect(model.value == 0)
     }
 
-    @Test("reset falls back to the lower bound when 0 is out of range")
-    func resetWithoutZeroInRange() throws {
+    @Test
+    func `reset falls back to the lower bound when 0 is out of range`() throws {
         let model = try CounterViewModel(counter: Counter(value: 5, range: 1 ... 10))
         model.reset()
         #expect(model.value == 1)

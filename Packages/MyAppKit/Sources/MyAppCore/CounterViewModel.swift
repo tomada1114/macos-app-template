@@ -7,7 +7,23 @@ import Observation
 @MainActor
 @Observable
 public final class CounterViewModel {
+    /// The underlying domain model.
     public private(set) var counter: Counter
+
+    /// The current counter value.
+    public var value: Int {
+        counter.value
+    }
+
+    /// Whether increment would change the value (false at the upper bound).
+    public var canIncrement: Bool {
+        !counter.isAtMax
+    }
+
+    /// Whether decrement would change the value (false at the lower bound).
+    public var canDecrement: Bool {
+        !counter.isAtMin
+    }
 
     /// Creates a view model over the default counter (0 in -100...100).
     public init() {
@@ -24,21 +40,17 @@ public final class CounterViewModel {
         self.counter = counter
     }
 
-    /// The current counter value.
-    public var value: Int { counter.value }
-    /// Whether increment would change the value (false at the upper bound).
-    public var canIncrement: Bool { !counter.isAtMax }
-    /// Whether decrement would change the value (false at the lower bound).
-    public var canDecrement: Bool { !counter.isAtMin }
-
+    /// Increments the counter, clamping at its upper bound.
     public func increment() {
         counter.increment()
     }
 
+    /// Decrements the counter, clamping at its lower bound.
     public func decrement() {
         counter.decrement()
     }
 
+    /// Resets the counter to its initial value.
     public func reset() {
         counter.reset()
     }

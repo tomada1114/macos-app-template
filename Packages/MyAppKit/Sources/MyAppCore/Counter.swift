@@ -13,6 +13,16 @@ public struct Counter: Equatable, Sendable {
     /// The current value, always within ``range``.
     public private(set) var value: Int
 
+    /// Whether the counter sits at its upper bound.
+    public var isAtMax: Bool {
+        value == range.upperBound
+    }
+
+    /// Whether the counter sits at its lower bound.
+    public var isAtMin: Bool {
+        value == range.lowerBound
+    }
+
     /// Creates a counter, validating that `value` lies within `range`.
     /// - Throws: ``CounterError/valueOutOfRange(value:range:)`` when it does not.
     public init(value: Int = 0, range: ClosedRange<Int> = -100 ... 100) throws {
@@ -22,11 +32,6 @@ public struct Counter: Equatable, Sendable {
         self.value = value
         self.range = range
     }
-
-    /// Whether the counter sits at its upper bound.
-    public var isAtMax: Bool { value == range.upperBound }
-    /// Whether the counter sits at its lower bound.
-    public var isAtMin: Bool { value == range.lowerBound }
 
     /// Increments by one, clamping at `range.upperBound`.
     public mutating func increment() {
