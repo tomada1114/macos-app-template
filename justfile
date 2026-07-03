@@ -8,3 +8,7 @@ default:
 # Run tests with the 80% line-coverage floor on MyAppCore
 test:
     scripts/coverage.sh
+
+# Build Release and assert the app launches and stays alive
+smoke:
+    scripts/smoke_launch.sh
