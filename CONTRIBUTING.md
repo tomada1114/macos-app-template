@@ -84,7 +84,7 @@ Examples:
 - `docs: update installation guide`
 
 Recommended types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`,
-`perf`, `build`.
+`perf`, `build`, `deps` (dependency bumps).
 
 ### Changelog Policy
 

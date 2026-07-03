@@ -23,3 +23,18 @@ jobs:
         with:
           ignoreLabels: |
             dependencies
+          # The action's default types plus `deps`, the prefix smart-commit and
+          # dependabot.yml use for dependency bumps.
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+            deps
