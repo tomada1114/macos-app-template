@@ -5,9 +5,9 @@ strict: true
 opt_in_rules:
   - all
 
-analyzer_rules:
-  - unused_import
-  - unused_declaration
+# No analyzer_rules: they only run under `swiftlint analyze` with a compiler
+# log, which no gate here invokes — listing them would advertise checks that
+# never fire. Revisit if a build-log-producing CI step is ever added.
 
 disabled_rules:
   - todo                        # TODOs are allowed during development
