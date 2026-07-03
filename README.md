@@ -14,9 +14,13 @@ Dependabot, or pinned actions. This template starts with all of them.
 
 ## Quickstart
 
+Prerequisites: Xcode 26.5+, [mise](https://mise.jdx.dev/), and
+[Just](https://just.systems) (`brew install mise just`).
+
 ```bash
 git clone https://github.com/your-username/my-app.git
 cd my-app
+mise trust     # approve mise.toml once — mise refuses untrusted configs
 just install   # pinned tools via mise + git hooks + xcodegen generate
 just check     # format → lint → test (80% floor) → build
 open MyApp.xcodeproj

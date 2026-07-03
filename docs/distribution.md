@@ -55,6 +55,7 @@ Document this in your release notes, or better, configure the secrets above.
 - **Homebrew cask**: as of Homebrew 5.0 (2026), unsigned/un-notarized casks
   are removed from homebrew/cask — notarization is a hard prerequisite.
 - **Sparkle**: in-app updates for direct distribution; add it only when users
-  ask, and sign your appcast (see docs/architecture.md).
+  ask, and sign your appcast (see
+  [Sparkle's documentation](https://sparkle-project.org/documentation/)).
 - **Mac App Store**: a different signing/provisioning pipeline entirely; this
   template targets direct distribution via GitHub Releases.

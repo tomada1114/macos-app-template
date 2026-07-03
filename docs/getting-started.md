@@ -9,12 +9,16 @@
 ## Setup
 
 ```bash
+mise trust     # approve this repo's mise.toml (asked once per clone)
 just install
 ```
 
-This runs `mise install` (SwiftLint, SwiftFormat, XcodeGen, xcbeautify,
-actionlint — all pinned), points `core.hooksPath` at `.githooks/` for the
-fast pre-commit lint, and generates `MyApp.xcodeproj`.
+mise refuses to read config files it has not been told to trust, so a fresh
+clone needs `mise trust` first (interactively it prompts; non-interactive
+runs fail without it). `just install` then runs `mise install` (SwiftLint,
+SwiftFormat, XcodeGen, xcbeautify, actionlint — all pinned), points
+`core.hooksPath` at `.githooks/` for the fast pre-commit lint, and generates
+`MyApp.xcodeproj`.
 
 ## Everyday Commands
 

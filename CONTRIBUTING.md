@@ -15,6 +15,7 @@ Install these tools:
 Then:
 
 ```bash
+mise trust     # approve mise.toml (asked once per fresh clone)
 just install
 ```
 
@@ -44,6 +45,7 @@ just check
 
 ```bash
 mise install
+git config core.hooksPath .githooks   # pre-commit lint gate (just install does this)
 mise exec -- swiftformat .
 mise exec -- swiftformat --lint .
 mise exec -- swiftlint lint --strict --quiet
@@ -51,6 +53,7 @@ mise exec -- actionlint
 scripts/coverage.sh
 mise exec -- xcodegen generate
 xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug build
+xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS'
 scripts/smoke_launch.sh
 ```
 
