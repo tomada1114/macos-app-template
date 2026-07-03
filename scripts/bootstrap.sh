@@ -108,7 +108,9 @@ find . -depth -name "*${PH_NAME}*" \
     -not -path "./.git/*" -not -path "*/.build/*" -not -path "./build/*" \
     | while IFS= read -r path; do
     base=$(basename "${path}")
-    target="$(dirname "${path}")/${base//"${PH_NAME}"/"${NEW_NAME}"}"
+    # Unquoted expansions: bash 3.2 (the runners' /bin/bash) treats quotes
+    # inside ${var//pat/rep} literally. Both values are validated alphanumeric.
+    target="$(dirname "${path}")/${base//${PH_NAME}/${NEW_NAME}}"
     if [ "${path}" != "${target}" ]; then
         mv "${path}" "${target}"
     fi
