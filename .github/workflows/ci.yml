@@ -96,6 +96,16 @@ jobs:
           cd "$RUNNER_TEMP/bootstrap-smoke"
           scripts/bootstrap.sh DemoApp --bundle-id-prefix io.example --github-user demo
 
+      - name: Assert no placeholders remain
+        run: |
+          cd "$RUNNER_TEMP/bootstrap-smoke"
+          # Author/email placeholders are intentionally kept (no --author/--email above).
+          # README's leftover-check line is spelled with wildcards, so it never matches.
+          if grep -rilE 'my-?app|com\.example|your-username' . --exclude-dir=.git; then
+            echo "::error::bootstrap left placeholder leftovers in the files listed above"
+            exit 1
+          fi
+
       - name: Test the renamed package
         run: |
           cd "$RUNNER_TEMP/bootstrap-smoke/Packages/DemoAppKit"
