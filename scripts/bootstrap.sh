@@ -69,14 +69,18 @@ replace "my-app" "${REPO_SLUG}"
 [ -n "${EMAIL}" ] && replace "you@example.com" "${EMAIL}"
 
 echo "==> Renaming MyApp* paths"
+# Drop any stale generated project first; it is rebuilt below.
+rm -rf MyApp.xcodeproj "${NEW_NAME}.xcodeproj"
 # -depth renames the deepest entries first, so only basenames need rewriting.
 find . -depth -name "*MyApp*" -not -path "./.git/*" -not -path "./.build/*" | while IFS= read -r path; do
     base=$(basename "${path}")
-    mv "${path}" "$(dirname "${path}")/${base//MyApp/${NEW_NAME}}"
+    target="$(dirname "${path}")/${base//MyApp/${NEW_NAME}}"
+    if [ "${path}" != "${target}" ]; then
+        mv "${path}" "${target}"
+    fi
 done
 
 echo "==> Regenerating Xcode project"
-rm -rf MyApp.xcodeproj "${NEW_NAME}.xcodeproj"
 if command -v xcodegen >/dev/null 2>&1; then
     xcodegen generate
 elif command -v mise >/dev/null 2>&1; then
