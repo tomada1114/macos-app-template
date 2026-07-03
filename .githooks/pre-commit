@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Fast pre-commit gate: lint only the staged Swift files.
+# Installed by `just install` (git config core.hooksPath .githooks).
+set -euo pipefail
+
+STAGED_SWIFT_FILES=$(git diff --cached --name-only --diff-filter=ACM -- '*.swift')
+
+if [ -z "${STAGED_SWIFT_FILES}" ]; then
+    exit 0
+fi
+
+echo "pre-commit: checking staged Swift files"
+# shellcheck disable=SC2086  # word splitting is intended for the file list
+mise exec -- swiftformat --lint ${STAGED_SWIFT_FILES}
+# shellcheck disable=SC2086
+mise exec -- swiftlint lint --strict --quiet ${STAGED_SWIFT_FILES}

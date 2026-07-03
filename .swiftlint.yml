@@ -31,4 +31,5 @@ trailing_comma:
 excluded:
   - .build
   - "**/.build"
+  - build
   - MyApp.xcodeproj

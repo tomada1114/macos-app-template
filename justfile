@@ -1,14 +1,52 @@
 # Development task runner — requires Just (https://just.systems)
-# All commands also work without Just by running the underlying commands directly.
+# All commands also work without Just by running the underlying commands directly
+# (see CONTRIBUTING.md). Tools come from mise (mise.toml pins the versions).
 
 # Show available recipes
 default:
     @just --list
 
+# Install pinned tools, git hooks, and generate the Xcode project
+install:
+    mise install
+    if git rev-parse --git-dir >/dev/null 2>&1; then git config core.hooksPath .githooks; else echo "Skipping git hook installation (not a Git repository)."; fi
+    mise exec -- xcodegen generate
+
+# Regenerate MyApp.xcodeproj from project.yml
+generate:
+    mise exec -- xcodegen generate
+
+# Format code
+fmt:
+    mise exec -- swiftformat .
+
+# Run formatters and linters in check mode
+lint:
+    mise exec -- swiftformat --lint .
+    mise exec -- swiftlint lint --strict --quiet
+    if [ -d .github/workflows ]; then mise exec -- actionlint; else echo "Skipping actionlint (no workflows yet)."; fi
+
 # Run tests with the 80% line-coverage floor on MyAppCore
 test:
     scripts/coverage.sh
 
+# Build the app (Debug)
+build:
+    mise exec -- xcodegen generate
+    set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug build | mise exec -- xcbeautify --quiet
+
+# Run the XCUITest launch test (may prompt for Accessibility permission on first local run)
+uitest:
+    mise exec -- xcodegen generate
+    set -o pipefail && xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' | mise exec -- xcbeautify
+
 # Build Release and assert the app launches and stays alive
 smoke:
     scripts/smoke_launch.sh
+
+# Run all checks: format, lint, test, build (CI's app job adds uitest + smoke)
+check: fmt lint test build
+
+# Remove build artifacts and the generated project
+clean:
+    rm -rf build Packages/MyAppKit/.build MyApp.xcodeproj
