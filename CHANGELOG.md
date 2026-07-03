@@ -1,0 +1,29 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Initial template: XcodeGen-generated app shell over a local Swift package
+  with a Core/UI split and a working counter placeholder
+- Swift Testing suite with an enforced 80% line-coverage floor on `MyAppCore`
+  (`scripts/coverage.sh`)
+- XCUITest launch test and a Release-build smoke script (`scripts/smoke_launch.sh`)
+- `scripts/bootstrap.sh` deterministic template initializer: renames `MyApp`
+  and replaces every placeholder (`my-app`, `com.example`, `your-username`,
+  `Your Name`, `you@example.com`) across tracked files
+- Strict tooling from day one: Swift 6 language mode, warnings-as-errors,
+  SwiftLint strict with all opt-in rules, SwiftFormat, pinned via mise
+- Hardened CI: SHA-pinned actions, least-privilege permissions, zizmor,
+  typos, OpenSSF Scorecard, Dependabot with cooldown, OSV scan,
+  dependency review, and a template bootstrap smoke job
+- Secret-gated release pipeline: DMG packaging, Developer ID signing,
+  notarization, and build-provenance attestation
+- `CLAUDE.md` and path-scoped `.claude/rules/` for AI-assisted development
+
+[Unreleased]: https://github.com/your-username/my-app/commits/main
