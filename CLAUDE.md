@@ -20,6 +20,7 @@ just build     # Build the app (Debug)
 just uitest    # Run the XCUITest launch test
 just smoke     # Build Release and assert the app launches
 just check     # Run all checks: fmt → lint → test → build
+just clean     # Remove build artifacts and the generated project
 ```
 
 Without Just: run the underlying commands listed in each `justfile` recipe
