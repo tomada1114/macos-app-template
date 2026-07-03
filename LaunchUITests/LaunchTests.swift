@@ -15,9 +15,19 @@ final class LaunchTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: Timeout.windowAppears))
-        XCTAssertTrue(app.staticTexts["counterValue"]
-            .waitForExistence(timeout: Timeout.elementAppears))
+
+        let counter = app.staticTexts["counterValue"]
+        XCTAssertTrue(counter.waitForExistence(timeout: Timeout.elementAppears))
+
         app.buttons["incrementButton"].click()
-        XCTAssertEqual(app.staticTexts["counterValue"].label, "1")
+        // macOS exposes a SwiftUI Text's string as `value` (sometimes `label`),
+        // and the update is asynchronous — wait on a predicate covering both.
+        let showsOne = NSPredicate(format: "label == '1' OR value == '1'")
+        let updated = XCTNSPredicateExpectation(predicate: showsOne, object: counter)
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [updated], timeout: Timeout.elementAppears),
+            .completed,
+            "counterValue should read 1 after clicking increment",
+        )
     }
 }
