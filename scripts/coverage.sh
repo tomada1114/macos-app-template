@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Run the MyAppKit test suite with code coverage and enforce a line-coverage
+# floor on Sources/MyAppCore. The UI layer (MyAppUI) is deliberately exempt —
+# the floor is honest because all logic lives in Core.
+#
+# Swift's llvm-cov has no dependable branch metric, so this gates on LINE
+# coverage (uv-template gates on branch coverage; documented divergence).
+#
+# Override the floor with COVERAGE_MIN (e.g. COVERAGE_MIN=90 scripts/coverage.sh).
+set -euo pipefail
+
+THRESHOLD="${COVERAGE_MIN:-80}"
+cd "$(dirname "$0")/../Packages/MyAppKit"
+
+swift test --enable-code-coverage
+CODECOV_JSON="$(swift test --show-codecov-path)"
+
+python3 - "$CODECOV_JSON" "$THRESHOLD" <<'PY'
+import json, sys
+
+data = json.load(open(sys.argv[1]))
+threshold = float(sys.argv[2])
+covered = total = 0
+for f in data["data"][0]["files"]:
+    if "/Sources/MyAppCore/" not in f["filename"]:
+        continue
+    s = f["summary"]["lines"]
+    covered += s["covered"]
+    total += s["count"]
+    pct = 100.0 * s["covered"] / s["count"] if s["count"] else 100.0
+    print(f'{f["filename"]}: {pct:.1f}%')
+if total == 0:
+    sys.exit("coverage: no MyAppCore files found — gate misconfigured")
+pct = 100.0 * covered / total
+print(f"MyAppCore line coverage: {pct:.1f}% (floor {threshold}%)")
+sys.exit(0 if pct >= threshold else f"coverage {pct:.1f}% is below the {threshold}% floor")
+PY
