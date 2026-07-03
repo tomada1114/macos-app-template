@@ -50,7 +50,7 @@ public final class CounterViewModel {
         counter.decrement()
     }
 
-    /// Resets the counter to its initial value.
+    /// Resets to 0 when the counter's range contains it, otherwise to its lower bound.
     public func reset() {
         counter.reset()
     }
