@@ -90,7 +90,9 @@ secrets — no workflow edits. See docs/distribution.md.
 
 ## Using This Template
 
-1. Click **"Use this template"** on GitHub (or clone and remove `.git`)
+1. Click **"Use this template"** on GitHub and clone your new repository
+   (the bootstrap script enumerates files with `git ls-files`, so it needs a
+   git checkout — a ZIP download must be `git init`-ed first)
 2. Run the bootstrap script to rename everything:
 
    ```bash
@@ -108,10 +110,11 @@ secrets — no workflow edits. See docs/distribution.md.
    keep the Core/UI split and the tests
 5. For signed releases, add the secrets listed in docs/distribution.md
 
-To find any placeholders the script left untouched:
+To find any placeholders the script left untouched (the pattern uses `.`
+wildcards so the rename cannot rewrite this very command into your new names):
 
 ```bash
-rg -n "MyApp|my-app|com\.example|your-username|Your Name|you@example" .
+rg -i "my.?app|com\.example|your.username|Your.Name|you@example"
 ```
 
 ## Development
