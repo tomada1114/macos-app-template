@@ -21,6 +21,7 @@ disabled_rules:
   - explicit_enum_raw_value     # implicit raw values fine
   - one_declaration_per_file    # small helper types may colocate
   - contrasted_opening_brace    # Allman braces conflict with SwiftFormat's K&R style
+  - prefer_nimble               # zero-dependency template; Nimble is a third-party package
   - incompatible_concurrency_annotation  # Swift 6-only package; no Swift 5 clients to appease
 
 # SwiftFormat inserts trailing commas in multiline literals (Swift 6.1+ style) — align with it.
