@@ -33,5 +33,7 @@ if total == 0:
     sys.exit("coverage: no MyAppCore files found — gate misconfigured")
 pct = 100.0 * covered / total
 print(f"MyAppCore line coverage: {pct:.1f}% (floor {threshold}%)")
-sys.exit(0 if pct >= threshold else f"coverage {pct:.1f}% is below the {threshold}% floor")
+# Two decimals in the failure message so a near-miss never rounds up to the
+# floor itself (e.g. 79.96% displayed as "80.0% is below the 80% floor").
+sys.exit(0 if pct >= threshold else f"coverage {pct:.2f}% is below the {threshold}% floor")
 PY
