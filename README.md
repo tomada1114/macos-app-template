@@ -113,9 +113,10 @@ secrets — no workflow edits. See docs/distribution.md.
    all tracked files, renames the matching paths, and regenerates the Xcode
    project. Omitted optional arguments leave their placeholders as-is.
 3. Verify the rename: `just install && just check`
-4. Update `README.md` (this file), `SECURITY.md`, and `CLAUDE.md` for your
-   app, and review `LICENSE`'s copyright line (`CHANGELOG.md` is reset
-   automatically)
+4. Update `README.md` (this file), `SECURITY.md`, `CLAUDE.md`, and
+   `CODE_OF_CONDUCT.md` for your app (the conduct-reporting contact stays
+   `you@example.com` if `--email` was omitted, so check it), and review
+   `LICENSE`'s copyright line (`CHANGELOG.md` is reset automatically)
 5. Replace the counter placeholder in `Packages/<YourApp>Kit` with real code —
    keep the Core/UI split and the tests
 6. For signed releases, add the secrets listed in docs/distribution.md
