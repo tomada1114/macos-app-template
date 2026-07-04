@@ -124,6 +124,23 @@ wildcards so the rename cannot rewrite this very command into your new names):
 rg -i "my.?app|com\.example|your.username|Your.Name|you@example"
 ```
 
+### Keeping up with template updates
+
+A repository generated from a GitHub template has no upstream link — the files
+are copied once. To pull later template improvements (CI hardening, lint-rule
+bumps, workflow fixes) into your app:
+
+```bash
+git remote add template https://github.com/tomada1114/macos-app-template.git
+git fetch template
+git cherry-pick <sha>    # or: git merge template/main --allow-unrelated-histories
+```
+
+Cherry-picking narrowly scoped commits is usually cleaner than a full merge:
+the bootstrap rename means most template commits touch files whose names and
+contents differ in your repository. Treat the template as a starting point,
+not a dependency — adopt the changes that earn their place.
+
 ## Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full setup instructions.
