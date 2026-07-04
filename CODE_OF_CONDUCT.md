@@ -47,7 +47,8 @@ an individual is officially representing the community in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the project maintainers via the repository's issue tracker or email.
+reported privately to the maintainer at <you@example.com>. Conduct reports are
+not handled through the public issue tracker — reporters deserve privacy.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
