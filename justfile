@@ -24,6 +24,7 @@ fmt:
 lint:
     mise exec -- swiftformat --lint .
     mise exec -- swiftlint lint --strict --quiet
+    mise exec -- shellcheck scripts/*.sh .githooks/pre-commit
     if [ -d .github/workflows ]; then mise exec -- actionlint; else echo "Skipping actionlint (no workflows yet)."; fi
 
 # Run tests with the 80% line-coverage floor on MyAppCore

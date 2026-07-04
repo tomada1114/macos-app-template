@@ -25,5 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Secret-gated release pipeline: DMG packaging, Developer ID signing,
   notarization, and build-provenance attestation
 - `CLAUDE.md` and path-scoped `.claude/rules/` for AI-assisted development
+- ShellCheck joins the lint gate (`just lint` and CI) for every repo shell script
 
 [Unreleased]: https://github.com/your-username/my-app/commits/main

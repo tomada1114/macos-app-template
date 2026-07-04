@@ -25,7 +25,7 @@ jobs:
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         with:
           # XcodeGen/xcbeautify are macOS-only; install just the Linux-capable linters here.
-          install_args: swiftlint swiftformat actionlint
+          install_args: swiftlint swiftformat actionlint shellcheck
 
       - name: SwiftFormat check
         run: swiftformat --lint .
@@ -33,7 +33,11 @@ jobs:
       - name: SwiftLint
         run: swiftlint lint --strict --quiet
 
+      - name: ShellCheck
+        run: shellcheck scripts/*.sh .githooks/pre-commit
+
       - name: actionlint
+        # With shellcheck on PATH, actionlint also lints workflow run: blocks.
         run: actionlint
 
   test:
