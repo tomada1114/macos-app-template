@@ -25,5 +25,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Secret-gated release pipeline: DMG packaging, Developer ID signing,
   notarization, and build-provenance attestation
 - `CLAUDE.md` and path-scoped `.claude/rules/` for AI-assisted development
+- ShellCheck joins the lint gate (`just lint` and CI) for every repo shell script
+- The launch UI test writes an `.xcresult` bundle; CI uploads it when the job fails
+- The release pipeline smoke-tests the signed Release app before packaging the DMG
+- Release runs are serialized per tag via a workflow `concurrency` group
+- `.xcode-version` is the single source of truth for the CI Xcode pin;
+  `just install` warns when the local Xcode differs
+- CodeQL static analysis of the Swift package (weekly and on `main` pushes)
+- `ContentView` accepts an injected view model and ships `#Preview` configurations
+
+### Changed
+
+- `just build` and `just uitest` isolate DerivedData under `build/`, so
+  `just clean` now removes everything the toolchain produced
+- `scripts/bootstrap.sh` resets `CHANGELOG.md` for the new project and prints a
+  verify-first next-steps list
 
 [Unreleased]: https://github.com/your-username/my-app/commits/main

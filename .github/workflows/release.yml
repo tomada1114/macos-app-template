@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
 
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
 permissions: {}
 
 jobs:
@@ -14,12 +18,12 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+
+      - uses: ./.github/actions/select-xcode
 
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         with:
@@ -42,7 +46,6 @@ jobs:
       attestations: write
       id-token: write
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app
       APP_NAME: MyApp
       # Secret-gated signing/notarization: steps check these flags because the
       # secrets context is not available in step-level `if:` expressions.
@@ -52,6 +55,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+
+      - uses: ./.github/actions/select-xcode
 
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         with:
@@ -108,6 +113,9 @@ jobs:
           echo "::notice::DEVELOPER_ID_CERT_P12 is not set — ad-hoc signing only. Downloads will be blocked by Gatekeeper; see docs/distribution.md."
           codesign --force --deep --sign - "build/Build/Products/Release/$APP_NAME.app"
           codesign --verify --verbose=2 "build/Build/Products/Release/$APP_NAME.app"
+
+      - name: Smoke-test the signed app
+        run: scripts/smoke_launch.sh "build/Build/Products/Release/$APP_NAME.app"
 
       - name: Package DMG
         run: scripts/package_dmg.sh "build/Build/Products/Release/$APP_NAME.app" "$APP_NAME.dmg"

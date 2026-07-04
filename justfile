@@ -11,6 +11,7 @@ install:
     mise install
     if git rev-parse --git-dir >/dev/null 2>&1; then git config core.hooksPath .githooks; else echo "Skipping git hook installation (not a Git repository)."; fi
     mise exec -- xcodegen generate
+    @if command -v xcodebuild >/dev/null 2>&1; then xcode_local="$(xcodebuild -version | head -n1 | awk '{print $2}')"; xcode_pinned="$(cat .xcode-version)"; if [ "$xcode_local" != "$xcode_pinned" ]; then echo "warning: local Xcode $xcode_local differs from the CI-pinned $xcode_pinned — results may diverge from CI"; fi; fi
 
 # Regenerate MyApp.xcodeproj from project.yml
 generate:
@@ -24,6 +25,7 @@ fmt:
 lint:
     mise exec -- swiftformat --lint .
     mise exec -- swiftlint lint --strict --quiet
+    mise exec -- shellcheck scripts/*.sh .githooks/pre-commit
     if [ -d .github/workflows ]; then mise exec -- actionlint; else echo "Skipping actionlint (no workflows yet)."; fi
 
 # Run tests with the 80% line-coverage floor on MyAppCore
@@ -33,18 +35,17 @@ test:
 # Build the app (Debug)
 build:
     mise exec -- xcodegen generate
-    set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug build | mise exec -- xcbeautify --quiet
+    set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build | mise exec -- xcbeautify --quiet
 
 # Build (Debug) and launch the app, left running until you quit it
-run:
-    mise exec -- xcodegen generate
-    set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build | mise exec -- xcbeautify --quiet
+run: build
     open build/dev-derived-data/Build/Products/Debug/MyApp.app
 
 # Run the XCUITest launch test (may prompt for Accessibility permission on first local run)
 uitest:
     mise exec -- xcodegen generate
-    set -o pipefail && xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' | mise exec -- xcbeautify
+    rm -rf build/LaunchUITests.xcresult
+    set -o pipefail && xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' -derivedDataPath build/dev-derived-data -resultBundlePath build/LaunchUITests.xcresult | mise exec -- xcbeautify
 
 # Build Release and assert the app launches and stays alive
 smoke:

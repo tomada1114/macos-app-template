@@ -12,6 +12,9 @@ XCUITest launch guarantee, and hardened CI — all from the first commit.
 Most popular OSS macOS apps ship without CI-gated tests, SECURITY.md,
 Dependabot, or pinned actions. This template starts with all of them.
 
+**Starting your own app from this template?** Jump to
+[Using This Template](#using-this-template).
+
 ## Quickstart
 
 Prerequisites: Xcode 26.5+, [mise](https://mise.jdx.dev/), and
@@ -109,10 +112,14 @@ secrets — no workflow edits. See docs/distribution.md.
    `com.example`, `your-username`, `Your Name`, and `you@example.com` across
    all tracked files, renames the matching paths, and regenerates the Xcode
    project. Omitted optional arguments leave their placeholders as-is.
-3. Update `README.md` (this file), `SECURITY.md`, and `CLAUDE.md` for your app
-4. Replace the counter placeholder in `Packages/<YourApp>Kit` with real code —
+3. Verify the rename: `just install && just check`
+4. Update `README.md` (this file), `SECURITY.md`, `CLAUDE.md`, and
+   `CODE_OF_CONDUCT.md` for your app (the conduct-reporting contact stays
+   `you@example.com` if `--email` was omitted, so check it), and review
+   `LICENSE`'s copyright line (`CHANGELOG.md` is reset automatically)
+5. Replace the counter placeholder in `Packages/<YourApp>Kit` with real code —
    keep the Core/UI split and the tests
-5. For signed releases, add the secrets listed in docs/distribution.md
+6. For signed releases, add the secrets listed in docs/distribution.md
 
 To find any placeholders the script left untouched (the pattern uses `.`
 wildcards so the rename cannot rewrite this very command into your new names):
@@ -120,6 +127,23 @@ wildcards so the rename cannot rewrite this very command into your new names):
 ```bash
 rg -i "my.?app|com\.example|your.username|Your.Name|you@example"
 ```
+
+### Keeping up with template updates
+
+A repository generated from a GitHub template has no upstream link — the files
+are copied once. To pull later template improvements (CI hardening, lint-rule
+bumps, workflow fixes) into your app:
+
+```bash
+git remote add template https://github.com/tomada1114/macos-app-template.git
+git fetch template
+git cherry-pick <sha>    # or: git merge template/main --allow-unrelated-histories
+```
+
+Cherry-picking narrowly scoped commits is usually cleaner than a full merge:
+the bootstrap rename means most template commits touch files whose names and
+contents differ in your repository. Treat the template as a starting point,
+not a dependency — adopt the changes that earn their place.
 
 ## Development
 

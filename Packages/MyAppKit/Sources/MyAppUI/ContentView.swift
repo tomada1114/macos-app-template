@@ -15,7 +15,7 @@ private enum Layout {
 /// Deliberately thin — every behavior it renders is owned and unit-tested by
 /// `CounterViewModel` in MyAppCore.
 public struct ContentView: View {
-    @State private var model = CounterViewModel()
+    @State private var model: CounterViewModel
 
     public var body: some View {
         VStack(spacing: Layout.stackSpacing) {
@@ -37,7 +37,21 @@ public struct ContentView: View {
         .frame(minWidth: Layout.minWindowWidth, minHeight: Layout.minWindowHeight)
     }
 
-    public init() {
-        // Nothing to configure — @State owns the view model.
+    /// Creates the view over `model` — previews and tests inject alternate
+    /// states; the app shell uses the default.
+    public init(model: CounterViewModel = CounterViewModel()) {
+        _model = State(initialValue: model)
+    }
+}
+
+#Preview("Default") {
+    ContentView()
+}
+
+#Preview("At the upper bound") {
+    if let counter = try? Counter(value: 100) {
+        ContentView(model: CounterViewModel(counter: counter))
+    } else {
+        Text("Counter(value: 100) is out of bounds — check Counter's invariants")
     }
 }

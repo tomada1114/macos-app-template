@@ -90,6 +90,28 @@ replace() { # replace <from> <to> — literal replacement in all tracked text fi
     done
 }
 
+# Reset the template's own CHANGELOG history for the new project. Guarded by a
+# marker so a re-run (documented as safe) never wipes the new app's entries.
+if grep -qF 'Initial template: XcodeGen-generated app shell' CHANGELOG.md 2>/dev/null; then
+    echo "==> Resetting CHANGELOG.md for the new project"
+    cat > CHANGELOG.md <<EOF
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Initial project scaffold from [macos-app-template](https://github.com/tomada1114/macos-app-template)
+
+[Unreleased]: https://github.com/${PH_USER}/${PH_SLUG}/commits/main
+EOF
+fi
+
 echo "==> Replacing placeholders"
 replace "${PH_NAME}" "${NEW_NAME}"
 replace "${PH_SLUG}" "${REPO_SLUG}"
@@ -130,6 +152,8 @@ echo "Bootstrap complete: ${PH_NAME} -> ${NEW_NAME} (repo slug: ${REPO_SLUG})"
 [ -n "${BUNDLE_ID_PREFIX}" ] && echo "  bundle-id prefix: ${BUNDLE_ID_PREFIX}"
 echo
 echo "Next steps:"
-echo "  1. Review the changes: git diff"
-echo "  2. Check for leftovers: rg -i '${PH_NAME}|${PH_SLUG}|${PH_BUNDLE}|${PH_USER}'"
-echo "  3. Commit: git add -A && git commit -m 'chore: bootstrap ${NEW_NAME} from template'"
+echo "  1. Verify the rename: just install && just check"
+echo "  2. Review the changes: git diff"
+echo "  3. Review LICENSE's copyright line (year and holder)"
+echo "  4. Check for leftovers: rg -i '${PH_NAME}|${PH_SLUG}|${PH_BUNDLE}|${PH_USER}'"
+echo "  5. Commit: git add -A && git commit -m 'chore: bootstrap ${NEW_NAME} from template'"

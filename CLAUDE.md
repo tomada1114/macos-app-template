@@ -14,7 +14,7 @@ day one.
 just install   # Install pinned tools (mise), git hooks, and generate the Xcode project
 just generate  # Regenerate MyApp.xcodeproj from project.yml
 just fmt       # Format code (swiftformat)
-just lint      # Lint (swiftformat --lint + swiftlint --strict + actionlint)
+just lint      # Lint (swiftformat --lint + swiftlint --strict + shellcheck + actionlint)
 just test      # Run tests with the 80% coverage floor on MyAppCore
 just build     # Build the app (Debug)
 just run       # Build (Debug) and launch the app, left running until you quit it

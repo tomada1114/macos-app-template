@@ -7,7 +7,8 @@ your development environment and submit changes.
 
 Install these tools:
 
-- [Xcode 26.5+](https://developer.apple.com/xcode/)
+- [Xcode 26.5+](https://developer.apple.com/xcode/) (CI pins the exact version in
+  `.xcode-version`)
 - [mise](https://mise.jdx.dev/) — provides the pinned CLI tools from `mise.toml`
 - [Just](https://just.systems/man/en/installation.html) (optional — you can run
   the underlying commands directly)
@@ -25,7 +26,7 @@ just install
 # Format
 just fmt
 
-# Lint (swiftformat --lint + swiftlint --strict + actionlint)
+# Lint (swiftformat --lint + swiftlint --strict + shellcheck + actionlint)
 just lint
 
 # Run tests with the coverage floor
@@ -52,13 +53,14 @@ git config core.hooksPath .githooks   # pre-commit lint gate (just install does 
 mise exec -- swiftformat .
 mise exec -- swiftformat --lint .
 mise exec -- swiftlint lint --strict --quiet
+mise exec -- shellcheck scripts/*.sh .githooks/pre-commit
 mise exec -- actionlint
 scripts/coverage.sh
 mise exec -- xcodegen generate
-xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug build
 xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build
 open build/dev-derived-data/Build/Products/Debug/MyApp.app
-xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS'
+rm -rf build/LaunchUITests.xcresult
+xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' -derivedDataPath build/dev-derived-data -resultBundlePath build/LaunchUITests.xcresult
 scripts/smoke_launch.sh
 ```
 
@@ -106,5 +108,4 @@ what users should read to understand what changed in a release.
 
 ## Getting Help
 
-If something is unclear, open an issue or start a discussion. We're happy to
-help you get started.
+If something is unclear, open an issue. We're happy to help you get started.
