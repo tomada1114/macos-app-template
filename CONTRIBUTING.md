@@ -108,5 +108,4 @@ what users should read to understand what changed in a release.
 
 ## Getting Help
 
-If something is unclear, open an issue or start a discussion. We're happy to
-help you get started.
+If something is unclear, open an issue. We're happy to help you get started.
