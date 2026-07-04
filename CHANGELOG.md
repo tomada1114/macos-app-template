@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release runs are serialized per tag via a workflow `concurrency` group
 - `.xcode-version` is the single source of truth for the CI Xcode pin;
   `just install` warns when the local Xcode differs
+- CodeQL static analysis of the Swift package (weekly and on `main` pushes)
 
 ### Changed
 
