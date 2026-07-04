@@ -44,12 +44,13 @@ jobs:
     name: Test & Coverage Gate
     runs-on: macos-26
     timeout-minutes: 20
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+
+      - name: Select the pinned Xcode
+        run: echo "DEVELOPER_DIR=/Applications/Xcode_$(cat .xcode-version).app" >> "$GITHUB_ENV"
 
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 
@@ -60,12 +61,13 @@ jobs:
     name: App Build, UI Test & Smoke
     runs-on: macos-26
     timeout-minutes: 30
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+
+      - name: Select the pinned Xcode
+        run: echo "DEVELOPER_DIR=/Applications/Xcode_$(cat .xcode-version).app" >> "$GITHUB_ENV"
 
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 
@@ -91,14 +93,15 @@ jobs:
     name: Template Bootstrap Smoke
     runs-on: macos-26
     timeout-minutes: 30
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           # Full history so the local `git clone` below works from a non-shallow source.
           fetch-depth: 0
+
+      - name: Select the pinned Xcode
+        run: echo "DEVELOPER_DIR=/Applications/Xcode_$(cat .xcode-version).app" >> "$GITHUB_ENV"
 
       - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 

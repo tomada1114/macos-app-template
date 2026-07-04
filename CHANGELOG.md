@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The launch UI test writes an `.xcresult` bundle; CI uploads it when the job fails
 - The release pipeline smoke-tests the signed Release app before packaging the DMG
 - Release runs are serialized per tag via a workflow `concurrency` group
+- `.xcode-version` is the single source of truth for the CI Xcode pin;
+  `just install` warns when the local Xcode differs
 
 ### Changed
 

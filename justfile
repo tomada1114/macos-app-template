@@ -11,6 +11,7 @@ install:
     mise install
     if git rev-parse --git-dir >/dev/null 2>&1; then git config core.hooksPath .githooks; else echo "Skipping git hook installation (not a Git repository)."; fi
     mise exec -- xcodegen generate
+    @if command -v xcodebuild >/dev/null 2>&1 && [ "$(xcodebuild -version | head -n1 | awk '{print $2}')" != "$(cat .xcode-version)" ]; then echo "warning: local Xcode $(xcodebuild -version | head -n1 | awk '{print $2}') differs from the CI-pinned $(cat .xcode-version) — results may diverge from CI"; fi
 
 # Regenerate MyApp.xcodeproj from project.yml
 generate:

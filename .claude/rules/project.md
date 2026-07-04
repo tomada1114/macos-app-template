@@ -25,7 +25,8 @@ paths:
 
 ## Toolchain Pinning
 
-- CI pins Xcode via `DEVELOPER_DIR: /Applications/Xcode_26.5.app`; CLI tools are pinned in `mise.toml`
+- `.xcode-version` is the single source of truth for the CI Xcode pin (every macOS job
+  derives `DEVELOPER_DIR` from it); CLI tools are pinned in `mise.toml`
 - Bump pins deliberately (roughly monthly), one commit per bump, after `just check` passes locally
 - Dependabot's `cooldown.default-days: 7` delays update PRs for SwiftPM and Actions; note that
   SwiftPM itself has no resolver-level cooldown (unlike uv's `exclude-newer`), so fresh installs
