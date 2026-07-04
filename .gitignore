@@ -12,6 +12,7 @@ xcuserdata/
 
 # Build output
 build/
+*.dmg
 
 # IDE
 .vscode/
