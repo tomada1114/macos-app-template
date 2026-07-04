@@ -51,5 +51,7 @@ public struct ContentView: View {
 #Preview("At the upper bound") {
     if let counter = try? Counter(value: 100) {
         ContentView(model: CounterViewModel(counter: counter))
+    } else {
+        Text("Counter(value: 100) is out of bounds — check Counter's invariants")
     }
 }
