@@ -43,7 +43,8 @@ run: build
 # Run the XCUITest launch test (may prompt for Accessibility permission on first local run)
 uitest:
     mise exec -- xcodegen generate
-    set -o pipefail && xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' | mise exec -- xcbeautify
+    rm -rf build/LaunchUITests.xcresult
+    set -o pipefail && xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' -derivedDataPath build/dev-derived-data -resultBundlePath build/LaunchUITests.xcresult | mise exec -- xcbeautify
 
 # Build Release and assert the app launches and stays alive
 smoke:

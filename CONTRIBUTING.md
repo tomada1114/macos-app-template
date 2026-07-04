@@ -58,7 +58,8 @@ scripts/coverage.sh
 mise exec -- xcodegen generate
 xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build
 open build/dev-derived-data/Build/Products/Debug/MyApp.app
-xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS'
+rm -rf build/LaunchUITests.xcresult
+xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' -derivedDataPath build/dev-derived-data -resultBundlePath build/LaunchUITests.xcresult
 scripts/smoke_launch.sh
 ```
 
