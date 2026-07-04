@@ -23,8 +23,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Select the pinned Xcode
-        run: echo "DEVELOPER_DIR=/Applications/Xcode_$(cat .xcode-version).app" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/select-xcode
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a # v4.36.3
