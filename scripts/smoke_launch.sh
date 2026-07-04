@@ -8,17 +8,21 @@
 #   scripts/smoke_launch.sh path/to/An.app  # smoke-test an existing bundle (no build)
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
-
 APP_NAME="MyApp"
 DERIVED_DATA="build/smoke-derived-data"
 ALIVE_SECONDS=10
 
 if [ $# -ge 1 ]; then
-    # Strip a trailing slash: zsh tab completion appends it.
-    APP_BUNDLE="${1%/}"
-    [ -d "${APP_BUNDLE}" ] || { echo "error: '${APP_BUNDLE}' is not an app bundle" >&2; exit 1; }
-else
+    # Strip a trailing slash (zsh tab completion appends it) and resolve to an
+    # absolute path now, before the `cd` below re-roots relative paths at the repo.
+    RAW_ARG="${1%/}"
+    [ -d "${RAW_ARG}" ] || { echo "error: '${RAW_ARG}' is not an app bundle" >&2; exit 1; }
+    APP_BUNDLE="$(cd "${RAW_ARG}" && pwd)"
+fi
+
+cd "$(dirname "$0")/.."
+
+if [ -z "${APP_BUNDLE:-}" ]; then
     echo "==> Generating Xcode project"
     mise exec -- xcodegen generate
 
@@ -34,7 +38,8 @@ else
 fi
 
 APP_LABEL="$(basename "${APP_BUNDLE}" .app)"
-BINARY="${APP_BUNDLE}/Contents/MacOS/${APP_LABEL}"
+BINARY_NAME="$(plutil -extract CFBundleExecutable raw "${APP_BUNDLE}/Contents/Info.plist")"
+BINARY="${APP_BUNDLE}/Contents/MacOS/${BINARY_NAME}"
 
 echo "==> Verifying code signature"
 codesign --verify --verbose=2 "${APP_BUNDLE}"
