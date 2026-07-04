@@ -38,3 +38,11 @@ open MyApp.xcodeproj
 
 Remember: `MyApp.xcodeproj` is generated from `project.yml` and gitignored.
 Change targets/settings in `project.yml`, then `just generate`.
+
+## App Icon
+
+The template ships `App/Assets.xcassets/AppIcon.appiconset` with empty slots —
+the app builds and runs without icon artwork. To add yours, open the project in
+Xcode and drop PNG sizes onto the AppIcon set (App target → Assets), or edit
+`AppIcon.appiconset/Contents.json` directly, then rebuild. `project.yml` already
+wires the catalog via `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`.
