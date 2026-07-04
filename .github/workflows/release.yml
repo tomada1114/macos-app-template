@@ -109,6 +109,9 @@ jobs:
           codesign --force --deep --sign - "build/Build/Products/Release/$APP_NAME.app"
           codesign --verify --verbose=2 "build/Build/Products/Release/$APP_NAME.app"
 
+      - name: Smoke-test the signed app
+        run: scripts/smoke_launch.sh "build/Build/Products/Release/$APP_NAME.app"
+
       - name: Package DMG
         run: scripts/package_dmg.sh "build/Build/Products/Release/$APP_NAME.app" "$APP_NAME.dmg"
 

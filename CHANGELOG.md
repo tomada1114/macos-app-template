@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CLAUDE.md` and path-scoped `.claude/rules/` for AI-assisted development
 - ShellCheck joins the lint gate (`just lint` and CI) for every repo shell script
 - The launch UI test writes an `.xcresult` bundle; CI uploads it when the job fails
+- The release pipeline smoke-tests the signed Release app before packaging the DMG
 
 ### Changed
 
