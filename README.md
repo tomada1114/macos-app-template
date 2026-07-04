@@ -12,6 +12,9 @@ XCUITest launch guarantee, and hardened CI — all from the first commit.
 Most popular OSS macOS apps ship without CI-gated tests, SECURITY.md,
 Dependabot, or pinned actions. This template starts with all of them.
 
+**Starting your own app from this template?** Jump to
+[Using This Template](#using-this-template).
+
 ## Quickstart
 
 Prerequisites: Xcode 26.5+, [mise](https://mise.jdx.dev/), and
