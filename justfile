@@ -34,12 +34,10 @@ test:
 # Build the app (Debug)
 build:
     mise exec -- xcodegen generate
-    set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug build | mise exec -- xcbeautify --quiet
+    set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build | mise exec -- xcbeautify --quiet
 
 # Build (Debug) and launch the app, left running until you quit it
-run:
-    mise exec -- xcodegen generate
-    set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build | mise exec -- xcbeautify --quiet
+run: build
     open build/dev-derived-data/Build/Products/Debug/MyApp.app
 
 # Run the XCUITest launch test (may prompt for Accessibility permission on first local run)

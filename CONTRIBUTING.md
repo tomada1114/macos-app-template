@@ -56,7 +56,6 @@ mise exec -- shellcheck scripts/*.sh .githooks/pre-commit
 mise exec -- actionlint
 scripts/coverage.sh
 mise exec -- xcodegen generate
-xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug build
 xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build
 open build/dev-derived-data/Build/Products/Debug/MyApp.app
 xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS'
