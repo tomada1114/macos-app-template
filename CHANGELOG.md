@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.xcode-version` is the single source of truth for the CI Xcode pin;
   `just install` warns when the local Xcode differs
 - CodeQL static analysis of the Swift package (weekly and on `main` pushes)
+- `ContentView` accepts an injected view model and ships `#Preview` configurations
 
 ### Changed
 
