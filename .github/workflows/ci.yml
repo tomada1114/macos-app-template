@@ -122,6 +122,18 @@ jobs:
             exit 1
           fi
 
+      - name: Assert CHANGELOG was reset
+        run: |
+          cd "$RUNNER_TEMP/bootstrap-smoke"
+          grep -qF 'Initial project scaffold from' CHANGELOG.md || {
+            echo "::error::bootstrap did not reset CHANGELOG.md"
+            exit 1
+          }
+          if grep -qF 'Initial template:' CHANGELOG.md; then
+            echo "::error::template history still present in CHANGELOG.md"
+            exit 1
+          fi
+
       - name: Test the renamed package
         run: |
           cd "$RUNNER_TEMP/bootstrap-smoke/Packages/DemoAppKit"

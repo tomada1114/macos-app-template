@@ -37,5 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `just build` and `just uitest` isolate DerivedData under `build/`, so
   `just clean` now removes everything the toolchain produced
+- `scripts/bootstrap.sh` resets `CHANGELOG.md` for the new project and prints a
+  verify-first next-steps list
 
 [Unreleased]: https://github.com/your-username/my-app/commits/main
