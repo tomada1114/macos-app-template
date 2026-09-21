@@ -127,4 +127,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   declare, add, and bump one without hand-editing `Package.resolved`; it now also loads
   when `Package.resolved` is touched
 
+### Fixed
+
+- `scripts/tests/apply-ruleset_test.sh` built its `gh` stub bodies with a heredoc inside
+  a command substitution, which bash 3.2 parses wrongly at the first `)` of a `case` pattern:
+  under macOS `/bin/bash` the file died with a syntax error and still exited 0, so none
+  of its six cases ran and nothing reported it. The bodies are single-quoted literals now
+
 [Unreleased]: https://github.com/your-username/my-app/commits/main
