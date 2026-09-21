@@ -13,7 +13,7 @@
 # copy rulesets, so every repository created from this template needs its own
 # admin to run this once.
 #
-# Idempotent: resolves the repository with `gh repo view`, lists its rulesets,
+# Idempotent: resolves the repository with `gh repo view`, lists its own rulesets,
 # and updates a ruleset already named "main" in place (PUT) instead of creating a
 # duplicate; otherwise it creates one (POST).
 #
@@ -86,7 +86,11 @@ classify_failure() {
 REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner' 2>"${GH_STDERR}") ||
     classify_failure "resolving the repository (\`gh repo view\`)"
 
-EXISTING_ID=$(gh api "repos/${REPO}/rulesets" --jq '.[] | select(.name == "main") | .id' 2>"${GH_STDERR}") ||
+# includes_parents=false: the listing otherwise also returns organization-level
+# rulesets, whose ids the repository-scoped PUT below cannot address. --paginate:
+# the listing is paged (30 per page), so a "main" past the first page is still found.
+EXISTING_ID=$(gh api --paginate "repos/${REPO}/rulesets?includes_parents=false" \
+    --jq '.[] | select(.name == "main" and .source_type == "Repository") | .id' 2>"${GH_STDERR}") ||
     classify_failure "listing rulesets (\`gh api repos/${REPO}/rulesets\`)"
 EXISTING_ID=$(printf '%s\n' "${EXISTING_ID}" | head -n 1)
 
