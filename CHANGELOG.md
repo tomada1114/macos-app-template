@@ -126,6 +126,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (need, continuity, license, weight, build-time code, platforms, advisories) and how to
   declare, add, and bump one without hand-editing `Package.resolved`; it now also loads
   when `Package.resolved` is touched
+- `scripts/tests/run.sh` runs the script test files concurrently instead of one after
+  another — each file's output is still captured and printed whole in glob order, every
+  file still runs after a failure, and `ERR_TESTS_NONE`/`ERR_TESTS_FAILED` are unchanged
+  — cutting `just test-scripts` from roughly 34 s to 11 s; `scripts/tests/run_test.sh`
+  now covers the runner itself
 
 ### Fixed
 
