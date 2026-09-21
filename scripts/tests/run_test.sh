@@ -94,21 +94,23 @@ case_files_run_concurrently() {
     # Each file announces itself and then waits for all three announcements. Run
     # sequentially the first one would wait alone until its timeout and exit 1, so
     # a passing run is itself the proof that the three ran at the same time.
-    local name
+    local name target
     for name in aaa bbb ccc; do
-        write_test_file "${tree}" "${name}" "$(
-            printf 'TREE=%s\n' "${tree}"
-            printf ': > "${TREE}/started.%s"\n' "${name}"
-            printf 'i=0\n'
-            printf 'while [ "${i}" -lt 200 ]; do\n'
-            printf '    started=$(ls "${TREE}"/started.* 2>/dev/null | wc -l)\n'
-            printf '    [ "${started}" -lt 3 ] || exit 0\n'
-            printf '    sleep 0.05\n'
-            printf '    i=$((i + 1))\n'
-            printf 'done\n'
-            printf 'echo "timed out waiting for the other files to start" >&2\n'
-            printf 'exit 1\n'
-        )"
+        target="${tree}/scripts/tests/${name}_test.sh"
+        # TREE is the fixture root; the rest of the body is taken verbatim.
+        printf 'TREE=%s\n' "${tree}" >"${target}"
+        cat >>"${target}" <<'BODY'
+: >"${TREE}/started.$$"
+i=0
+while [ "${i}" -lt 200 ]; do
+    started=$(ls "${TREE}"/started.* 2>/dev/null | wc -l)
+    [ "${started}" -lt 3 ] || exit 0
+    sleep 0.05
+    i=$((i + 1))
+done
+echo "timed out waiting for the other files to start" >&2
+exit 1
+BODY
     done
 
     capture "${BASH}" "${tree}/scripts/tests/run.sh"
