@@ -14,16 +14,21 @@
 # lint job deliberately skips. The caller puts the tools on PATH — locally
 # `mise exec -- scripts/lint.sh` (what `just lint` runs), in CI jdx/mise-action.
 #
-# Errors:
+# Git work tree: the whole-repository mode enumerates tracked files, so it refuses
+# to run outside one (git's own error); --staged-tree does not need one.
+#
+# Errors (each followed by Expected:/Actual:/Next: lines, exit 1):
 #   ERR_LINT_USAGE         unknown argument, or a --staged-tree DIR that does not exist
 #   ERR_LINT_TOOL_MISSING  a tool this mode needs is not on PATH
 set -euo pipefail
 
 USAGE='usage: scripts/lint.sh [--staged-tree DIR]'
 
-usage_error() {
+usage_error() { # usage_error <what failed> <what was found>
     echo "ERR_LINT_USAGE: $1" >&2
-    echo "${USAGE}" >&2
+    echo "Expected: no arguments, or --staged-tree followed by an existing directory" >&2
+    echo "Actual: $2" >&2
+    echo "Next: ${USAGE}" >&2
     exit 1
 }
 
@@ -31,12 +36,12 @@ STAGED_TREE=""
 case $# in
     0) ;;
     2)
-        [ "$1" = "--staged-tree" ] || usage_error "unknown argument '$1'"
-        [ -d "$2" ] || usage_error "--staged-tree directory '$2' does not exist"
+        [ "$1" = "--staged-tree" ] || usage_error "unknown argument '$1'" "arguments: $*"
+        [ -d "$2" ] || usage_error "--staged-tree directory '$2' does not exist" "no directory at '$2'"
         # Resolve before the cd below so a relative DIR keeps pointing at the same place.
         STAGED_TREE=$(cd "$2" && pwd)
         ;;
-    *) usage_error "unexpected arguments: $*" ;;
+    *) usage_error "unexpected arguments: $*" "$# argument(s): $*" ;;
 esac
 
 cd "$(dirname "$0")/.."
@@ -49,6 +54,8 @@ fi
 for tool in "${REQUIRED_TOOLS[@]}"; do
     if ! command -v "${tool}" >/dev/null 2>&1; then
         echo "ERR_LINT_TOOL_MISSING: '${tool}' is not on PATH" >&2
+        echo "Expected: every tool this mode needs on PATH: ${REQUIRED_TOOLS[*]}" >&2
+        echo "Actual: \`command -v ${tool}\` found nothing" >&2
         echo "Next: run it through mise — \`mise exec -- scripts/lint.sh\` or \`just lint\`" >&2
         exit 1
     fi
