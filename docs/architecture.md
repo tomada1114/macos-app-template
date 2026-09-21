@@ -24,8 +24,10 @@ match: `.swiftlint.yml`'s `no_ui_import_in_core` custom rule (the pre-commit hoo
 `MyAppCoreTests` (`just test`, CI's `test` job). Both reject `SwiftUI`, `AppKit`,
 `UIKit`, and `Cocoa` (which re-exports AppKit), including attributed
 (`@preconcurrency import AppKit`) and kind-qualified (`import struct SwiftUI.Color`)
-imports; a commented-out import is ignored. "Platform-agnostic" here means free of UI
-frameworks, not buildable on Linux: Apple-only frameworks such as Combine stay allowed.
+imports. A `//`-commented import is ignored, but one that starts a line inside a
+`/* … */` block or a multi-line string literal is still flagged — delete it instead.
+"Platform-agnostic" here means free of UI frameworks, not buildable on Linux:
+Apple-only frameworks such as Combine stay allowed.
 
 ## Where new code goes
 
