@@ -20,6 +20,8 @@ public struct ContentView: View {
     /// ``FrontmostAppViewModel``, because the port's adapter lives in `MyAppPlatform`,
     /// which `MyAppUI` must not import. Previews and tests simply leave it out.
     @State private var frontmostApp: FrontmostAppViewModel?
+    @Environment(\.scenePhase)
+    private var scenePhase
 
     public var body: some View {
         VStack(spacing: Layout.stackSpacing) {
@@ -41,11 +43,20 @@ public struct ContentView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("frontmostAppLabel")
-                    .task { frontmostApp.refresh() }
             }
         }
         .padding(Layout.windowPadding)
         .frame(minWidth: Layout.minWindowWidth, minHeight: Layout.minWindowHeight)
+        // The port answers with a snapshot, so the snapshot is retaken every time this
+        // scene becomes active — reading it once at launch would pin the label to
+        // whoever launched the app. `initial: true` covers the case where the scene is
+        // already active on first render.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            guard phase == .active else {
+                return
+            }
+            frontmostApp?.refresh()
+        }
     }
 
     /// Creates the view over `model` — previews and tests inject alternate

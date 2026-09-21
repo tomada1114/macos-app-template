@@ -15,6 +15,11 @@ public struct WorkspaceFrontmostAppProvider: FrontmostAppProviding {
 
     /// Asks `NSWorkspace` who is frontmost and reduces the answer to a value.
     ///
+    /// A snapshot of this instant, not a subscription: the adapter registers for no
+    /// notification and keeps no state, matching the pull-style contract of the port
+    /// it implements. Live updates would be a separate observing port, not a change
+    /// of behavior here.
+    ///
     /// `NSWorkspace` answers `nil` when no application is frontmost; a running
     /// application with no `localizedName` is dropped rather than given a made-up one,
     /// so Core decides what "unavailable" reads like.

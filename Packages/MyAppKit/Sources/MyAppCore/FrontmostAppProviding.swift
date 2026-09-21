@@ -25,8 +25,15 @@ public struct FrontmostApp: Equatable, Sendable {
 ///
 /// Ports are `Sendable` and take and return value types, so an adapter can be handed
 /// across actors and a Core caller never has to reason about the OS object behind it.
+///
+/// This one is deliberately **pull-style**: it answers with a snapshot of the moment it
+/// is asked and pushes nothing, so a caller that wants a current answer asks again (the
+/// app does so whenever its scene becomes active). An app that needs live updates —
+/// following every app switch, not just its own activations — adds a second,
+/// observing port whose adapter subscribes to `NSWorkspace`'s activation notifications
+/// and hands Core a stream; it does not turn this one into a publisher.
 public protocol FrontmostAppProviding: Sendable {
-    /// The application currently frontmost, or `nil` when there is none or the OS
-    /// declines to say (a sandboxed or background process may get no answer).
+    /// The application frontmost at the moment of the call, or `nil` when there is none
+    /// or the OS declines to say (a sandboxed or background process may get no answer).
     func currentFrontmostApp() -> FrontmostApp?
 }
