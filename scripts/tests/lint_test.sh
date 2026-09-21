@@ -63,9 +63,27 @@ case_tool_missing_staged_tree() {
     [ ! -e "${STUB_BIN}/swiftformat.log" ] || _fail "swiftformat ran before the tool check"
 }
 
+# A copy of lint.sh in a directory that is not a git work tree, with every linter
+# stubbed present: the whole-repository mode refuses before running any of them.
+case_whole_repo_outside_work_tree() {
+    local dir tool
+    dir=$(make_temp_dir)
+    mkdir "${dir}/scripts"
+    cp "${LINT}" "${dir}/scripts/lint.sh"
+    for tool in swiftformat swiftlint shellcheck actionlint typos; do
+        stub_command "${tool}" 'exit 0'
+    done
+    capture env GIT_CEILING_DIRECTORIES="${dir}" "${BASH}" "${dir}/scripts/lint.sh"
+    assert_exit 1
+    assert_stderr_contains "ERR_LINT_NOT_A_REPO: whole-repository lint needs a git work tree"
+    assert_stderr_contains "Next:"
+    [ ! -e "${STUB_BIN}/swiftformat.log" ] || _fail "swiftformat ran outside a work tree"
+}
+
 run_case "an unknown flag fails ERR_LINT_USAGE" case_unknown_flag
 run_case "a wrong argument count fails ERR_LINT_USAGE" case_wrong_argument_count
 run_case "--staged-tree with a missing directory fails ERR_LINT_USAGE" case_staged_tree_missing_dir
 run_case "a PATH without git fails ERR_LINT_TOOL_MISSING" case_tool_missing_whole_repo
 run_case "--staged-tree without swiftlint fails ERR_LINT_TOOL_MISSING" case_tool_missing_staged_tree
+run_case "whole-repository mode outside a work tree fails ERR_LINT_NOT_A_REPO" case_whole_repo_outside_work_tree
 finish

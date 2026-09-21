@@ -15,11 +15,12 @@
 # `mise exec -- scripts/lint.sh` (what `just lint` runs), in CI jdx/mise-action.
 #
 # Git work tree: the whole-repository mode enumerates tracked files, so it refuses
-# to run outside one (git's own error); --staged-tree does not need one.
+# to run outside one (ERR_LINT_NOT_A_REPO); --staged-tree does not need one.
 #
 # Errors (each followed by Expected:/Actual:/Next: lines, exit 1):
 #   ERR_LINT_USAGE         unknown argument, or a --staged-tree DIR that does not exist
 #   ERR_LINT_TOOL_MISSING  a tool this mode needs is not on PATH
+#   ERR_LINT_NOT_A_REPO    whole-repository mode run outside a git work tree
 set -euo pipefail
 
 USAGE='usage: scripts/lint.sh [--staged-tree DIR]'
@@ -76,7 +77,13 @@ else
     # Every tracked *.sh at any depth, so a script added later is covered without
     # editing this list. set -e cannot see a failure inside the process
     # substitution, so the work-tree check runs first and fails loudly on its own.
-    git rev-parse --is-inside-work-tree >/dev/null
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "ERR_LINT_NOT_A_REPO: whole-repository lint needs a git work tree" >&2
+        echo "Expected: $(pwd) to be inside a git work tree" >&2
+        echo "Actual: git rev-parse --is-inside-work-tree failed there" >&2
+        echo "Next: run it from a git clone, or lint exported files with --staged-tree DIR" >&2
+        exit 1
+    fi
     SHELL_FILES=(.githooks/pre-commit)
     while IFS= read -r -d '' file; do
         SHELL_FILES+=("${file}")
