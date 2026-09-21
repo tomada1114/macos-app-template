@@ -129,8 +129,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scripts/tests/run.sh` runs the script test files concurrently instead of one after
   another — each file's output is still captured and printed whole in glob order, every
   file still runs after a failure, and `ERR_TESTS_NONE`/`ERR_TESTS_FAILED` are unchanged
-  — cutting `just test-scripts` from roughly 34 s to 11 s; `scripts/tests/run_test.sh`
-  now covers the runner itself
+  — cutting `just test-scripts` from roughly 34 s to 12 s. It also parses each file
+  with `bash -n` before starting it, so a file that bash 3.2 aborts on a syntax error
+  while still exiting 0 is counted as failing instead of passing, and on INT or TERM it
+  kills the files it started (a background job in a non-interactive shell ignores
+  SIGINT) and prints every log it had not reported yet, marked `(interrupted)`, with a
+  new `ERR_TESTS_INTERRUPTED`; `scripts/tests/run_test.sh` now covers the runner itself
 
 ### Fixed
 
