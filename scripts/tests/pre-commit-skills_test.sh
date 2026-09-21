@@ -70,6 +70,22 @@ case_claude_hand_edit_fails() {
     assert_stderr_contains "ERR_AGENTS_DRIFT"
 }
 
+# A deletion is a staged change too: removing a skill from the .agents side only
+# must still reach the check.
+case_agents_side_deletion_fails() {
+    local repo
+    repo=$(make_repo_with_hook)
+    mkdir -p "${repo}/.agents/skills/beta" "${repo}/.claude/skills/beta"
+    echo "beta skill" >"${repo}/.agents/skills/beta/SKILL.md"
+    echo "beta skill" >"${repo}/.claude/skills/beta/SKILL.md"
+    git -C "${repo}" add -A
+    git -C "${repo}" commit -q -m "add beta on both sides"
+    git -C "${repo}" rm -q .agents/skills/beta/SKILL.md
+    capture git -C "${repo}" commit -q -m "delete beta from .agents only"
+    assert_exit 1
+    assert_stderr_contains "ERR_AGENTS_DRIFT"
+}
+
 case_both_sides_staged_after_sync_succeeds() {
     local repo
     repo=$(make_repo_with_hook)
@@ -95,6 +111,7 @@ case_unrelated_staged_path_skips_check() {
 run_case "an unsynced .agents/skills edit fails ERR_AGENTS_DRIFT" case_unsynced_agents_edit_fails
 run_case "a sync that ran but staged only the .agents side still fails" case_synced_but_only_agents_side_staged_fails
 run_case "a hand edit staged only in .claude/skills fails" case_claude_hand_edit_fails
+run_case "deleting a skill from the .agents side only fails" case_agents_side_deletion_fails
 run_case "both sides staged after a sync succeeds" case_both_sides_staged_after_sync_succeeds
 run_case "staging an unrelated path skips the check" case_unrelated_staged_path_skips_check
 finish

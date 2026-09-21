@@ -56,12 +56,13 @@ fi
 # `.agents` side staged, looks in sync on disk yet is still a drifted commit — the
 # same rule the Swift section above applies to `git diff --cached`. diff and git are
 # ordinary tools already on PATH, so this needs no `mise exec --`.
+# Its own query rather than STAGED_FILES: a deletion (or a rename out of the tree)
+# drifts the mirror too, and STAGED_FILES leaves out D because the Swift section
+# cannot export a deleted blob.
 STAGED_SKILLS_FILES=()
-for file in ${STAGED_FILES[@]+"${STAGED_FILES[@]}"}; do
-    case "${file}" in
-        .agents/skills/* | .claude/skills/*) STAGED_SKILLS_FILES+=("${file}") ;;
-    esac
-done
+while IFS= read -r -d '' file; do
+    STAGED_SKILLS_FILES+=("${file}")
+done < <(git diff --cached --name-only -z --no-renames -- .agents/skills .claude/skills)
 
 if [ ${#STAGED_SKILLS_FILES[@]} -gt 0 ]; then
     echo "pre-commit: Skills mirror — checking the staged content of .agents/skills/ and .claude/skills/"
