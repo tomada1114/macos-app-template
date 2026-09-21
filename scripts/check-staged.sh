@@ -27,7 +27,7 @@
 # content are both blocked, every finding line comes first, then one
 # Expected:/Actual:/Next: block:
 #   ERR_STAGED_NOT_A_REPO          not inside a git work tree
-#   ERR_STAGED_READ_FAILED         a staged blob could not be read or scanned
+#   ERR_STAGED_READ_FAILED         the staged changes could not be listed, or a staged blob read or scanned
 #   ERR_STAGED_BLOCKED_PATH        a staged path matches scripts/guard/paths.sh
 #   ERR_STAGED_CREDENTIAL_SHAPED   a staged blob matches scripts/guard/credentials.sh
 set -euo pipefail
@@ -57,6 +57,7 @@ fi
 SCRATCH=$(mktemp -d)
 trap 'rm -rf "${SCRATCH}"' EXIT
 BLOB="${SCRATCH}/blob"
+STAGED="${SCRATCH}/staged"
 
 FINDINGS=()
 BLOCKED_PATHS=0
@@ -70,6 +71,17 @@ CREDENTIAL_PATHS=0
 # file from the next commit, so it cannot add a secret — and refusing it would block
 # the very commit that removes a secret committed earlier. T (a type change, e.g. a
 # file replaced by a symlink) is inspected, since it stages new content.
+#
+# The listing is written to a file first rather than read through a process
+# substitution, whose exit status bash discards: a failing `git diff` would otherwise
+# look like an empty index and let the commit through unchecked.
+if ! git diff --cached --raw -z --no-abbrev --no-renames --diff-filter=ACMRT >"${STAGED}"; then
+    fail ERR_STAGED_READ_FAILED \
+        "could not list the staged changes" \
+        "\`git diff --cached --raw\` to list every staged path" \
+        "it exited non-zero" \
+        "check \`git status\` and the index, then retry the commit."
+fi
 while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
     # meta is ":<old mode> <new mode> <old id> <new id> <status>".
     read -r _ new_mode _ new_id _ <<<"${meta}"
@@ -107,7 +119,7 @@ while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
                 "check that ${SCRATCH} is writable and retry the commit."
             ;;
     esac
-done < <(git diff --cached --raw -z --no-abbrev --no-renames --diff-filter=ACMRT)
+done <"${STAGED}"
 
 if [ ${#FINDINGS[@]} -gt 0 ]; then
     printf '%s\n' "${FINDINGS[@]}" >&2
