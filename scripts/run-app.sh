@@ -70,11 +70,19 @@ while [ $# -gt 0 ]; do
                 "--quit-timeout followed by a positive whole number of seconds" \
                 "no value after --quit-timeout" "${USAGE}"
             case "$2" in
-                "" | *[!0-9]* | 0) fail ERR_RUN_USAGE "--quit-timeout '$2' is not a positive whole number" \
+                "" | *[!0-9]*) fail ERR_RUN_USAGE "--quit-timeout '$2' is not a positive whole number" \
                     "--quit-timeout followed by a positive whole number of seconds" \
                     "'$2'" "${USAGE}" ;;
             esac
-            QUIT_TIMEOUT="$2"
+            # Forced to base 10 here, not at the arithmetic below: a leading zero
+            # reads as octal there ('010' would mean 8 seconds, silently), and
+            # '08' is not octal at all — bash would abort with a message of its
+            # own, after the SIGTERM has gone out and before anything launched.
+            # The same expansion turns '0' and '00' into the 0 rejected next.
+            QUIT_TIMEOUT=$((10#$2))
+            [ "${QUIT_TIMEOUT}" -gt 0 ] || fail ERR_RUN_USAGE "--quit-timeout '$2' is not a positive whole number" \
+                "--quit-timeout followed by a positive whole number of seconds" \
+                "'$2'" "${USAGE}"
             shift
             ;;
         *)

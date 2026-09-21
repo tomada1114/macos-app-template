@@ -202,6 +202,32 @@ case_bad_quit_timeout() {
     assert_stderr_contains "ERR_RUN_USAGE"
 }
 
+case_zero_quit_timeout() {
+    root=$(make_fixture_root)
+    for zero in 0 00; do
+        capture "${RUN_APP_SH}" --root "${root}" --quit-timeout "${zero}"
+        assert_exit 1
+        assert_stderr_contains "ERR_RUN_USAGE"
+    done
+}
+
+case_leading_zero_quit_timeout() {
+    # A leading zero must not reach the arithmetic that sizes the poll: '010'
+    # would read as octal there, and '08' would abort bash itself — after the
+    # SIGTERM had already gone out, with no ERR_RUN_* line to act on.
+    root=$(make_fixture_root)
+    executable=$(make_fixture_bundle MyApp com.example.MyApp)
+    pid=$(spawn_detached 'sleep 30')
+    stub_process_table "  ${pid} ${executable}" "  4242 ${executable}"
+    stub_open
+
+    capture "${RUN_APP_SH}" --root "${root}" --quit-timeout 08
+    assert_exit 0
+    assert_pid_gone "${pid}"
+    assert_stderr_not_contains "value too great for base" "bash's own arithmetic error"
+    assert_open_called_with "${root}/${APP_RELATIVE_PATH}"
+}
+
 run_case "quits the running instance, then launches the fresh build" case_quits_then_launches
 run_case "launches when no instance is running" case_launches_when_nothing_is_running
 run_case "leaves a same-named app with another identifier alone" case_leaves_a_same_named_app_alone
@@ -211,4 +237,6 @@ run_case "names a failed launch" case_launch_failure
 run_case "passes the manifest failure through" case_manifest_failure_is_the_helpers
 run_case "rejects an unknown argument" case_unknown_argument
 run_case "rejects a non-numeric --quit-timeout" case_bad_quit_timeout
+run_case "rejects a zero --quit-timeout, however spelled" case_zero_quit_timeout
+run_case "reads a leading-zero --quit-timeout as base 10" case_leading_zero_quit_timeout
 finish

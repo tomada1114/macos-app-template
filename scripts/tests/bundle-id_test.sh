@@ -53,6 +53,35 @@ case_strips_quotes_and_trailing_space() {
     assert_stdout_not_contains '"' "the surrounding quotes"
 }
 
+case_strips_a_trailing_comment() {
+    # XcodeGen accepts a YAML comment after the value, so this script must too.
+    root=$(make_temp_dir)
+    write_manifest "${root}" '        PRODUCT_BUNDLE_IDENTIFIER: com.example.MyApp # the app id'
+    capture "${BUNDLE_ID_SH}" --root "${root}"
+    assert_exit 0
+    assert_stdout_contains "com.example.MyApp"
+    assert_stdout_not_contains "#" "the comment"
+    assert_stdout_not_contains "the app id" "the comment text"
+}
+
+case_strips_a_trailing_comment_after_quotes() {
+    root=$(make_temp_dir)
+    write_manifest "${root}" '        PRODUCT_BUNDLE_IDENTIFIER: "com.example.MyApp"   # the app id'
+    capture "${BUNDLE_ID_SH}" --root "${root}"
+    assert_exit 0
+    assert_stdout_contains "com.example.MyApp"
+    assert_stdout_not_contains '"' "the surrounding quotes"
+    assert_stdout_not_contains "#" "the comment"
+}
+
+case_comment_only_value() {
+    root=$(make_temp_dir)
+    write_manifest "${root}" '        PRODUCT_BUNDLE_IDENTIFIER: # to be filled in'
+    capture "${BUNDLE_ID_SH}" --root "${root}"
+    assert_exit 1
+    assert_stderr_contains "ERR_BUNDLEID_NOT_FOUND"
+}
+
 case_takes_the_first_target() {
     root=$(make_temp_dir)
     write_manifest "${root}" '        PRODUCT_BUNDLE_IDENTIFIER: com.example.MyApp'
@@ -110,6 +139,9 @@ case_missing_root_directory() {
 run_case "prints the identifier the manifest declares" case_reads_the_identifier
 run_case "follows a renamed identifier (post-bootstrap)" case_reads_a_renamed_identifier
 run_case "strips surrounding quotes and trailing space" case_strips_quotes_and_trailing_space
+run_case "strips a YAML comment after the value" case_strips_a_trailing_comment
+run_case "strips a YAML comment after a quoted value" case_strips_a_trailing_comment_after_quotes
+run_case "names a line whose value is only a comment" case_comment_only_value
 run_case "takes the app target's identifier, not a later target's" case_takes_the_first_target
 run_case "names a missing project.yml" case_missing_manifest
 run_case "names a manifest with no identifier" case_no_identifier_declared

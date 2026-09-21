@@ -11,8 +11,9 @@
 #
 # Prints the value of the first PRODUCT_BUNDLE_IDENTIFIER in the manifest — the
 # app target's, which project.yml declares first — so a target added later (an
-# iOS one, say) never shadows it. A surrounding pair of single or double quotes
-# is stripped; the value is otherwise taken literally.
+# iOS one, say) never shadows it. A YAML trailing comment (whitespace, then `#`,
+# to the end of the line) and a surrounding pair of single or double quotes are
+# stripped; the value is otherwise taken literally.
 #
 # Git work tree: not required — the manifest is read under --root, which
 # defaults to the checkout containing this script, so a tarball works too.
@@ -60,9 +61,15 @@ MANIFEST="${ROOT}/project.yml"
     "run this from a checkout of this repository, or pass --root DIR"
 
 VALUE=$(sed -n 's/^[[:space:]]*PRODUCT_BUNDLE_IDENTIFIER:[[:space:]]*//p' "${MANIFEST}" | head -n 1)
-# Trailing carriage return (a CRLF manifest) and trailing spaces are not part of
-# the value; strip them before the quotes, which would otherwise not be last.
-VALUE=$(printf '%s' "${VALUE}" | tr -d '\r' | sed 's/[[:space:]]*$//')
+# A trailing carriage return (a CRLF manifest), a YAML comment, and trailing
+# spaces are not part of the value; strip them before the quotes, which would
+# otherwise not be last. A comment needs whitespace in front of its `#` to be
+# one (YAML's own rule), and a bundle identifier can hold no `#` of its own.
+VALUE=$(printf '%s' "${VALUE}" | tr -d '\r' | sed -e 's/[[:space:]]#.*//' -e 's/[[:space:]]*$//')
+# A line whose value is only a comment declares no identifier at all.
+case "${VALUE}" in
+    \#*) VALUE="" ;;
+esac
 case "${VALUE}" in
     \"*\") VALUE=${VALUE#\"}; VALUE=${VALUE%\"} ;;
     \'*\') VALUE=${VALUE#\'}; VALUE=${VALUE%\'} ;;
