@@ -44,7 +44,7 @@ jobs:
         run: scripts/checks/run-all.sh
 
   # Already the single spelling: this job calls scripts/coverage.sh (what `just test` runs),
-  # and the app/bootstrap-smoke jobs call the just recipes themselves.
+  # and the app job calls the just recipes itself.
   test:
     name: Test & Coverage Gate
     runs-on: macos-26

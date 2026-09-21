@@ -132,8 +132,9 @@ if grep -qxF "${SMOKE_JOB}" "${CI_FILE}" 2>/dev/null || grep -qF "\"${SMOKE_NAME
     [ -f "${RULESET_FILE}" ] && perl -ni -e 'print unless /^\s*\{ "context": "Template Bootstrap Smoke", "integration_id": \d+ \},\s*$/' "${RULESET_FILE}"
     if grep -qxF "${SMOKE_JOB}" "${CI_FILE}" 2>/dev/null || grep -qF "${SMOKE_NAME}" "${CI_FILE}" "${RULESET_FILE}" 2>/dev/null; then
         echo "error: could not retire the template's bootstrap-smoke job automatically." >&2
-        echo "       Remove the 'bootstrap-smoke' job from ${CI_FILE} and its '${SMOKE_NAME}'" >&2
-        echo "       entry from ${RULESET_FILE} by hand, then re-run this script." >&2
+        echo "       Still present (anything already removed was left removed):" >&2
+        grep -nE "^${SMOKE_JOB}\$|${SMOKE_NAME}" "${CI_FILE}" "${RULESET_FILE}" 2>/dev/null | sed 's/^/         /' >&2 || true
+        echo "       Remove those lines by hand (keep ${RULESET_FILE} valid JSON), then re-run this script." >&2
         exit 1
     fi
 fi
