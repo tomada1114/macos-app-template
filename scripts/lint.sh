@@ -77,10 +77,11 @@ else
     # Every tracked *.sh at any depth, so a script added later is covered without
     # editing this list. set -e cannot see a failure inside the process
     # substitution, so the work-tree check runs first and fails loudly on its own.
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    if ! GIT_ERROR=$(git rev-parse --is-inside-work-tree 2>&1 >/dev/null); then
         echo "ERR_LINT_NOT_A_REPO: whole-repository lint needs a git work tree" >&2
         echo "Expected: $(pwd) to be inside a git work tree" >&2
-        echo "Actual: git rev-parse --is-inside-work-tree failed there" >&2
+        # git's own message tells "no repository" apart from e.g. safe.directory refusals.
+        echo "Actual: git rev-parse --is-inside-work-tree failed there: ${GIT_ERROR}" >&2
         echo "Next: run it from a git clone, or lint exported files with --staged-tree DIR" >&2
         exit 1
     fi

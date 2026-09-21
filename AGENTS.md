@@ -107,7 +107,8 @@ of a check that enforces it.
 
 ## Repository scripts
 
-Every script under `scripts/` follows these rules, whoever writes it:
+Every script under `scripts/` follows these rules, whoever writes it
+(`scripts/tests/lib.sh` is sourced, so it carries no shebang or `set` line of its own):
 
 - `#!/usr/bin/env bash` and `set -euo pipefail`, and bash 3.2-compatible (macOS
   `/bin/bash`): no associative arrays, no `mapfile`/`readarray`, no `${var,,}`, and no
@@ -124,7 +125,7 @@ Every script under `scripts/` follows these rules, whoever writes it:
   enumerates or rewrites tracked files refuses to run outside a git work tree (the
   `scripts/bootstrap.sh` pattern); a check that is meaningless outside one skips with a
   one-line notice instead. Each script's header states which it does.
-- Every script under `scripts/` has a test file `scripts/tests/<script-name>_test.sh`
+- Every script directly under `scripts/` has a test file `scripts/tests/<script-name>_test.sh`
   built on `scripts/tests/lib.sh`, and `scripts/tests/run.sh` (`just test-scripts`,
   part of `just check` and CI's lint job) runs them all. A test works in a throwaway
   repository or temp directory, never the real checkout, and fakes external commands
