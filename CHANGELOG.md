@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `MyAppPlatform` target: the home for OS-integration code, behind `Sendable` ports
+  declared in `MyAppCore`. Ships a worked example — the `FrontmostAppProviding` port,
+  its `NSWorkspace`-backed `WorkspaceFrontmostAppProvider` adapter, and the fake the
+  Core tests use — and the app now shows the frontmost application's name
+  (`docs/architecture.md` › Ports and adapters)
+- Architecture boundary tests that `MyAppUI` and `MyAppPlatform` never import each other
 - Initial template: XcodeGen-generated app shell over a local Swift package
   with a Core/UI split and a working counter placeholder
 - Swift Testing suite with an enforced 80% line-coverage floor on `MyAppCore`
@@ -104,6 +110,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `scripts/run-app.sh` quits every running instance of this app — matched by bundle
   identifier, never by process name — and waits for it to exit, bounded, reporting a
   process that outlives the wait rather than forcing it
+- `MyAppCore`'s import ban list now also rejects `ApplicationServices`, `Carbon`, and
+  `ServiceManagement`, in both `.swiftlint.yml`'s `no_ui_import_in_core` and
+  `ArchitectureBoundaryTests`: an adapter that needs one belongs in `MyAppPlatform`
 - `scripts/bootstrap.sh` now removes the template-only `bootstrap-smoke` CI job and
   its required status check, so a new app's CI and branch ruleset no longer require a
   job that cannot pass
@@ -134,5 +143,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (need, continuity, license, weight, build-time code, platforms, advisories) and how to
   declare, add, and bump one without hand-editing `Package.resolved`; it now also loads
   when `Package.resolved` is touched
+- `scripts/tests/run.sh` runs the script test files concurrently instead of one after
+  another — each file's output is still captured and printed whole in glob order, every
+  file still runs after a failure, and `ERR_TESTS_NONE`/`ERR_TESTS_FAILED` are unchanged
+  — cutting `just test-scripts` from roughly 34 s to 12 s. It also parses each file
+  with `bash -n` before starting it, so a file that bash 3.2 aborts on a syntax error
+  while still exiting 0 is counted as failing instead of passing, and on INT or TERM it
+  kills the files it started (a background job in a non-interactive shell ignores
+  SIGINT) and prints every log it had not reported yet, marked `(interrupted)`, with a
+  new `ERR_TESTS_INTERRUPTED`; `scripts/tests/run_test.sh` now covers the runner itself
+
+### Fixed
+
+- `scripts/tests/apply-ruleset_test.sh` built its `gh` stub bodies with a heredoc inside
+  a command substitution, which bash 3.2 parses wrongly at the first `)` of a `case` pattern:
+  under macOS `/bin/bash` the file died with a syntax error and still exited 0, so none
+  of its six cases ran and nothing reported it. The bodies are single-quoted literals now
 
 [Unreleased]: https://github.com/your-username/my-app/commits/main
