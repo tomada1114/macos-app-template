@@ -32,14 +32,16 @@ case_reads_the_identifier() {
 }
 
 case_reads_a_renamed_identifier() {
-    # What `just run` and `just logs` depend on after scripts/bootstrap.sh: the
-    # answer follows the manifest, with nothing hard-coded on this side.
+    # What `just run` and `just logs` depend on after scripts/bootstrap.sh: a
+    # second manifest, a second answer, with nothing hard-coded on this side.
+    # It asserts only on this fixture's own value — scripts/bootstrap.sh rewrites
+    # the template's placeholder prefix inside this file too, so an assertion
+    # about that prefix would be rewritten into one about the new app's.
     root=$(make_temp_dir)
     write_manifest "${root}" '        PRODUCT_BUNDLE_IDENTIFIER: dev.acme.Notes'
     capture "${BUNDLE_ID_SH}" --root "${root}"
     assert_exit 0
     assert_stdout_contains "dev.acme.Notes"
-    assert_stdout_not_contains "com.example" "the template's placeholder prefix"
 }
 
 case_strips_quotes_and_trailing_space() {
