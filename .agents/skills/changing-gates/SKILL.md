@@ -62,19 +62,37 @@ entry in `disabled_rules` carries a one-line trailing reason; a new entry withou
 is incomplete, and removing a rule needs explicit approval
 (`.claude/rules/project.md`). Prefer an inline `// swiftlint:disable:next <rule>` with
 a reason when only one site needs the exception — a global disable widens the gate for
-every future file. Repository-specific rules live under `custom_rules:`. The one there,
-`no_ui_import_in_core`, keeps `MyAppCore` from importing a UI or OS-integration
+every future file. Repository-specific rules live under `custom_rules:`; there are two.
+
+`no_ui_import_in_core` keeps `MyAppCore` from importing a UI or OS-integration
 framework — SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon, and
 ServiceManagement — attributed and kind-qualified spellings included;
 `ArchitectureBoundaryTests` in
 `MyAppCoreTests` enforces the same boundary a second way. Its module list and the
 test's `forbiddenModules` change together, in one commit — adding a framework to one
 and not the other leaves the boundary enforced once. Adding to that list strengthens
-the gate and is the routine direction; removing from it is weakening one. Its
+the gate and is the routine direction; removing from it is weakening one. `os` and
+`OSLog` are deliberately not on it, so Core can log (`docs/architecture.md` › Logging);
+a test case pins their absence. Its
 `included` regex names the
 package and module, so a new Core-like target means widening it and the test's path.
 The sibling boundary — `MyAppUI` and `MyAppPlatform` never importing each other — is
 held by `ArchitectureBoundaryTests` alone, with no lint-rule twin.
+
+`no_print_in_sources` rejects `print(`, `debugPrint(`, and `NSLog(` under
+`Packages/*/Sources/` and `App/`, because an `open`-launched `.app` discards stdout:
+shipped code logs through `MyAppCore`'s `AppLog` instead (`.claude/rules/swift.md` ›
+Logging). Three parts of it are load-bearing, and a widening edit usually breaks one:
+`match_kinds: [identifier]` is what spares a `print(` inside a comment or a string
+literal; `[^\w.]` before the name spares `blueprint(` and member calls like `.print()`;
+and each alternative in `included` is anchored to a path separator, without which
+`App/` would also match the `App/` inside a checkout directory named after the app —
+`scripts/bootstrap.sh` produces exactly that — and the rule would fire in `Tests/`,
+which is exempt on purpose. Matching relative path suffixes is also what keeps it
+firing over the temp tree the pre-commit hook exports with
+`git checkout-index --prefix=`. It catches a call site, not a deliberate bypass:
+`Swift.print(` is out of its reach and is PR review's to catch.
+
 `analyzer_rules` is deliberately absent: those run only under
 `swiftlint analyze` with a compiler log, which no gate here invokes. `trailing_comma`
 is set to agree with SwiftFormat; the two tools must never disagree about one file.

@@ -34,14 +34,42 @@ excluded:
   - build
   - MyApp.xcodeproj
 
-# MyAppCore stays free of UI and OS-integration frameworks (AGENTS.md › Architecture):
-# an adapter that needs one belongs in MyAppPlatform, behind a Core-declared port.
-# Enforced twice: here, and by ArchitectureBoundaryTests in MyAppCoreTests — change
-# both module lists together. No match_kinds: the ^\s* anchor already skips
-# `// import …` comments, and a kind filter would drop the attributed-import case.
 custom_rules:
+  # MyAppCore stays free of UI and OS-integration frameworks (AGENTS.md › Architecture):
+  # an adapter that needs one belongs in MyAppPlatform, behind a Core-declared port.
+  # `os`/`OSLog` are NOT on this list — logging is neither, and Core logs through
+  # AppLog (docs/architecture.md › Logging). Enforced twice: here, and by
+  # ArchitectureBoundaryTests in MyAppCoreTests — change both module lists together.
+  # No match_kinds: the ^\s* anchor already skips `// import …` comments, and a kind
+  # filter would drop the attributed-import case.
   no_ui_import_in_core:
     included: 'Packages/MyAppKit/Sources/MyAppCore/.+\.swift$'
     regex: '^\s*(@[\w()]+\s+)*import\s+((typealias|struct|class|enum|protocol|let|var|func)\s+)?(SwiftUI|AppKit|UIKit|Cocoa|ApplicationServices|Carbon|ServiceManagement)\b'
     message: "MyAppCore must not import SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon, or ServiceManagement — it stays UI- and OS-integration-free; put the adapter in MyAppPlatform behind a Core port (AGENTS.md › Architecture)."
+    severity: error
+
+  # Shipped code logs through AppLog (os.Logger), never stdout: a .app launched the way
+  # users launch it has nowhere to send stdout, so a print() is invisible exactly when
+  # it would matter (.claude/rules/swift.md › Logging).
+  #
+  # `included` covers every package's Sources/ plus the app shell, and nothing else —
+  # test targets print freely. It is a substring match against the file path, so each
+  # alternative is anchored to a path separator: unanchored, `App/` would also match
+  # the `App/` inside a checkout directory named after the app (`DemoApp/…`, which is
+  # what scripts/bootstrap.sh produces) and the rule would fire in Tests/ too.
+  # Relative suffixes match, which is what keeps the rule working over the temp tree
+  # the pre-commit hook exports with `git checkout-index --prefix=`.
+  #
+  # `match_kinds: [identifier]` is what keeps a `print(` inside a comment, a doc
+  # comment, or a string literal from counting: only a real call site is an identifier.
+  # `[^\w.]` before the name spares `blueprint(` and member calls like `.print()`
+  # (Combine's debugging operator) — at the price of not catching `Swift.print(`,
+  # which is a deliberate bypass rather than a slip, and PR review's to catch.
+  # `(?<!func )` spares a declaration of a method that happens to be named `print`.
+  no_print_in_sources:
+    included: '(^|/)(Packages/[^/]+/Sources|App)/.+\.swift$'
+    regex: '(^|[^\w.])(?<!func )(print|debugPrint|NSLog)\s*\('
+    match_kinds:
+      - identifier
+    message: "Shipped code must not print to stdout — an `open`-launched .app discards it. Log through AppLog (os.Logger) instead, with a privacy annotation on anything user-derived (.claude/rules/swift.md › Logging)."
     severity: error
