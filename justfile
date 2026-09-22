@@ -129,3 +129,12 @@ ruleset:
 # can do it for you.
 test-local:
     cd Packages/MyAppKit && RUN_LOCAL_MACHINE_TESTS=1 swift test --filter 'MyAppPlatformTests'
+
+# Prepare a release — `just release-prep <version>`, plus `--dry-run` to check
+# without writing: sets MARKETING_VERSION, increments CURRENT_PROJECT_VERSION, and
+# rolls CHANGELOG.md's [Unreleased] entries into a dated section. Writes those two
+# files and nothing else — it refuses a dirty tree, a version that is not above the
+# current one, and an empty [Unreleased], creates no commit, tag, or push, and
+# prints the commands that do (scripts/release-prep.sh).
+release-prep *args:
+    scripts/release-prep.sh {{ args }}
