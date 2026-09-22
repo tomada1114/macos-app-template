@@ -81,7 +81,13 @@ final class ScratchProbeTests: XCTestCase {
         shot.name = "after-two-increments"
         shot.lifetime = .keepAlways
         add(shot)
-        XCTAssertEqual(app.staticTexts["counterValue"].value as? String, "2")
+        // macOS exposes a SwiftUI Text's string as `value` (sometimes `label`) and
+        // updates it asynchronously — wait on a predicate covering both, exactly as
+        // LaunchUITests/LaunchTests.swift does, instead of reading `.value` right away.
+        let counter = app.staticTexts["counterValue"]
+        let showsTwo = NSPredicate(format: "label == '2' OR value == '2'")
+        let updated = XCTNSPredicateExpectation(predicate: showsTwo, object: counter)
+        XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 5), .completed)
     }
 }
 ```
@@ -139,7 +145,7 @@ ps -o command= -p "$(pgrep -f 'Debug/MyApp.app/Contents/MacOS/MyApp' | head -1)"
   `XCUIApplication.launchArguments` and `.launchEnvironment` are the same two channels
   from a UI test.
 - `-n` opens a *new* instance even though one is running, which is how you end up
-  watching two builds at once. Quit first (`pkill -TERM -f …`) unless you meant it.
+  watching two builds at once. Quit the verified pid first (`kill -TERM "$pid"`) unless you meant it.
 - The hook itself belongs in `MyAppCore`, behind one value a view model reads, so the
   same state stays reachable from a Core test. `App/` — the composition root — is where
   the argument is read and turned into that value, and Core never learns where it came

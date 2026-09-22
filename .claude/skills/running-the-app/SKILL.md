@@ -62,8 +62,12 @@ Quit it when you are done — leaving a build running behind you is how the next
 up watching a stale window:
 
 ```bash
-pkill -TERM -f 'Debug/MyApp.app/Contents/MacOS/MyApp'
+kill -TERM "$pid"    # the pid you verified above — never pkill -f on the path
 ```
+
+A `pkill -f` on the executable path would also hit the same app launched from another
+worktree or clone, and an instance an in-flight `xcodebuild test` is driving under
+XCUITest; the pid you just checked is the only one this run owns.
 
 Prefer that to `osascript -e 'quit app id "…"'`: driving another app through AppleScript
 is itself TCC-gated (Automation) and prompts a human the first time.
