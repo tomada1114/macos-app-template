@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `AGENTS.md` gains a `## Product` section — what the app is and who for, the core
+  interaction, its **Non-goals**, and where those decisions are recorded — shipped here
+  as a `TODO` skeleton and filled in right after the rename (`README.md` › Using This
+  Template, step 3; the `starting-an-app` skill). `scripts/checks/product-section-filled.sh`
+  (`just check-harness`) holds both directions off one signal: the skeleton stays while
+  `project.yml` names the template's app-name placeholder, and no `TODO` may survive
+  once the rename has removed it, so a new app cannot ship agent instructions with no
+  product context. CI's `bootstrap-smoke` asserts the check fires on the renamed clone
+
 - `.template-origin`: `scripts/bootstrap.sh` records the template commit and repository
   an app was created from, so listing the template changes the app does not have yet is
   one command — `git log --oneline "$(sed -n 1p .template-origin)"..template/main`
