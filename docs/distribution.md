@@ -26,7 +26,9 @@ the tag/version disagreement above is only reported once the tag is pushed:
   `CURRENT_PROJECT_VERSION` is incremented.
 - `CHANGELOG.md`: the `[Unreleased]` entries move under
   `## [<version>] - <date>`, leaving a fresh empty `[Unreleased]`, plus a
-  `[<version>]:` release-tag link reference beside the `[Unreleased]:` one.
+  `[<version>]:` release-tag link reference beside the `[Unreleased]:` one — and
+  when that one is a `…/compare/<range>` URL, its range moves on to
+  `v<version>...HEAD`. An `[Unreleased]:` line of any other shape is left alone.
 
 It refuses a version that is not above the current one (compared component by
 component, so 1.10.0 follows 1.9.0), a work tree with uncommitted changes, and an

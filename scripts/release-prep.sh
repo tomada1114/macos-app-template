@@ -27,8 +27,12 @@
 # stays where it is and the dated heading is inserted under it, so the entries move
 # without being reordered or reformatted. When the file defines an `[Unreleased]:`
 # link reference of the usual GitHub shape, a matching `[<version>]:` release-tag
-# reference is added next to it; an `[Unreleased]:` line of any other shape is left
-# alone rather than guessed at.
+# reference is added next to it — and for the `…/compare/<range>` shape, where the
+# range names a version, the `[Unreleased]:` line itself is pointed at
+# `compare/v<version>...HEAD`. A `…/commits/<branch>` line names no version, so it
+# already points where it should and is left as it is. An `[Unreleased]:` line of
+# any other shape is left alone too, and gets no companion reference: a wrong URL
+# is worse than a heading that renders as plain text.
 #
 # The checks run in this order, and the tree state is checked last on purpose: a
 # refusal about the version or the changelog is true whatever the tree looks like,
@@ -245,10 +249,17 @@ if [ "${ENTRY_COUNT}" = "0" ]; then
         "add the user-facing changes to ${CHANGELOG} (CONTRIBUTING.md's Changelog Policy), then re-run"
 fi
 
-if ! DIRTY=$(git -C "${ROOT}" status --porcelain 2>&1); then
+# Only git's stdout is the list of pending changes. Its stderr is not: a
+# configured-but-broken hook (core.fsmonitor, say) makes git print a `fatal:` line
+# and still exit 0 with an empty, correct listing, and folding that line into the
+# list would refuse a clean tree as dirty. So stderr is read only when git actually
+# fails, by asking it again on that path alone.
+if ! DIRTY=$(git -C "${ROOT}" status --porcelain 2>/dev/null); then
+    GIT_MESSAGE=$(git -C "${ROOT}" status --porcelain 2>&1 >/dev/null | head -n 1 || true)
+    [ -n "${GIT_MESSAGE}" ] || GIT_MESSAGE="\`git status --porcelain\` failed without a message"
     fail ERR_RELEASE_GIT_FAILED "the work tree state could not be read" \
         "\`git -C ${ROOT} status --porcelain\` to list the pending changes" \
-        "$(printf '%s\n' "${DIRTY}" | head -n 1)" \
+        "${GIT_MESSAGE}" \
         "run \`git -C ${ROOT} status\` and fix what it reports"
 fi
 if [ -n "${DIRTY}" ]; then
@@ -268,11 +279,30 @@ HEADING="## [${VERSION}] - ${DATE}"
 # one of a shape this can extend (…/commits/<branch> or …/compare/<range>, both of
 # which GitHub writes). Anything else is left untouched: a wrong URL is worse than
 # a heading that renders as plain text.
+#
+# The `[Unreleased]:` line is matched twice — here, to read its URL, and by the awk
+# below, to write beside or over it — and the two must agree, or this prints a plan
+# the write does not carry out. `^\[Unreleased\]:[[:space:]]*` is therefore spelled
+# identically in both, which it can be: `\[` is a literal bracket and
+# `[[:space:]]` a POSIX class to sed's regular expressions and to awk's alike, on
+# both platforms these scripts run on (a `[ \t]` class would not be: BSD sed reads
+# that `\t` as a backslash and a `t`, not a tab). The whitespace
+# is optional because a Markdown link reference definition allows none.
 UNRELEASED_URL=$(sed -n 's/^\[Unreleased\]:[[:space:]]*//p' "${CHANGELOG}" | head -n 1 | tr -d '\r' | sed 's/[[:space:]]*$//')
 LINK_REFERENCE=""
+# For the compare shape the new [Unreleased]: range is not a guess — it is the tag
+# this run prepares, compared against HEAD, which is what Keep a Changelog asks for
+# and what the old range said about the previous release. The commits shape names no
+# version, so it already points where it should and is left as it is.
+UNRELEASED_REPLACEMENT=""
 case "${UNRELEASED_URL}" in
-    *://*/commits/*) LINK_REFERENCE="[${VERSION}]: ${UNRELEASED_URL%/commits/*}/releases/tag/v${VERSION}" ;;
-    *://*/compare/*) LINK_REFERENCE="[${VERSION}]: ${UNRELEASED_URL%/compare/*}/releases/tag/v${VERSION}" ;;
+    *://*/commits/*)
+        LINK_REFERENCE="[${VERSION}]: ${UNRELEASED_URL%/commits/*}/releases/tag/v${VERSION}"
+        ;;
+    *://*/compare/*)
+        LINK_REFERENCE="[${VERSION}]: ${UNRELEASED_URL%/compare/*}/releases/tag/v${VERSION}"
+        UNRELEASED_REPLACEMENT="[Unreleased]: ${UNRELEASED_URL%/compare/*}/compare/v${VERSION}...HEAD"
+        ;;
 esac
 
 # Both new files are built beside their targets and only then moved into place, so a
@@ -324,7 +354,8 @@ fi
 # The [Unreleased] heading stays; the dated heading goes under it, with exactly one
 # blank line on each side however the original was spaced, and the entries follow
 # it unchanged.
-if ! awk -v heading="${HEADING}" -v linkref="${LINK_REFERENCE}" '
+if ! awk -v heading="${HEADING}" -v linkref="${LINK_REFERENCE}" \
+    -v unreleased_line="${UNRELEASED_REPLACEMENT}" '
     !inserted && /^##[ \t]*\[Unreleased\][ \t]*$/ {
         print $0
         print ""
@@ -336,8 +367,9 @@ if ! awk -v heading="${HEADING}" -v linkref="${LINK_REFERENCE}" '
     }
     skipping_blanks && /^[ \t]*$/ { next }
     { skipping_blanks = 0 }
-    !linked && linkref != "" && /^\[Unreleased\]:[ \t]/ {
-        print $0
+    # The same expression the URL was read with, spelled identically.
+    !linked && linkref != "" && /^\[Unreleased\]:[[:space:]]*/ {
+        print (unreleased_line != "" ? unreleased_line : $0)
         print linkref
         linked = 1
         next
@@ -356,6 +388,9 @@ echo "  project.yml: CURRENT_PROJECT_VERSION ${CURRENT_BUILD} -> ${NEXT_BUILD}"
 echo "  CHANGELOG.md: the [Unreleased] entries -> \"${HEADING}\", leaving [Unreleased] empty"
 if [ -n "${LINK_REFERENCE}" ]; then
     echo "  CHANGELOG.md: link reference ${LINK_REFERENCE}"
+fi
+if [ -n "${UNRELEASED_REPLACEMENT}" ]; then
+    echo "  CHANGELOG.md: link reference ${UNRELEASED_REPLACEMENT}"
 fi
 
 if [ "${DRY_RUN}" = 1 ]; then

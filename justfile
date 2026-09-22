@@ -136,5 +136,11 @@ test-local:
 # files and nothing else — it refuses a dirty tree, a version that is not above the
 # current one, and an empty [Unreleased], creates no commit, tag, or push, and
 # prints the commands that do (scripts/release-prep.sh).
+#
+# `{{ args }}` is unquoted because just substitutes a variadic parameter as one
+# string, with no array expansion: quoting it would hand the script `--dry-run 0.2.0`
+# as a single argument. So an argument containing whitespace cannot come through this
+# recipe — call the script directly for that (`scripts/release-prep.sh --root "dir
+# with space" 0.2.0`), which only its tests need.
 release-prep *args:
     scripts/release-prep.sh {{ args }}

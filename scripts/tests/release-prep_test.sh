@@ -266,6 +266,62 @@ EOF
     assert_stdout_not_contains "link reference [0.2.0]" "a link reference it did not write"
 }
 
+case_ignores_a_git_warning_on_a_clean_tree() {
+    # A configured-but-broken hook makes `git status` print a fatal: line to stderr
+    # and still exit 0 with a correct, empty listing. Those lines are not changes.
+    repo=$(make_fixture_repo)
+    git -C "${repo}" config core.fsmonitor /nonexistent-hook
+    capture "${RELEASE_PREP_SH}" --root "${repo}" 0.2.0
+    assert_exit 0
+    assert_stderr_not_contains "nonexistent-hook" "git's warning"
+    [ "$(setting "${repo}/project.yml" MARKETING_VERSION)" = "0.2.0" ] ||
+        _fail "a warning on a clean tree stopped the release prep"
+}
+
+case_writes_a_link_reference_with_no_space_after_the_colon() {
+    # The plan and the write must agree about what an [Unreleased]: line is: a
+    # Markdown link reference definition needs no space after the colon.
+    repo=$(make_temp_repo)
+    write_manifest "${repo}" 0.1.0 1
+    printf '# Changelog\n\n## [Unreleased]\n\n- Something new\n\n[Unreleased]:https://github.com/octo/my-app/commits/main\n' \
+        >"${repo}/CHANGELOG.md"
+    git -C "${repo}" add -A
+    git -C "${repo}" commit -q -m "fixture"
+    capture "${RELEASE_PREP_SH}" --root "${repo}" 0.2.0
+    assert_exit 0
+    assert_stdout_contains "link reference [0.2.0]: https://github.com/octo/my-app/releases/tag/v0.2.0"
+    grep -qF '[0.2.0]: https://github.com/octo/my-app/releases/tag/v0.2.0' "${repo}/CHANGELOG.md" ||
+        _fail "the plan promised a link reference the write did not add"
+}
+
+case_moves_a_compare_range_to_the_new_version() {
+    repo=$(make_temp_repo)
+    write_manifest "${repo}" 0.1.0 1
+    printf '# Changelog\n\n## [Unreleased]\n\n- Something new\n\n[Unreleased]: https://github.com/octo/my-app/compare/v0.1.0...HEAD\n' \
+        >"${repo}/CHANGELOG.md"
+    git -C "${repo}" add -A
+    git -C "${repo}" commit -q -m "fixture"
+    capture "${RELEASE_PREP_SH}" --root "${repo}" 0.2.0
+    assert_exit 0
+    # The range names a version, so leaving it at v0.1.0 would make [Unreleased]
+    # link to the changes this run just released.
+    grep -qF '[Unreleased]: https://github.com/octo/my-app/compare/v0.2.0...HEAD' "${repo}/CHANGELOG.md" ||
+        _fail "the compare range was not moved to the new version"
+    grep -qF '[0.2.0]: https://github.com/octo/my-app/releases/tag/v0.2.0' "${repo}/CHANGELOG.md" ||
+        _fail "the release link reference was not added"
+    assert_stdout_contains "link reference [Unreleased]: https://github.com/octo/my-app/compare/v0.2.0...HEAD"
+}
+
+case_keeps_a_commits_link_reference_as_it_is() {
+    # That shape names no version, so there is nothing in it to move.
+    repo=$(make_fixture_repo)
+    capture "${RELEASE_PREP_SH}" --root "${repo}" 0.2.0
+    assert_exit 0
+    grep -qF '[Unreleased]: https://github.com/octo/my-app/commits/main' "${repo}/CHANGELOG.md" ||
+        _fail "the commits-shaped [Unreleased] reference was rewritten"
+    assert_stdout_not_contains "link reference [Unreleased]" "a rewrite it did not make"
+}
+
 case_keeps_unquoted_values_and_comments() {
     repo=$(make_temp_repo)
     cat >"${repo}/project.yml" <<'EOF'
@@ -377,6 +433,10 @@ run_case "refuses an empty [Unreleased] section" case_refuses_an_empty_unrelease
 run_case "refuses a changelog with no [Unreleased] heading" case_refuses_a_changelog_without_an_unreleased_heading
 run_case "refuses a version the changelog already has" case_refuses_a_version_the_changelog_already_has
 run_case "leaves a link reference it does not recognize alone" case_leaves_an_unknown_link_reference_alone
+run_case "treats a git warning on a clean tree as no change" case_ignores_a_git_warning_on_a_clean_tree
+run_case "writes the reference for an [Unreleased]: line with no space" case_writes_a_link_reference_with_no_space_after_the_colon
+run_case "moves an [Unreleased]: compare range to the new version" case_moves_a_compare_range_to_the_new_version
+run_case "leaves a commits-shaped [Unreleased]: reference alone" case_keeps_a_commits_link_reference_as_it_is
 run_case "keeps an unquoted value and its trailing comment" case_keeps_unquoted_values_and_comments
 run_case "leaves no temporary files behind" case_leaves_no_temporary_files_behind
 run_case "rejects a version that is not MAJOR.MINOR.PATCH" case_refuses_a_malformed_version
