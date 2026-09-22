@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `project.yml` names the template's app-name placeholder, and no `TODO` may survive
   once the rename has removed it, so a new app cannot ship agent instructions with no
   product context. CI's `bootstrap-smoke` asserts the check fires on the renamed clone
+- `just release-prep <version>` (`scripts/release-prep.sh`): the edits a release needs
+  before its tag exists, in one checked step — `MARKETING_VERSION` set,
+  `CURRENT_PROJECT_VERSION` incremented, and `CHANGELOG.md`'s `[Unreleased]` entries
+  rolled into `## [<version>] - <date>`, leaving a fresh empty `[Unreleased]`. It
+  refuses a version that is not above the current one (compared component by component,
+  so 1.10.0 follows 1.9.0), a dirty work tree, and an empty `[Unreleased]`; `--dry-run`
+  runs every check and writes nothing. It creates no commit, tag, or push and prints
+  the commands that do, ending with the tag `.github/workflows/release.yml` checks
+  against `MARKETING_VERSION` (`docs/distribution.md` › Preparing the version bump)
 
 - `.template-origin`: `scripts/bootstrap.sh` records the template commit and repository
   an app was created from, so listing the template changes the app does not have yet is
