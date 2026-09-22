@@ -9,8 +9,8 @@ description: >
   just test-local and just reset-permissions. Use when asked to run the app, to launch
   or start it, or to screenshot it, when a change has to be verified in the real app
   rather than in tests, when the app must be observed with no human at the keyboard,
-  when a TCC permission prompt or a System Settings step needs a human hand-off, or when deciding
-  what evidence a pull request carries for behavior no CI job can assert.
+  when a TCC permission prompt or a System Settings step needs a human hand-off, or
+  when deciding what evidence a pull request carries for behavior no CI job can assert.
 ---
 
 # Running the App
