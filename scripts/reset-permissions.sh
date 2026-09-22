@@ -5,10 +5,12 @@
 #   scripts/reset-permissions.sh [--root DIR]
 #
 # `tccutil reset All <bundle id>` is destructive — it drops the user's own grants —
-# so the identifier it is given is never an argument: it is read from project.yml
+# so the identifier is never a free-form argument: it is read from project.yml
 # (scripts/bundle-id.sh), the manifest that is the source of truth for the app
 # target, which is also what makes this keep working after scripts/bootstrap.sh
-# renames the app. There is no way to point this script at another app.
+# renames the app. The one way to aim it elsewhere is `--root DIR`, which follows
+# the manifest under DIR — it exists for the tests, and `just reset-permissions`
+# never passes it.
 #
 # When you need it: after switching a Debug build between ad-hoc signing and a real
 # identity (Config/Debug.xcconfig), macOS sees a different app and System Settings
