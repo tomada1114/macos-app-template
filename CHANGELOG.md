@@ -15,12 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `just ruleset`, `just release-prep`, `just reset-permissions`, `git push`,
   `gh pr create`, `gh pr merge`, `gh issue create` — stays behind one, as does
   `just logs`, which streams until Ctrl-C. `deny` refuses `git commit --no-verify`/`-n`,
-  a force push in each of its spellings, and an edit to `App/*.entitlements`. It binds Claude Code alone and is a prompt policy rather than a
-  boundary (`AGENTS.md` › Enforcement layers). `scripts/checks/just-recipes-exist.sh`
+  a force push in each of its spellings, and an edit to `App/*.entitlements`. It binds
+  Claude Code alone and is a prompt policy rather than a boundary
+  (`AGENTS.md` › Enforcement layers). `scripts/checks/just-recipes-exist.sh`
   (`just check-harness`) now also reads that file, so a `Bash(just <recipe>…)` rule for
   a recipe the justfile does not define fails the harness instead of silently never
   matching
-
+- An `integrating-system-apis` skill: how a macOS system API is reached from
+  `MyAppPlatform` behind a Core port — choosing the mechanism and the permission it
+  costs, a `@convention(c)` callback's `Unmanaged` refcon pairing, `MainActor.assumeIsolated`
+  versus a `Task` hop, `@preconcurrency import`, teardown order, re-enabling an event
+  tap the system disabled, and how a TCC grant behaves (no callback, lost on every
+  ad-hoc rebuild). Every Swift snippet in its references was compiled under the
+  template's `strictSettings` and checked with `swiftlint --strict`
 - An optional local signing identity for Debug builds: `Config/Debug.xcconfig`
   (wired in by `project.yml`'s `configFiles`) ends with
   `#include? "Local.xcconfig"`, so a gitignored `Config/Local.xcconfig` can give
