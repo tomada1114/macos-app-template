@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A Claude Code permission list in `.claude/settings.json`: the `just` recipes that
+  read, build, or test, `swift build`/`swift test`, and read-only `gh` now run without
+  a prompt, while everything that writes beyond the working tree — `just labels`,
+  `just ruleset`, `just release-prep`, `just reset-permissions`, `git push`,
+  `gh pr create`, `gh pr merge`, `gh issue create` — stays behind one, and `deny`
+  refuses `git commit --no-verify`/`-n`, a force push, and an edit to
+  `App/*.entitlements`. It binds Claude Code alone and is a prompt policy rather than a
+  boundary (`AGENTS.md` › Enforcement layers). `scripts/checks/just-recipes-exist.sh`
+  (`just check-harness`) now also reads that file, so a `Bash(just <recipe>…)` rule for
+  a recipe the justfile does not define fails the harness instead of silently never
+  matching
+
 - An optional local signing identity for Debug builds: `Config/Debug.xcconfig`
   (wired in by `project.yml`'s `configFiles`) ends with
   `#include? "Local.xcconfig"`, so a gitignored `Config/Local.xcconfig` can give
