@@ -12,15 +12,20 @@ import Testing
 ///
 /// The variable name carries no app-specific prefix on purpose. `scripts/bootstrap.sh`
 /// rewrites the literal `MyApp`, not an upper-cased spelling of it, so a prefixed name
-/// would survive the template rename as a stale one. It matches the repository's other
-/// environment opt-in, `ALLOW_MISSING_GIT_HOOKS`.
+/// would survive the template rename as a stale one. It follows the repository's other
+/// environment opt-in, `ALLOW_MISSING_GIT_HOOKS`, in spelling and in what counts as set:
+/// any value other than empty, `0`, or `false` (`scripts/verify-hooks.sh`'s `is_truthy`),
+/// so `=true` opts in just as `=1` does.
 enum LocalMachineTests {
     /// The environment variable that opts a run in. `just test-local` sets it to `1`.
     static let optInVariable = "RUN_LOCAL_MACHINE_TESTS"
 
     /// Whether this process was started with the opt-in.
     static var isOptedIn: Bool {
-        ProcessInfo.processInfo.environment[optInVariable] == "1"
+        guard let raw = ProcessInfo.processInfo.environment[optInVariable] else {
+            return false
+        }
+        return !["", "0", "false"].contains(raw)
     }
 
     /// Unwraps an answer the OS gives only a process that holds `requirement`, failing
@@ -30,23 +35,25 @@ enum LocalMachineTests {
     /// does not report a missing permission, it simply answers nothing. A bare `nil`
     /// would therefore read as "the adapter is broken"; naming what is missing turns
     /// the failure into an instruction. A test that needs Accessibility, Input
-    /// Monitoring, or Screen Recording says so here.
+    /// Monitoring, or Screen Recording says so here with `grant: true`, which adds the
+    /// System Settings instruction; a requirement that is a session rather than a
+    /// permission (the worked example) passes `false`.
     static func require<Value>(
         _ value: Value?,
         requires requirement: String,
+        grant: Bool,
         // The default is the point of the parameter: `#_sourceLocation` is evaluated at
         // the call site, so the failure points at the test rather than at this helper.
         // swiftlint:disable:next discouraged_default_parameter
         sourceLocation: SourceLocation = #_sourceLocation,
     ) throws -> Value {
-        try #require(
+        let grantInstruction = "A permission is held by the application that launched the "
+            + "run — your terminal, or Xcode — so grant it to that application in "
+            + "System Settings › Privacy & Security and rerun `just test-local`."
+        let howToFix = grant ? grantInstruction : "Rerun `just test-local` once that is in place."
+        return try #require(
             value,
-            """
-            The OS answered nothing. This test needs \(requirement). \
-            A permission is held by the application that launched the run — your \
-            terminal, or Xcode — so grant it to that application in \
-            System Settings › Privacy & Security and rerun `just test-local`.
-            """,
+            "The OS answered nothing. This test needs \(requirement). \(howToFix)",
             sourceLocation: sourceLocation,
         )
     }

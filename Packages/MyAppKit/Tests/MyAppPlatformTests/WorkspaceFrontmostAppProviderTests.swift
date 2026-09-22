@@ -26,6 +26,7 @@ struct WorkspaceFrontmostAppProviderTests {
             a logged-in GUI session with an active application — NSWorkspace asks for no \
             permission, but a headless session has no frontmost application to report
             """,
+            grant: false,
         )
 
         #expect(!frontmost.name.isEmpty)
