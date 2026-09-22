@@ -16,16 +16,20 @@
 #     `just <recipe>` names no recipe, and `just` must not be the tail of a longer
 #     word (`adjust x` is not a token). Prose outside backticks is never read.
 # Tokens, read from <root>/.claude/settings.json (Claude Code's permission rules):
-#   - every `Bash(just <name>` occurrence, anywhere in the file, so an `allow`, an
-#     `ask`, and a `deny` rule are all covered — as is a `just` call written into a
-#     hook command;
+#   - every permission rule of the form `Bash(just <name>…)`, wherever it appears in
+#     the file, so the `allow`, `ask`, and `deny` lists are all covered. The literal
+#     `Bash(` prefix is required, so a `just` call written into a hook's `"command"`
+#     string is not a token and is not checked;
 #   - <name> follows the same rule-name shape as above, so `Bash(just test-fast:*)`
 #     yields `test-fast` and `Bash(just check)` yields `check`.
 #   The file is optional: a checkout without it has no permission rule to check, and
 #   the AGENTS.md half of this check still runs.
 # The recipes are the names `just --summary --justfile <root>/justfile` prints
-# (public recipes; `[private]` and `_`-prefixed ones are not listed). Only AGENTS.md
-# and .claude/settings.json are read — CONTRIBUTING.md, README.md, and
+# (public recipes; `[private]` and `_`-prefixed ones are not listed). A rule or a
+# reference naming a private recipe is therefore reported as missing, which is the
+# intended answer for AGENTS.md and means a private recipe cannot be permitted by
+# name — make the recipe public, or drop the rule. Only AGENTS.md and
+# .claude/settings.json are read — CONTRIBUTING.md, README.md, and
 # .claude/settings.local.json are not covered.
 #
 # Requires `just` on PATH (a mise tool: `mise exec -- …` locally, jdx/mise-action

@@ -13,9 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read, build, or test, `swift build`/`swift test`, and read-only `gh` now run without
   a prompt, while everything that writes beyond the working tree — `just labels`,
   `just ruleset`, `just release-prep`, `just reset-permissions`, `git push`,
-  `gh pr create`, `gh pr merge`, `gh issue create` — stays behind one, and `deny`
-  refuses `git commit --no-verify`/`-n`, a force push, and an edit to
-  `App/*.entitlements`. It binds Claude Code alone and is a prompt policy rather than a
+  `gh pr create`, `gh pr merge`, `gh issue create` — stays behind one, as does
+  `just logs`, which streams until Ctrl-C. `deny` refuses `git commit --no-verify`/`-n`,
+  a force push in each of its spellings, and an edit to `App/*.entitlements`. It binds Claude Code alone and is a prompt policy rather than a
   boundary (`AGENTS.md` › Enforcement layers). `scripts/checks/just-recipes-exist.sh`
   (`just check-harness`) now also reads that file, so a `Bash(just <recipe>…)` rule for
   a recipe the justfile does not define fails the harness instead of silently never
