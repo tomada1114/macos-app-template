@@ -62,19 +62,46 @@ entry in `disabled_rules` carries a one-line trailing reason; a new entry withou
 is incomplete, and removing a rule needs explicit approval
 (`.claude/rules/project.md`). Prefer an inline `// swiftlint:disable:next <rule>` with
 a reason when only one site needs the exception — a global disable widens the gate for
-every future file. Repository-specific rules live under `custom_rules:`. The one there,
-`no_ui_import_in_core`, keeps `MyAppCore` from importing a UI or OS-integration
+every future file. Repository-specific rules live under `custom_rules:`; there are two.
+
+`no_ui_import_in_core` keeps `MyAppCore` from importing a UI or OS-integration
 framework — SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon, and
 ServiceManagement — attributed and kind-qualified spellings included;
 `ArchitectureBoundaryTests` in
 `MyAppCoreTests` enforces the same boundary a second way. Its module list and the
 test's `forbiddenModules` change together, in one commit — adding a framework to one
 and not the other leaves the boundary enforced once. Adding to that list strengthens
-the gate and is the routine direction; removing from it is weakening one. Its
+the gate and is the routine direction; removing from it is weakening one. `os` and
+`OSLog` are deliberately not on it, so Core can log (`docs/architecture.md` › Logging);
+a test case pins their absence. Its
 `included` regex names the
 package and module, so a new Core-like target means widening it and the test's path.
 The sibling boundary — `MyAppUI` and `MyAppPlatform` never importing each other — is
 held by `ArchitectureBoundaryTests` alone, with no lint-rule twin.
+
+`no_print_in_sources` rejects `print(`, `debugPrint(`, and `NSLog(` under
+`Packages/*/Sources/` and `App/`, because an `open`-launched `.app` discards stdout:
+shipped code logs through `MyAppCore`'s `AppLog` instead (`.claude/rules/swift.md` ›
+Logging). Four parts of it are load-bearing, and a widening edit usually breaks one:
+
+- `match_kinds: [identifier]` spares a `print(` inside a comment or a string literal —
+  only a real call site is an identifier;
+- `[^\w.]` before the name spares `blueprint(` and member calls like `.print()`;
+- `included` and `excluded` are substring matches against the *whole* path, never
+  repository-relative globs, so both are written to survive any ancestor directory.
+  `App/[^/]+\.swift$` allows exactly one component after `App/`, because the shell is
+  flat; `Packages/[^/]+/Sources/[^/]+/.+\.swift$` requires a module directory, so
+  `Packages/*/Tests/` cannot satisfy it. Loosen either and a checkout under `~/App/` —
+  or under any path with that shape, which `scripts/bootstrap.sh` readily produces —
+  starts matching test files;
+- `excluded: '(^|/)[A-Za-z0-9]*Tests/'` is the second line of defence for the same
+  worry: no `*Tests/` directory is ever linted by this rule. Test code prints freely.
+
+Matching a path *suffix* rather than a repository-relative path is also what keeps the
+rule firing over the temp tree the pre-commit hook exports with
+`git checkout-index --prefix=`. It catches a call site, not a deliberate bypass:
+`Swift.print(` is out of its reach and is PR review's to catch.
+
 `analyzer_rules` is deliberately absent: those run only under
 `swiftlint analyze` with a compiler log, which no gate here invokes. `trailing_comma`
 is set to agree with SwiftFormat; the two tools must never disagree about one file.
@@ -106,10 +133,14 @@ silently. The Xcode pin lives in `.xcode-version`, not here.
 
 ## `scripts/coverage.sh`
 
-It gates on line coverage of `Sources/MyAppCore/` only. `MyAppUI` and `MyAppPlatform`
-are not measured: no test target links them, so llvm-cov has no data for them, and an
-adapter holds translation rather than a decision (`docs/architecture.md` › Ports and
-adapters). The floor is
+It gates on line coverage of `Sources/MyAppCore/` only, by filtering llvm-cov's report
+to that path. `MyAppUI` and `MyAppPlatform` are outside it because an adapter or a view
+holds translation rather than a decision (`docs/architecture.md` › Ports and adapters) —
+not because nothing links them: `MyAppPlatformTests` links `MyAppPlatform`, and its
+tests are skipped unless `RUN_LOCAL_MACHINE_TESTS=1` (`just test-local`), so they add no
+coverage under `just test` either way. Measuring Platform would therefore gate on
+whether a human opted in, which is why the filter is a path and not a target list. The
+floor is
 `readonly COVERAGE_FLOOR=80` in the script and nothing else — no environment variable or
 flag moves it, so every change to it is a reviewed diff of this file, and a change is
 only ever a raise. The script rejects the environment override it used to read with
@@ -193,8 +224,9 @@ Nothing boots the app and asserts behavior beyond two checks: `scripts/smoke_lau
 asserts only that the process stays alive; `LaunchUITests/LaunchTests.swift`
 (`just uitest`) asserts that a window appears and one increment click updates the
 counter. Any other UI behavior, `MyAppUI` and `MyAppPlatform` code paths (both outside
-the coverage floor — an adapter's real OS call is exercised by no gate at all), the
-signed and notarized release (built only on a tag push by `release.yml`), and
+the coverage floor — an adapter's real OS call is exercised by no *gate*: it has a test,
+in `Tests/MyAppPlatformTests`, that only a human runs with `just test-local`, because a
+runner has no GUI session and no TCC grants), the signed and notarized release (built only on a tag push by `release.yml`), and
 entitlements or signing settings are places a change can be wrong while every gate
 passes. Debug signing is now one of those settings: `Config/Debug.xcconfig` may
 `#include?` an uncommitted `Config/Local.xcconfig`, so what a developer's Debug build

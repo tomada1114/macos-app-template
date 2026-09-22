@@ -21,6 +21,7 @@ just test-scripts  # Run the plain-bash tests for scripts/ (scripts/tests/run.sh
 just check-harness # Re-assert the harness's claims about itself (scripts/checks/run-all.sh)
 just test      # Run tests with the 80% coverage floor on MyAppCore
 just test-fast CounterTests  # Run only the matching tests, no coverage floor (iteration only)
+just test-local    # Run the local-machine adapter tests (MyAppPlatformTests) CI cannot run
 just build     # Build the app (Debug)
 just run       # Build (Debug), quit any running instance, and launch the fresh build
 just logs      # Stream this app's unified-log output (Ctrl-C to stop)
@@ -49,7 +50,8 @@ job call.
 | A Swift file under `Packages/MyAppKit/Sources/MyAppCore/` | `just test` |
 | A test under `Packages/MyAppKit/Tests/MyAppCoreTests/` | `just test` |
 | A view under `Packages/MyAppKit/Sources/MyAppUI/`, or anything under `App/` | `just build` |
-| An adapter under `Packages/MyAppKit/Sources/MyAppPlatform/` | `just test` (it compiles under `swift test`); `just build` if `App/` wires it |
+| An adapter under `Packages/MyAppKit/Sources/MyAppPlatform/` | `just test` (it compiles under `swift test`); then `just test-local` for its real-OS test, whose output goes in the PR; `just build` if `App/` wires it |
+| A test under `Packages/MyAppKit/Tests/MyAppPlatformTests/` | `just test-local` (`just test` and CI report these skipped — they are human-run) |
 | Formatting or style of any Swift file | `just lint` |
 | A SwiftLint or SwiftFormat violation that may be auto-fixable | `just fix` (formats, runs `swiftlint --fix`, then `just lint` reports what still needs a hand edit) |
 | One Core suite, while iterating | `just test-fast <filter>` (e.g. `just test-fast CounterTests`) — no coverage floor, so finish with `just test` |
@@ -83,7 +85,10 @@ Packages/MyAppKit/
 ├── Sources/MyAppPlatform/  # OS-integration adapters behind Core ports (AppKit and
 │                           #   friends) — translation only, no domain logic, and
 │                           #   deliberately outside the coverage floor
-└── Tests/MyAppCoreTests/   # Swift Testing suites
+├── Tests/MyAppCoreTests/   # Swift Testing suites — CI-run, coverage-gated
+└── Tests/MyAppPlatformTests/
+                            # Adapter tests against the real OS — opt-in and human-run
+                            #   (`just test-local`), reported as skipped everywhere else
 LaunchUITests/              # XCUITest launch guarantee (XCTest by necessity)
 Config/Debug.xcconfig       # Debug-only build settings project.yml cannot express:
                             #   the optional `#include?` of a gitignored
@@ -99,11 +104,20 @@ Config/Debug.xcconfig       # Debug-only build settings project.yml cannot expre
   Platform stays outside the coverage floor (`scripts/coverage.sh` measures Core only).
   The worked example is `FrontmostAppProviding` / `WorkspaceFrontmostAppProvider`
   (`docs/architecture.md` › Ports and adapters)
+- The translation an adapter does *is* checked, just not by a gate: `Tests/MyAppPlatformTests`
+  runs it against the real OS behind the `.requiresLocalMachine` opt-in, so a human runs
+  it with `just test-local` and puts the output in the PR, while `just test` and CI
+  report those tests as skipped (`.claude/rules/testing.md` › Where a Test Goes)
 - `MyAppCore` never imports SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon,
   or ServiceManagement — in any spelling, including `@preconcurrency import AppKit` and
   `import struct SwiftUI.Color`. SwiftPM cannot block a
   system framework, so this is enforced twice: `.swiftlint.yml`'s `no_ui_import_in_core`
-  and the `ArchitectureBoundaryTests` suite; their module lists change together
+  and the `ArchitectureBoundaryTests` suite; their module lists change together.
+  `os`/`OSLog` are deliberately *not* on that list — logging is neither a UI nor an
+  OS-integration framework, so Core logs directly (`docs/architecture.md` › Logging)
+- Shipped code logs through `os.Logger`, declared once in `MyAppCore`'s `AppLog`;
+  `print`, `debugPrint`, and `NSLog` are rejected under `Packages/*/Sources/` and `App/`
+  by `.swiftlint.yml`'s `no_print_in_sources` (`.claude/rules/swift.md` › Logging)
 - `MyApp.xcodeproj` is generated — edit `project.yml` instead
 
 ## Skills
@@ -135,7 +149,7 @@ tool that sees the generated copy rather than the authored one:
 | `authoring-skills` | adding, editing, or reviewing a skill: authoring under `.agents/skills/`, the `just agents-sync` mirror, frontmatter, layout, and size limits |
 | `updating-docs` | deciding whether a change owes a documentation update and which surface it lands on: `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/*.md`, a skill, or a `///` comment |
 | `writing-repo-scripts` | writing or testing a shell script under `scripts/`, `.githooks/pre-commit`, or `scripts/tests/`: why bash, refusing or skipping outside a git checkout, the stderr contract by example, and `scripts/tests/lib.sh` |
-| `starting-an-app` | turning this template into a new app: `scripts/bootstrap.sh`'s rename, what the new repository keeps, and its `just labels` and `just ruleset` setup |
+| `starting-an-app` | turning this template into a new app: `scripts/bootstrap.sh`'s rename, what the new repository keeps, its `just labels` and `just ruleset` setup, choosing the app shape (windowed or menu-bar agent), and deciding the sandbox posture |
 
 ### Rules
 
@@ -239,6 +253,7 @@ The rules in this file are enforced by these layers, from mechanical to procedur
 |---|---|---|---|
 | `.githooks/pre-commit` | `git commit` | anyone who ran `just install` | `scripts/lint.sh --staged-tree` — `swiftformat --lint` and `swiftlint --strict` on the staged Swift files |
 | `.swiftlint.yml`'s `no_ui_import_in_core` custom rule and `ArchitectureBoundaryTests` (`Packages/MyAppKit/Tests/MyAppCoreTests/`) | the lint rule: `git commit` (via the hook's `swiftlint --strict`), `just lint`, and CI's `lint` job; the test: `just test` and CI's `test` job | every author | `MyAppCore` imports none of SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon, or ServiceManagement, including attributed and kind-qualified imports — enforced twice, so removing either mechanism leaves the other. The test alone also holds the sibling boundary: `MyAppUI` and `MyAppPlatform` never import each other |
+| `.swiftlint.yml`'s `no_print_in_sources` custom rule | `git commit` (via the hook's `swiftlint --strict`), `just lint`, and CI's `lint` job | every author | no `print(`, `debugPrint(`, or `NSLog(` call site under `Packages/*/Sources/` or `App/` — shipped code logs through `MyAppCore`'s `AppLog` (`os.Logger`), whose output survives an `open`-launched `.app` and is what `just logs` streams. A mention inside a comment or a string literal does not count, and test targets are exempt |
 | `scripts/verify-hooks.sh` (`just install`'s last step, and `just check`'s first) | `just install` and `just check` | anyone who runs either | git resolves the hooks directory to `.githooks/` and `.githooks/pre-commit` is executable — skips under CI or the `ALLOW_MISSING_GIT_HOOKS` opt-out |
 | `scripts/check-staged.sh` (the hook's "Staged guard" section; the rules live in `scripts/guard/`) | `git commit` when any change is staged, with or without a Swift file | anyone who ran `just install` | no obviously secret-shaped path (`.env*`, `secrets/`, signing material, `Config/Local.xcconfig`) or credential-shaped content (private-key header, GitHub token, AWS access key id) lands in a commit; staged deletions are never inspected |
 | `scripts/sync-agents.sh --check` (the hook's "Skills mirror" section, `just lint`, and CI's `lint` job) | `git commit` when a staged path is under `.agents/skills/` or `.claude/skills/`; unconditionally on `just lint` and CI | every author | `.agents/skills/` and `.claude/skills/` stay byte-identical |
@@ -273,6 +288,12 @@ These gaps are deliberate and stay open until their tracking issue closes them:
 - **The `PostToolUse` swiftformat hook in `.claude/settings.json` applies to Claude
   Code only.** It formats after an agent's edit on that one host; the git hook, not
   this hook, is the real gate.
+- **Nothing runs `Tests/MyAppPlatformTests` for you.** A CI runner has no logged-in GUI
+  session and cannot be granted Accessibility, Input Monitoring, or Screen Recording, so
+  those tests carry `.requiresLocalMachine` and are reported as skipped in `just test`
+  and in CI. That is deliberate — a skip is visible where a missing test is not — and it
+  leaves the run itself procedural: a change to an adapter is expected to come with
+  `just test-local` output in the PR, and review is what notices when it does not.
 
 ## Review Checklist
 
@@ -280,7 +301,9 @@ Before submitting a PR:
 
 1. `just check` passes (format, lint, tests + coverage, build)
 2. New public APIs have `///` doc comments explaining *why*
-3. Tests cover the new functionality (happy path AND error path)
+3. Tests cover the new functionality (happy path AND error path); a change under
+   `Sources/MyAppPlatform/` also carries `just test-local` output in the PR, since no
+   gate runs those tests
 4. No new dependencies without justification (see .claude/rules/project.md)
 5. User-facing changes have a `CHANGELOG.md` entry under `[Unreleased]`
 6. Commits and the PR title follow Conventional Commits (English)
