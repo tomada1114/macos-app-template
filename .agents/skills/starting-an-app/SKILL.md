@@ -60,11 +60,12 @@ scripts/bootstrap.sh CoolApp --bundle-id-prefix io.example --github-user janedoe
 - **`.template-origin`** records where the app was cut from: the template commit on
   line 1, its repository on line 2, then comment lines. It is written only when the
   file is absent — a re-run, and any hand-edit made after adopting template changes,
-  survives — and `replace()` skips it so the rename cannot rewrite the URL. Both
-  values are `unknown` when the checkout's history starts at its own root commit,
-  which is what "Use this template" produces: `HEAD` is then a commit the template has
-  never seen and `origin` is the new app, so the file names the tree to search for
-  rather than a SHA `git log <sha>..template/main` would reject. `README.md`'s
+  survives — and `replace()` skips it so the rename cannot rewrite the URL. `HEAD` is
+  recorded only when the history's root commit is the template's first commit (the
+  script carries that SHA); otherwise — a "Use this template" repository, whose fresh
+  root the template has never seen, or a shallow clone — both values are `unknown` and
+  the file names the tree to search for rather than a SHA `git log <sha>..template/main`
+  would reject. `README.md`'s
   "Keeping up with template updates" is the reader-facing half.
 - **`CHANGELOG.md`** is reset to a one-entry history for the new project, guarded by a
   marker line so a re-run never wipes the new app's own entries.

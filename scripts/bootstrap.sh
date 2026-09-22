@@ -15,8 +15,8 @@
 # Also removes the template-only CI job (bootstrap-smoke) and its required check
 # in .github/rulesets/main.json.
 # Records the template commit and repository in .template-origin (first run only;
-# never rewritten by the rename, and "unknown" when this checkout's history is not
-# the template's — see the comment above the ORIGIN_FILE block).
+# never rewritten by the rename, and "unknown" when this checkout's history does not
+# start at the template's root commit — see the comment above the ORIGIN_FILE block).
 # Running it again with the same name is a no-op, so it is safe to re-run
 # (values a previous run already replaced are not replaced again).
 set -euo pipefail
@@ -107,22 +107,24 @@ replace() { # replace <from> <to> — literal replacement in all tracked text fi
 #   * Written only when the file is absent. A re-run, and any hand-edit made after
 #     merging template changes, therefore survives untouched.
 #   * replace() skips it (see above), so the rename cannot rewrite the URL.
-#   * Both values are "unknown" when this checkout's history starts at its own root
-#     commit — what GitHub's "Use this template" produces. There, HEAD is a commit the
-#     template has never seen and "origin" is the new app's repository, not the
-#     template's, so neither value is knowable. A SHA that `git log <sha>..template/main`
-#     rejects as an unknown revision is worse than an honest "unknown", so the file
-#     names the tree to search the template's history for instead.
-#   * A shallow clone is exempt from that test: it also holds a single commit, but that
-#     commit is a real upstream one.
+#   * HEAD is recorded only when this history really is the template's: its root
+#     commit is TEMPLATE_ROOT, the template's first commit, which every clone and fork
+#     of the template shares and which no rename touches. GitHub's "Use this template"
+#     gives the new repository a fresh root instead — there HEAD is a commit the
+#     template has never seen (however many commits follow it) and "origin" is the new
+#     app, not the template — so both values are "unknown". A SHA that
+#     `git log <sha>..template/main` rejects as an unknown revision is worse than an
+#     honest "unknown", so the file names the tree to search the template's history
+#     for instead. A shallow clone cannot show its root, so it is "unknown" too.
+TEMPLATE_ROOT="3a9750f6548c1c745267a73ed3e22318d9380745"
 if [ -e "${ORIGIN_FILE}" ]; then
     echo "==> Keeping the existing ${ORIGIN_FILE}"
 else
     ORIGIN_SHA="unknown"
     ORIGIN_URL="unknown"
     ORIGIN_TREE="$(git rev-parse 'HEAD^{tree}' 2>/dev/null || echo unknown)"
-    if [ "$(git rev-list --count HEAD 2>/dev/null || echo 0)" -gt 1 ] ||
-        [ "$(git rev-parse --is-shallow-repository 2>/dev/null || echo false)" = "true" ]; then
+    if [ "$(git rev-parse --is-shallow-repository 2>/dev/null || echo false)" != "true" ] &&
+        git rev-list --max-parents=0 HEAD 2>/dev/null | grep -qx "${TEMPLATE_ROOT}"; then
         ORIGIN_SHA="$(git rev-parse HEAD)"
         ORIGIN_URL="$(git config --get remote.origin.url || echo unknown)"
     fi
@@ -134,10 +136,11 @@ else
         echo "# Line 1: the template commit this app was created from. Line 2: its repository."
         if [ "${ORIGIN_SHA}" = "unknown" ]; then
             cat <<EOF
-# Both are unknown: this checkout's history starts at its own root commit, so its HEAD
-# is not a template commit and "origin" is this app rather than the template. That is
-# what GitHub's "Use this template" produces. Find the template commit holding the same
-# files, then fill both lines in by hand:
+# Both are unknown: this checkout's history does not start at the template's root
+# commit (or is a shallow clone), so its HEAD is not known to be a template commit and
+# "origin" is this app rather than the template. That is what GitHub's "Use this
+# template" produces. Find the template commit holding the same files, then fill both
+# lines in by hand:
 #   git log --format='%H %T' template/main | grep ${ORIGIN_TREE}
 EOF
         fi

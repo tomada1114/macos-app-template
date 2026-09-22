@@ -153,9 +153,10 @@ git log --oneline "$(sed -n 1p .template-origin)"..template/main   # what you do
 git cherry-pick <sha>    # or: git merge template/main --allow-unrelated-histories
 ```
 
-Both lines read `unknown` when the script could not know them honestly: GitHub's
-"Use this template" gives the new repository a fresh root commit, so its `HEAD`
-is not a template commit and its `origin` is your app rather than the template.
+Both lines read `unknown` when the script could not know them honestly: it records
+`HEAD` only when the history's root commit is the template's own first commit.
+GitHub's "Use this template" gives the new repository a fresh root instead, so its
+`HEAD` is not a template commit and its `origin` is your app rather than the template.
 The file then names the file tree to look for, so one `git log --format='%H %T'`
 over `template/main` finds the commit — fill the two lines in and the command
 above works from then on. Update line 1 yourself whenever you adopt template
