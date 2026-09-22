@@ -499,7 +499,21 @@ case_product_marker_survived_the_rename() {
     capture "${BASH}" "${CHECKS}/product-section-filled.sh" --root "${root}"
     assert_exit 1
     assert_contract ERR_CHECK_PRODUCT_SECTION
-    assert_stderr_contains "AGENTS.md:$(grep -n '^TODO: what the fixture app is' "${root}/AGENTS.md" | cut -d: -f1): a ${BT}TODO${BT} marker survived the rename"
+    assert_stderr_contains "AGENTS.md:$(grep -n '^TODO: what the fixture app is' "${root}/AGENTS.md" | cut -d: -f1): a ${BT}TODO:${BT} marker survived the rename"
+}
+
+# The marker is `TODO:` with its colon, so an app whose product genuinely mentions a
+# to-do list, or points at a docs/TODO.md, is not mistaken for an unfilled skeleton.
+case_product_prose_may_say_todo() {
+    local root
+    root=$(make_fixture)
+    rename_fixture_app "${root}"
+    fill_fixture_product "${root}"
+    awk '/^A fixture app for whoever/ { print "A TODO list app; decisions live in docs/TODO.md."; next } { print }' \
+        "${root}/AGENTS.md" >"${CASE_DIR}/x"
+    mv "${CASE_DIR}/x" "${root}/AGENTS.md"
+    capture "${BASH}" "${CHECKS}/product-section-filled.sh" --root "${root}"
+    assert_exit 0
 }
 
 case_product_skeleton_filled_in_the_template() {
@@ -509,7 +523,7 @@ case_product_skeleton_filled_in_the_template() {
     capture "${BASH}" "${CHECKS}/product-section-filled.sh" --root "${root}"
     assert_exit 1
     assert_contract ERR_CHECK_PRODUCT_SECTION
-    assert_stderr_contains "holds no ${BT}TODO${BT} marker, but project.yml still names the template's app-name placeholder"
+    assert_stderr_contains "holds no ${BT}TODO:${BT} marker, but project.yml still names the template's app-name placeholder"
 }
 
 case_product_no_section() {
@@ -566,6 +580,7 @@ run_case "index: no Skills table fails" case_index_no_skills_table
 run_case "product: passes on the template's TODO skeleton" case_product_pass_in_template
 run_case "product: passes on a renamed app with the section written" case_product_pass_in_renamed_app
 run_case "product: a TODO marker left in a renamed app fails" case_product_marker_survived_the_rename
+run_case "product: the word TODO in real prose is not a marker" case_product_prose_may_say_todo
 run_case "product: a skeleton filled in inside the template fails" case_product_skeleton_filled_in_the_template
 run_case "product: no Product section fails" case_product_no_section
 run_case "product: a section that never names its non-goals fails" case_product_no_non_goals

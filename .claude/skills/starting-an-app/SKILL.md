@@ -106,9 +106,9 @@ down is one an eager implementer reads as a feature.
 
 `scripts/checks/product-section-filled.sh` (`just check-harness`, so `just check` too)
 holds both directions off one signal. While `project.yml` still names the app-name
-placeholder this is the template, where the section must stay a `TODO` skeleton —
+placeholder this is the template, where the section must stay a `TODO:` skeleton —
 filling it in here would hand every app cut afterwards a product description that is
-not its own. Once the rename has removed that placeholder, no `TODO` may survive in the
+not its own. Once the rename has removed that placeholder, no `TODO:` marker may survive in the
 section, and it must still name its non-goals. No check can judge the prose that
 replaces a marker; that stays with the person who wrote it.
 

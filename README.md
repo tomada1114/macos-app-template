@@ -120,7 +120,7 @@ secrets — no workflow edits. See docs/distribution.md.
 3. Fill in `AGENTS.md`'s `## Product` section: what the app is and who it is
    for, the core interaction, and the **Non-goals** it must not grow — the
    agent instructions have no other in-repo answer to "is this in scope?".
-   Delete every `TODO` marker as you go; `just check` fails while one is left
+   Delete every `TODO:` marker as you go; `just check` fails while one is left
    (`scripts/checks/product-section-filled.sh`)
 4. Verify the rename: `just install && just check`
 5. Create the label set on the new repository: `just labels`

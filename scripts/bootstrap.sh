@@ -236,7 +236,7 @@ echo "Bootstrap complete: ${PH_NAME} -> ${NEW_NAME} (repo slug: ${REPO_SLUG})"
 echo
 echo "Next steps:"
 echo "  1. Fill in AGENTS.md's '## Product' section (what the app is, who for, the"
-echo "     core interaction, its non-goals) and delete every TODO marker there —"
+echo "     core interaction, its non-goals) and delete every TODO: marker there —"
 echo "     'just check' fails until you do"
 echo "  2. Verify the rename: just install && just check"
 echo "  3. Create the label set on the new repository: just labels"

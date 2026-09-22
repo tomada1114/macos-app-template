@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # AGENTS.md's `## Product` section is the one part of that file about the application
 # rather than the harness: what the app is, who it is for, and above all what it
-# deliberately is not. In the template it is a skeleton of `TODO` markers; in a
+# deliberately is not. In the template it is a skeleton of `TODO:` markers; in a
 # repository the rename has already turned into an app, a surviving marker means the
 # agent instructions still carry no product context, so "is this in scope?" has no
 # in-repo answer and a non-goal is whatever the implementer assumes.
@@ -15,10 +15,10 @@
 # are checked, as one invariant:
 #   - the `## Product` section exists and names its `**Non-goals**` — in either
 #     repository;
-#   - template (project.yml still holds the placeholder): at least one `TODO` marker,
+#   - template (project.yml still holds the placeholder): at least one `TODO:` marker,
 #     so filling the skeleton in *here* cannot quietly make the rule below vacuous for
 #     every app cut from the template afterwards;
-#   - app (the placeholder is gone): no `TODO` marker at all.
+#   - app (the placeholder is gone): no `TODO:` marker at all.
 # Nothing here can judge prose: the marker is the whole signal, and whether what
 # replaced it is true stays with the human who wrote it.
 #
@@ -29,7 +29,7 @@
 #   ERR_CHECK_USAGE            unknown argument, or a --root DIR that does not exist
 #   ERR_CHECK_INPUT_MISSING    <root>/AGENTS.md or <root>/project.yml does not exist
 #   ERR_CHECK_PRODUCT_SECTION  the section is absent, does not name its non-goals, or
-#                              its `TODO` markers disagree with which repository this is
+#                              its `TODO:` markers disagree with which repository this is
 set -euo pipefail
 
 # shellcheck source=scripts/checks/lib.sh
@@ -42,7 +42,9 @@ check_require_file "project.yml"
 # script is a tracked text file too, and the rename must not rewrite the very literal
 # whose absence tells the check that the rename has happened.
 PLACEHOLDER_NAME='My''App'
-MARKER='TODO'
+# The colon is part of the marker: a bare `TODO` would also reject an app whose
+# product genuinely mentions a to-do list or points at a `docs/TODO.md`.
+MARKER='TODO:'
 
 # `<line>\t<text>` per line of the section, or the single line `NO_SECTION`.
 SECTION=$(awk '
