@@ -48,15 +48,28 @@ is gitignored and which the pre-commit guard refuses even if you force it into t
 index:
 
 ```bash
-security find-identity -v -p codesigning   # pick one: Apple Development or your own self-signed cert
+security find-identity -v -p codesigning   # confirm you have an Apple Development cert
 cat > Config/Local.xcconfig <<'EOF'
 DEVELOPMENT_TEAM = ABCDE12345
 CODE_SIGN_STYLE = Manual
-CODE_SIGN_IDENTITY = Apple Development: You (ABCDE12345)
+CODE_SIGN_IDENTITY = Apple Development
 EOF
 just build
 codesign -d -r- build/dev-derived-data/Build/Products/Debug/MyApp.app
 ```
+
+Two details cost time if you guess them:
+
+- Keep `CODE_SIGN_IDENTITY` as the generic `Apple Development`, and let
+  `DEVELOPMENT_TEAM` pick the certificate. A full common name
+  (`Apple Development: You (XXXXXXXXXX)`) is rejected with *"No certificate for
+  team … matching …"*, because the parenthesised id in that name is not your Team
+  ID. Your Team ID is the certificate's `OU`:
+  `security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject`
+- The first build that signs with a keychain identity opens a *"wants to sign using
+  key … in your keychain"* dialog and waits for it. Click **Always Allow** once; an
+  unattended build (an agent's, or a `just check` you walked away from) simply hangs
+  until someone does.
 
 `Config/Debug.xcconfig` ends with `#include? "Local.xcconfig"`, so the file is picked
 up when it exists and silently skipped when it does not — a fresh clone and CI keep
