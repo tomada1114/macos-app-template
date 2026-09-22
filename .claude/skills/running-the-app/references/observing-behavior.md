@@ -73,7 +73,7 @@ final class ScratchProbeTests: XCTestCase {
     func testProbe() {
         let app = XCUIApplication()
         app.launchArguments += ["-counterStart", "5"]
-        app.launchEnvironment["MYAPP_PROBE"] = "known-state"
+        app.launchEnvironment["PROBE_STATE"] = "known-state"
         app.launch()
         app.buttons["incrementButton"].click()
         app.buttons["incrementButton"].click()
@@ -123,7 +123,7 @@ Two rules about the probe:
 Nothing in this template reads a launch argument or an environment variable today:
 `CounterViewModel` always starts at zero, and no `App/` or `MyAppCore` code consults
 `UserDefaults` or `ProcessInfo`. The two snippets above pass `-counterStart 5` and
-`MYAPP_PROBE` to prove the plumbing, not because the app answers them. **Do not add such
+`PROBE_STATE` to prove the plumbing, not because the app answers them. **Do not add such
 a hook to the app just to observe it** — a state you only need to *look at* is a state a
 Core test can construct directly, by handing `ContentView` a view model, exactly as its
 `#Preview("At the upper bound")` does.
@@ -133,7 +133,7 @@ hand, wanted from both a UI probe and by hand — this is the mechanism, verifie
 running build:
 
 ```bash
-open --env MYAPP_PROBE=known-state -n \
+open --env PROBE_STATE=known-state -n \
   build/dev-derived-data/Build/Products/Debug/MyApp.app --args -counterStart 5
 ps -o command= -p "$(pgrep -f 'Debug/MyApp.app/Contents/MacOS/MyApp' | head -1)"
 ```
