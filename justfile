@@ -61,9 +61,15 @@ build:
     mise exec -- xcodegen generate
     set -o pipefail && xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build | mise exec -- xcbeautify --quiet
 
-# Build (Debug) and launch the app, left running until you quit it
+# Build (Debug), quit any running instance of this app, and launch the fresh
+# build, left running until you quit it (scripts/run-app.sh)
 run: build
-    open build/dev-derived-data/Build/Products/Debug/MyApp.app
+    scripts/run-app.sh
+
+# Stream this app's unified-log output (subsystem == the bundle identifier
+# project.yml declares), until you stop it with Ctrl-C
+logs:
+    bundle_id="$(scripts/bundle-id.sh)" && log stream --predicate "subsystem == \"${bundle_id}\"" --level debug
 
 # Run the XCUITest launch test (may prompt for Accessibility permission on first local run)
 uitest:
@@ -103,3 +109,23 @@ labels:
 # mise tool, so it comes from your own PATH, not `mise exec --`.
 ruleset:
     scripts/apply-ruleset.sh
+
+# Run the local-machine tests (MyAppPlatformTests): the adapter tests CI cannot run,
+# because a runner has no logged-in GUI session and cannot be granted the permissions
+# below. Sets RUN_LOCAL_MACHINE_TESTS=1, the opt-in the `.requiresLocalMachine` trait
+# reads, so these run here and stay reported-as-skipped everywhere else. No coverage
+# floor: adapters translate rather than decide, so `scripts/coverage.sh` still measures
+# MyAppCore only, and `just test` is still the gate.
+#
+# Grants: today's suite needs none — NSWorkspace only needs a GUI session. A test that
+# reaches for Accessibility, Input Monitoring, or Screen Recording needs that permission
+# granted to the application that launched the run (your terminal, or Xcode) in System
+# Settings › Privacy & Security; the test process inherits its launcher's grants and
+# never gets its own. macOS reports a missing grant as an empty answer rather than an
+# error, so such a test unwraps through `LocalMachineTests.require(_:requires:)`, whose
+# failure names the grant to give instead of failing as a bare nil.
+#
+# Run it before a PR that touches an adapter, and paste the result in the PR: no gate
+# can do it for you.
+test-local:
+    cd Packages/MyAppKit && RUN_LOCAL_MACHINE_TESTS=1 swift test --filter 'MyAppPlatformTests'

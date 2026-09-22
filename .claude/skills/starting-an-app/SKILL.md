@@ -3,10 +3,14 @@ name: starting-an-app
 description: >
   Covers turning this template into a new application with scripts/bootstrap.sh: its
   arguments, the placeholder literals it replaces across git-tracked files, re-running
-  it safely, the leftover check, and what the new repository keeps untouched. Use when
-  starting an app from this repository, running or editing scripts/bootstrap.sh, a
-  rename left a placeholder behind, CI's bootstrap-smoke job fails, or setting up a new
-  repository's labels (just labels) and branch ruleset (just ruleset).
+  it safely, the leftover check, what the new repository keeps untouched, and choosing
+  the app's shape — a windowed app or a menu-bar agent (LSUIElement, MenuBarExtra, a
+  launch test with no window) — and whether it can stay sandboxed. Use when starting an
+  app from this repository, running or editing scripts/bootstrap.sh, a rename left a
+  placeholder behind, deciding whether the new app lives in the Dock or the menu bar,
+  whether it must drop the App Sandbox for Accessibility, event taps, or global file
+  access, CI's bootstrap-smoke job fails, or setting up a new repository's labels
+  (just labels) and branch ruleset (just ruleset).
 ---
 
 # Starting an App
@@ -84,6 +88,32 @@ in the clone), then runs `swift test` and an `xcodebuild` on the renamed tree. I
 leftover grep is case-insensitive and allows a missing hyphen, so a new mention of the
 app name in a spelling the literal replace does not cover (all lowercase, say) fails
 that job.
+
+## Choosing the app shape
+
+The template ships one shape: a regular windowed app. A menu-bar agent — no Dock tile,
+`MenuBarExtra` in place of `WindowGroup`, and a launch test with no window to wait for —
+is three files' difference, and deciding it before the first feature costs far less than
+retrofitting it afterwards. [references/app-shapes.md](references/app-shapes.md) holds
+both shapes side by side: the `project.yml` keys, the `App/` entry point, and the
+`LaunchTests` assertion each one needs, as code proven against `just build`,
+`just uitest`, and `just smoke`, plus what XCUITest can and cannot see of a status item.
+
+## Deciding the sandbox posture
+
+Decide this with the shape, before the first feature. An app that drives other
+applications through the Accessibility API, posts `CGEvent`s, installs a global event
+tap, or reads files the user never picked through an open panel cannot be sandboxed —
+and an unsandboxed app can never ship on the Mac App Store. `App/MyApp.entitlements`
+ships with `com.apple.security.app-sandbox` on and stays on unless the new app is one
+of those.
+
+Turning it off is a change `AGENTS.md`'s "Security and human approval" reserves for a
+human: propose the flip and name the capability that forces it, never make it yourself.
+`docs/distribution.md`'s "Sandboxed or not" holds the rest — what still works sandboxed,
+what stays on either way (Hardened Runtime, Developer ID signing, notarization), and the
+`INFOPLIST_KEY_NS…UsageDescription` build settings a TCC-gated API needs in
+`project.yml`.
 
 ## What the new app keeps
 

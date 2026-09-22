@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one command — `git log --oneline "$(sed -n 1p .template-origin)"..template/main`
   (`README.md` › Keeping up with template updates)
 
+- `MyAppPlatformTests`, an opt-in test target for the adapter tests CI cannot run: every
+  suite carries the `.requiresLocalMachine` trait, so they are reported as *skipped*
+  under `just test` and in CI and run only with `RUN_LOCAL_MACHINE_TESTS=1`, which the
+  new `just test-local` recipe sets. `WorkspaceFrontmostAppProvider` against the real
+  `NSWorkspace` is the worked example; `.claude/rules/testing.md` › Where a Test Goes
+  states the split between a Core test with a fake and a local-machine test
+- A logging convention: `os.Logger` through `MyAppCore`'s new `AppLog`, whose
+  `subsystem` is the app's bundle identifier (the one `just logs` streams) and whose
+  categories name one concern each. `MyAppCore` may `import os` — it is neither a UI nor
+  an OS-integration framework, so it stays off both halves of the Core ban list
+  (`docs/architecture.md` › Logging). `FrontmostAppViewModel.refresh()` is the worked
+  example, logging another application's name `.private`
+- `.swiftlint.yml`'s `no_print_in_sources` custom rule rejects `print(`, `debugPrint(`,
+  and `NSLog(` under `Packages/*/Sources/` and `App/` (the pre-commit hook, `just lint`,
+  and CI's `lint` job); comments, string literals, and test targets are exempt
 - `MyAppPlatform` target: the home for OS-integration code, behind `Sendable` ports
   declared in `MyAppCore`. Ships a worked example — the `FrontmostAppProviding` port,
   its `NSWorkspace`-backed `WorkspaceFrontmostAppProvider` adapter, and the fake the
@@ -104,9 +119,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new app keeps, including its labels and branch ruleset)
 - `just fix` formats and auto-fixes SwiftLint violations, then runs `just lint`;
   `just test-fast <filter>` runs only the matching tests, without the coverage floor
+- `starting-an-app` gains an app-shapes reference
+  (`.agents/skills/starting-an-app/references/app-shapes.md`, linked from
+  `docs/architecture.md`): the `project.yml` key, `App/` entry point, and `LaunchTests`
+  assertion a menu-bar agent (`LSUIElement`, `MenuBarExtra`) needs instead of the
+  shipped windowed shape, proven against `just build`, `just uitest`, and `just smoke`,
+  plus where an `NSStatusItem` delegate lives and what XCUITest can see of a status item
+- `docs/distribution.md` gains a "Sandboxed or not" section: the capabilities that
+  force the App Sandbox off (Accessibility API, `CGEvent` posting, global event taps,
+  file access outside the container), what stays on regardless (Hardened Runtime,
+  Developer ID signing, notarization), what it costs (no Mac App Store), and the
+  `INFOPLIST_KEY_NS…UsageDescription` build settings a TCC-gated API needs. The
+  `starting-an-app` skill makes deciding the posture an explicit, human-signed-off
+  step; the shipped `App/MyApp.entitlements` stays sandboxed
+- `just logs` streams this app's unified-log output — the records whose subsystem is
+  the bundle identifier `project.yml` declares, read by the new
+  `scripts/bundle-id.sh`, so both recipes that need it survive
+  `scripts/bootstrap.sh`
+- `docs/architecture.md` › "Recommended optional dependencies" gains the four needs a
+  utility app hits first — global hotkeys, launch at login, a human-editable config
+  file, and a settings window — each with its zero-dependency answer first and each
+  candidate checked against `.claude/rules/project.md`'s checklist on a recorded date
+  (`KeyboardShortcuts` and `TOMLDecoder` pass; `LaunchAtLogin`, `TOMLKit`, and
+  `Settings` are recorded with the reason they do not). No dependency is added
 
 ### Changed
 
+- `just run` relaunches the build it just made instead of activating an old process:
+  `scripts/run-app.sh` quits every running instance of this app — matched by bundle
+  identifier, never by process name — and waits for it to exit, bounded, reporting a
+  process that outlives the wait rather than forcing it
 - `MyAppCore`'s import ban list now also rejects `ApplicationServices`, `Carbon`, and
   `ServiceManagement`, in both `.swiftlint.yml`'s `no_ui_import_in_core` and
   `ArchitectureBoundaryTests`: an adapter that needs one belongs in `MyAppPlatform`
@@ -140,5 +182,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (need, continuity, license, weight, build-time code, platforms, advisories) and how to
   declare, add, and bump one without hand-editing `Package.resolved`; it now also loads
   when `Package.resolved` is touched
+- `scripts/tests/run.sh` runs the script test files concurrently instead of one after
+  another — each file's output is still captured and printed whole in glob order, every
+  file still runs after a failure, and `ERR_TESTS_NONE`/`ERR_TESTS_FAILED` are unchanged
+  — cutting `just test-scripts` from roughly 34 s to 12 s. It also parses each file
+  with `bash -n` before starting it, so a file that bash 3.2 aborts on a syntax error
+  while still exiting 0 is counted as failing instead of passing, and on INT or TERM it
+  kills the files it started (a background job in a non-interactive shell ignores
+  SIGINT) and prints every log it had not reported yet, marked `(interrupted)`, with a
+  new `ERR_TESTS_INTERRUPTED`; `scripts/tests/run_test.sh` now covers the runner itself
+
+### Fixed
+
+- `scripts/tests/apply-ruleset_test.sh` built its `gh` stub bodies with a heredoc inside
+  a command substitution, which bash 3.2 parses wrongly at the first `)` of a `case` pattern:
+  under macOS `/bin/bash` the file died with a syntax error and still exited 0, so none
+  of its six cases ran and nothing reported it. The bodies are single-quoted literals now
 
 [Unreleased]: https://github.com/your-username/my-app/commits/main

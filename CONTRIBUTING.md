@@ -44,11 +44,18 @@ just test
 # While iterating: run only the matching tests, with no coverage floor
 just test-fast CounterTests
 
+# The adapter tests CI cannot run (real OS, local machine only) — run these by hand
+# whenever you change something under Sources/MyAppPlatform, and put the output in the PR
+just test-local
+
 # Build the app
 just build
 
-# Build (Debug) and launch it, left running until you quit it
+# Build (Debug), quit any running instance, and launch the fresh build
 just run
+
+# Stream this app's unified-log output (Ctrl-C to stop)
+just logs
 
 # Launch guarantee (Release build + alive check)
 just smoke
@@ -70,9 +77,12 @@ mise exec -- scripts/tests/run.sh
 mise exec -- scripts/checks/run-all.sh
 scripts/coverage.sh
 (cd Packages/MyAppKit && swift test --filter CounterTests)   # just test-fast CounterTests
+(cd Packages/MyAppKit && RUN_LOCAL_MACHINE_TESTS=1 swift test --filter MyAppPlatformTests)  # just test-local
 mise exec -- xcodegen generate
 xcodebuild -project MyApp.xcodeproj -scheme MyApp -configuration Debug -derivedDataPath build/dev-derived-data build
-open build/dev-derived-data/Build/Products/Debug/MyApp.app
+scripts/run-app.sh               # just run — quits the running instance, then launches
+scripts/bundle-id.sh             # the bundle identifier project.yml declares
+log stream --predicate "subsystem == \"$(scripts/bundle-id.sh)\"" --level debug   # just logs
 rm -rf build/LaunchUITests.xcresult
 xcodebuild test -project MyApp.xcodeproj -scheme MyApp -destination 'platform=macOS' -derivedDataPath build/dev-derived-data -resultBundlePath build/LaunchUITests.xcresult
 scripts/smoke_launch.sh
