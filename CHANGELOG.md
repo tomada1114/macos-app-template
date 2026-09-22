@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `.template-origin`: `scripts/bootstrap.sh` records the template commit and repository
+  an app was created from, so listing the template changes the app does not have yet is
+  one command — `git log --oneline "$(sed -n 1p .template-origin)"..template/main`
+  (`README.md` › Keeping up with template updates)
+
 - `MyAppPlatform` target: the home for OS-integration code, behind `Sendable` ports
   declared in `MyAppCore`. Ships a worked example — the `FrontmostAppProviding` port,
   its `NSWorkspace`-backed `WorkspaceFrontmostAppProvider` adapter, and the fake the
