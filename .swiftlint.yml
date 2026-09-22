@@ -52,13 +52,19 @@ custom_rules:
   # users launch it has nowhere to send stdout, so a print() is invisible exactly when
   # it would matter (.claude/rules/swift.md › Logging).
   #
-  # `included` covers every package's Sources/ plus the app shell, and nothing else —
-  # test targets print freely. It is a substring match against the file path, so each
-  # alternative is anchored to a path separator: unanchored, `App/` would also match
-  # the `App/` inside a checkout directory named after the app (`DemoApp/…`, which is
-  # what scripts/bootstrap.sh produces) and the rule would fire in Tests/ too.
-  # Relative suffixes match, which is what keeps the rule working over the temp tree
-  # the pre-commit hook exports with `git checkout-index --prefix=`.
+  # `included`/`excluded` are substring matches against the whole file path, not
+  # repository-relative globs, so they are written to survive any ancestor directory —
+  # including one literally named `App` or `DemoApp`, which is what scripts/bootstrap.sh
+  # produces. Matching a path *suffix* is also what keeps the rule firing over the temp
+  # tree the pre-commit hook exports with `git checkout-index --prefix=`.
+  #   - `App/[^/]+\.swift$` — the app shell is flat (App/MyAppApp.swift), so exactly one
+  #     component may follow. A checkout under `~/App/` therefore cannot drag anything
+  #     deeper into the rule.
+  #   - `Packages/[^/]+/Sources/[^/]+/.+\.swift$` — a package's module directory and
+  #     everything under it, so `Packages/*/Tests/` cannot match this alternative.
+  #   - `excluded` then spares any `*Tests/` directory outright (MyAppCoreTests,
+  #     LaunchUITests), so even a pathological ancestor path cannot make the rule fire
+  #     in a test target. Test code prints freely.
   #
   # `match_kinds: [identifier]` is what keeps a `print(` inside a comment, a doc
   # comment, or a string literal from counting: only a real call site is an identifier.
@@ -67,7 +73,8 @@ custom_rules:
   # which is a deliberate bypass rather than a slip, and PR review's to catch.
   # `(?<!func )` spares a declaration of a method that happens to be named `print`.
   no_print_in_sources:
-    included: '(^|/)(Packages/[^/]+/Sources|App)/.+\.swift$'
+    included: '(^|/)(App/[^/]+|Packages/[^/]+/Sources/[^/]+/.+)\.swift$'
+    excluded: '(^|/)[A-Za-z0-9]*Tests/'
     regex: '(^|[^\w.])(?<!func )(print|debugPrint|NSLog)\s*\('
     match_kinds:
       - identifier

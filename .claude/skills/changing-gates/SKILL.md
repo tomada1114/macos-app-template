@@ -82,14 +82,23 @@ held by `ArchitectureBoundaryTests` alone, with no lint-rule twin.
 `no_print_in_sources` rejects `print(`, `debugPrint(`, and `NSLog(` under
 `Packages/*/Sources/` and `App/`, because an `open`-launched `.app` discards stdout:
 shipped code logs through `MyAppCore`'s `AppLog` instead (`.claude/rules/swift.md` ›
-Logging). Three parts of it are load-bearing, and a widening edit usually breaks one:
-`match_kinds: [identifier]` is what spares a `print(` inside a comment or a string
-literal; `[^\w.]` before the name spares `blueprint(` and member calls like `.print()`;
-and each alternative in `included` is anchored to a path separator, without which
-`App/` would also match the `App/` inside a checkout directory named after the app —
-`scripts/bootstrap.sh` produces exactly that — and the rule would fire in `Tests/`,
-which is exempt on purpose. Matching relative path suffixes is also what keeps it
-firing over the temp tree the pre-commit hook exports with
+Logging). Four parts of it are load-bearing, and a widening edit usually breaks one:
+
+- `match_kinds: [identifier]` spares a `print(` inside a comment or a string literal —
+  only a real call site is an identifier;
+- `[^\w.]` before the name spares `blueprint(` and member calls like `.print()`;
+- `included` and `excluded` are substring matches against the *whole* path, never
+  repository-relative globs, so both are written to survive any ancestor directory.
+  `App/[^/]+\.swift$` allows exactly one component after `App/`, because the shell is
+  flat; `Packages/[^/]+/Sources/[^/]+/.+\.swift$` requires a module directory, so
+  `Packages/*/Tests/` cannot satisfy it. Loosen either and a checkout under `~/App/` —
+  or under any path with that shape, which `scripts/bootstrap.sh` readily produces —
+  starts matching test files;
+- `excluded: '(^|/)[A-Za-z0-9]*Tests/'` is the second line of defence for the same
+  worry: no `*Tests/` directory is ever linted by this rule. Test code prints freely.
+
+Matching a path *suffix* rather than a repository-relative path is also what keeps the
+rule firing over the temp tree the pre-commit hook exports with
 `git checkout-index --prefix=`. It catches a call site, not a deliberate bypass:
 `Swift.print(` is out of its reach and is PR review's to catch.
 
