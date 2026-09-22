@@ -2,16 +2,15 @@
 name: integrating-system-apis
 description: >
   Covers calling a macOS system API from MyAppPlatform under Swift 6 strict concurrency:
-  where the port, the adapter, the fake, and the local-machine test each go; a C callback
-  that carries self through an UnsafeMutableRawPointer refcon with Unmanaged;
-  MainActor.assumeIsolated versus a Task hop; @preconcurrency import; non-Sendable CF
-  types; and teardown order. Use when adding a CGEventTap, an AXObserver or other
-  Accessibility (AXUIElement) code, a RegisterEventHotKey Carbon hotkey, a CFRunLoop
-  source, or any CGEvent work; when a TCC-gated permission is involved (Accessibility,
-  Input Monitoring, Screen Recording) — AXIsProcessTrustedWithOptions, a prompt that
-  never calls back, a grant lost on every rebuild; when "sending value of non-Sendable
-  type" or a C function pointer that captures context blocks the build; or when tempted
-  by @unchecked Sendable or nonisolated(unsafe) to get past the compiler.
+  where the port, the adapter, the fake, and the local-machine test go; a C callback
+  carrying self through a refcon with Unmanaged; MainActor.assumeIsolated versus a Task
+  hop; @preconcurrency import; non-Sendable CF types; teardown order. Use when adding a
+  CGEventTap, an AXObserver or other Accessibility (AXUIElement) code, a Carbon
+  RegisterEventHotKey hotkey, a CFRunLoop source, or any CGEvent work; when a TCC-gated
+  permission (Accessibility, Input Monitoring, Screen Recording) is involved —
+  AXIsProcessTrustedWithOptions, a prompt that never calls back, a grant lost on every
+  rebuild; when "sending value of non-Sendable type" or a capturing C function pointer
+  blocks the build; or when tempted by @unchecked Sendable or nonisolated(unsafe).
 ---
 
 # Integrating System APIs
@@ -61,9 +60,10 @@ user has to give and the support burden of the ones who will not.
 Carbon is deprecated and still the only hotkey API that needs no grant — that is the
 trade, and it is usually the right one. An event tap that only *listens* still needs
 Input Monitoring, so a hotkey implemented as a tap costs a permission the Carbon one does
-not. Anything that needs a grant also forces the app out of the sandbox and off the Mac
-App Store; that decision is a human's (`starting-an-app` › "Deciding the sandbox
-posture").
+not. Accessibility and Input Monitoring are never granted to a sandboxed process, so
+either of them forces the app out of the sandbox and off the Mac App Store; Screen
+Recording is a grant a sandboxed app can hold (`docs/distribution.md` › "Sandboxed or
+not"). That decision is a human's (`starting-an-app` › "Deciding the sandbox posture").
 
 ## Three rules that never bend
 

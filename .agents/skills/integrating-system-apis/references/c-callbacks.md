@@ -326,7 +326,7 @@ with less scope and no record of which framework it was about.
 ## Non-`Sendable` CF types
 
 `CGEvent`, `AXUIElement`, `AXObserver`, `CFMachPort`, and `CFRunLoopSource` are all
-non-`Sendable`, as this repository's toolchain confirms — each of the four in a
+non-`Sendable`, as this repository's toolchain confirms — each of them in a
 `Task.detached` is a compile error. The order of preference:
 
 1. **Do not move it.** Keep it in the `@MainActor` adapter and expose values. This is the
