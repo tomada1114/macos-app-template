@@ -108,10 +108,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new app keeps, including its labels and branch ruleset)
 - `just fix` formats and auto-fixes SwiftLint violations, then runs `just lint`;
   `just test-fast <filter>` runs only the matching tests, without the coverage floor
+- `starting-an-app` gains an app-shapes reference
+  (`.agents/skills/starting-an-app/references/app-shapes.md`, linked from
+  `docs/architecture.md`): the `project.yml` key, `App/` entry point, and `LaunchTests`
+  assertion a menu-bar agent (`LSUIElement`, `MenuBarExtra`) needs instead of the
+  shipped windowed shape, proven against `just build`, `just uitest`, and `just smoke`,
+  plus where an `NSStatusItem` delegate lives and what XCUITest can see of a status item
+- `docs/distribution.md` gains a "Sandboxed or not" section: the capabilities that
+  force the App Sandbox off (Accessibility API, `CGEvent` posting, global event taps,
+  file access outside the container), what stays on regardless (Hardened Runtime,
+  Developer ID signing, notarization), what it costs (no Mac App Store), and the
+  `INFOPLIST_KEY_NS…UsageDescription` build settings a TCC-gated API needs. The
+  `starting-an-app` skill makes deciding the posture an explicit, human-signed-off
+  step; the shipped `App/MyApp.entitlements` stays sandboxed
 - `just logs` streams this app's unified-log output — the records whose subsystem is
   the bundle identifier `project.yml` declares, read by the new
   `scripts/bundle-id.sh`, so both recipes that need it survive
   `scripts/bootstrap.sh`
+- `docs/architecture.md` › "Recommended optional dependencies" gains the four needs a
+  utility app hits first — global hotkeys, launch at login, a human-editable config
+  file, and a settings window — each with its zero-dependency answer first and each
+  candidate checked against `.claude/rules/project.md`'s checklist on a recorded date
+  (`KeyboardShortcuts` and `TOMLDecoder` pass; `LaunchAtLogin`, `TOMLKit`, and
+  `Settings` are recorded with the reason they do not). No dependency is added
 
 ### Changed
 
