@@ -22,7 +22,8 @@ just check-harness # Re-assert the harness's claims about itself (scripts/checks
 just test      # Run tests with the 80% coverage floor on MyAppCore
 just test-fast CounterTests  # Run only the matching tests, no coverage floor (iteration only)
 just build     # Build the app (Debug)
-just run       # Build (Debug) and launch the app, left running until you quit it
+just run       # Build (Debug), quit any running instance, and launch the fresh build
+just logs      # Stream this app's unified-log output (Ctrl-C to stop)
 just uitest    # Run the XCUITest launch test
 just smoke     # Build Release and assert the app launches
 just check     # Run all checks: verify-hooks → fmt → lint → test-scripts → check-harness → test → build
@@ -202,7 +203,10 @@ reasons behind them, with worked examples, are in the `writing-repo-scripts` ski
   one-line notice instead. Each script's header states which it does.
 - Every script directly under `scripts/` has a test file `scripts/tests/<script-name>_test.sh`
   built on `scripts/tests/lib.sh`, and `scripts/tests/run.sh` (`just test-scripts`,
-  part of `just check` and CI's lint job) runs them all. A test works in a throwaway
+  part of `just check` and CI's lint job) runs them all — concurrently, so a test file
+  must share no state with any other: its own throwaway repository or temp directory,
+  its own stubs, and only read-only use of the checkout. The runner itself is covered
+  by `scripts/tests/run_test.sh`. A test works in a throwaway
   repository or temp directory, never the real checkout, and fakes external commands
   with `stub_command`. A sourced library under `scripts/guard/` gets its own test file
   too, `scripts/tests/guard-<library>_test.sh` (`guard-paths_test.sh`,
