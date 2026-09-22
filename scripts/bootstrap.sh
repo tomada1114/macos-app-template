@@ -14,6 +14,9 @@
 # Then renames MyApp* paths and regenerates the Xcode project.
 # Also removes the template-only CI job (bootstrap-smoke) and its required check
 # in .github/rulesets/main.json.
+# Records the template commit and repository in .template-origin (first run only;
+# never rewritten by the rename, and "unknown" when this checkout's history is not
+# the template's — see the comment above the ORIGIN_FILE block).
 # Running it again with the same name is a no-op, so it is safe to re-run
 # (values a previous run already replaced are not replaced again).
 set -euo pipefail
@@ -82,16 +85,65 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
     exit 1
 fi
 
+ORIGIN_FILE=".template-origin"
+
 replace() { # replace <from> <to> — literal replacement in all tracked text files
     local from="$1" to="$2" file
     [ "${from}" = "${to}" ] && return 0
     git ls-files -z | while IFS= read -r -d '' file; do
         [ -f "${file}" ] || continue
+        # Never rewrite the recorded origin: a fork of this template can be owned
+        # by, or named after, one of the placeholder literals above, and a
+        # rewritten URL would point at a repository that does not exist.
+        [ "${file}" != "${ORIGIN_FILE}" ] || continue
         grep -Iq . "${file}" 2>/dev/null || continue # skip binary and empty files
         grep -qF -- "${from}" "${file}" || continue  # leave non-matching files untouched
         FROM="${from}" TO="${to}" perl -pi -e 's/\Q$ENV{FROM}\E/$ENV{TO}/g' "${file}"
     done
 }
+
+# Record which template commit this app was cut from, so "what has the template
+# fixed since?" is one command instead of a two-history read. Decisions encoded here:
+#   * Written only when the file is absent. A re-run, and any hand-edit made after
+#     merging template changes, therefore survives untouched.
+#   * replace() skips it (see above), so the rename cannot rewrite the URL.
+#   * Both values are "unknown" when this checkout's history starts at its own root
+#     commit — what GitHub's "Use this template" produces. There, HEAD is a commit the
+#     template has never seen and "origin" is the new app's repository, not the
+#     template's, so neither value is knowable. A SHA that `git log <sha>..template/main`
+#     rejects as an unknown revision is worse than an honest "unknown", so the file
+#     names the tree to search the template's history for instead.
+#   * A shallow clone is exempt from that test: it also holds a single commit, but that
+#     commit is a real upstream one.
+if [ -e "${ORIGIN_FILE}" ]; then
+    echo "==> Keeping the existing ${ORIGIN_FILE}"
+else
+    ORIGIN_SHA="unknown"
+    ORIGIN_URL="unknown"
+    ORIGIN_TREE="$(git rev-parse 'HEAD^{tree}' 2>/dev/null || echo unknown)"
+    if [ "$(git rev-list --count HEAD 2>/dev/null || echo 0)" -gt 1 ] ||
+        [ "$(git rev-parse --is-shallow-repository 2>/dev/null || echo false)" = "true" ]; then
+        ORIGIN_SHA="$(git rev-parse HEAD)"
+        ORIGIN_URL="$(git config --get remote.origin.url || echo unknown)"
+    fi
+    echo "==> Recording the template origin in ${ORIGIN_FILE} (${ORIGIN_SHA})"
+    {
+        echo "${ORIGIN_SHA}"
+        echo "${ORIGIN_URL}"
+        echo "# Written once by scripts/bootstrap.sh; a re-run leaves this file alone."
+        echo "# Line 1: the template commit this app was created from. Line 2: its repository."
+        if [ "${ORIGIN_SHA}" = "unknown" ]; then
+            cat <<EOF
+# Both are unknown: this checkout's history starts at its own root commit, so its HEAD
+# is not a template commit and "origin" is this app rather than the template. That is
+# what GitHub's "Use this template" produces. Find the template commit holding the same
+# files, then fill both lines in by hand:
+#   git log --format='%H %T' template/main | grep ${ORIGIN_TREE}
+EOF
+        fi
+        echo "# See README.md, \"Keeping up with template updates\"."
+    } >"${ORIGIN_FILE}"
+fi
 
 # Reset the template's own CHANGELOG history for the new project. Guarded by a
 # marker so a re-run (documented as safe) never wipes the new app's entries.
