@@ -20,6 +20,8 @@ paths:
 - Views in `MyAppUI` stay thin: no business logic, delegate everything to Core view models
 - `MyAppUI` and `MyAppPlatform` are siblings and never import each other; `App/` is the
   composition root that hands a `MyAppPlatform` adapter to a Core view model
+- How Core logic is shaped (injected time, locale, and randomness; one `Tuning`; action-shaped
+  view models) is the `designing-core-logic` skill
 - `///` doc comments on all public API; document *why*, not what the signature already says
 
 ## Error Handling
@@ -28,6 +30,7 @@ paths:
 - NEVER `try!` or force-unwrap (`!`) in production code; `guard let`/`throws` instead
 - Never swallow errors silently; if catching, handle meaningfully or rethrow
 - Never use errors for control flow
+- Typed vs. plain `throws`, cancellation, payload privacy, and OS-error mapping: the `designing-errors` skill
 
 ## Logging
 

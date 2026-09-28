@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Private-repository setup steps in `README.md` "Using This Template" and the
+  `starting-an-app` skill (`references/private-repository.md`): which workflows to
+  delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
+  remove, and the `Dependency Review` required context to drop before `just ruleset`.
+
+- `AGENTS.md` "Security and human approval" now forbids reading secret-shaped files
+  (the list `scripts/guard/paths.sh` refuses to commit), requires sign-off before
+  editing `.claude/settings.local.json`, lists what no local gate sees, and lists the
+  GitHub settings a new repository must enable (secret scanning, push protection,
+  private vulnerability reporting, Dependabot alerts) and why the `main` ruleset has
+  no bypass actor.
+
+- `.claude/rules/project.md`'s Toolchain Pinning is now the one statement of the
+  pin-bump policy: bot PRs (Dependabot `deps:`/`ci:`, Renovate `deps:`) after a 7-day
+  cooldown, and `.xcode-version` as the single hand-bumped pin with the reason and
+  procedure. The `changing-gates` skill, `mise.toml`, and `check-pr-title.yml` point to
+  it instead of contradicting it.
+- `scripts/checks/skills-descriptions.sh` (run by `just check-harness`) fails on a
+  `SKILL.md` nested below a skill's top directory (`ERR_CHECK_SKILL_NESTED`), and on a
+  skill `description` over 1,024 characters, one containing a non-ASCII character, or
+  an unquoted frontmatter value Codex CLI's YAML parser rejects
+  (`ERR_CHECK_SKILL_DESCRIPTION`). The em-dashes in the `changing-gates`,
+  `integrating-system-apis`, `shipping-issues`, and `starting-an-app` descriptions are
+  now ASCII hyphens.
+- A `designing-core-logic` skill: how `MyAppCore` logic is shaped — time (`Clock`,
+  an injected "now"), `Locale`, and a `RandomNumberGenerator` injected with a test
+  substitute for each, tunables in one `Tuning` type, action-shaped `@Observable` view
+  models, and a table of patterns deliberately not adopted, pointing at `README.md`'s
+  Design Philosophy and at an ADR for any app that adopts one.
+- A `designing-errors` skill: error enums in `MyAppCore`, typed `throws(E)` only where
+  a caller switches on the cases, no user data in error payloads or log lines,
+  `CancellationError` propagated rather than swallowed, and how a `MyAppPlatform`
+  adapter maps `OSStatus`, `NSError`, and `AXError` into Core errors.
 - A "Removing the example code" checklist in `docs/getting-started.md` covering the
   counter and the `FrontmostApp` port/adapter (port, view model, adapter, fake,
   local-machine test, `AppLog.frontmostApp`, the `ContentView` row, the composition
@@ -311,6 +344,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   layers row now describes both.
 
 ### Fixed
+
+- `just check` step lists in `README.md`, `docs/getting-started.md`, `CONTRIBUTING.md`,
+  `AGENTS.md`, and the `create-pr` and `tdd` skills now match the justfile's `check`
+  recipe, and every recipe shows a one-line summary in `just --list` (`[doc(...)]`).
 
 - `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
   (its own header, `README.md`'s "Using This Template" paragraph, and the
