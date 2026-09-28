@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `AGENTS.md` "Security and human approval" now forbids reading secret-shaped files
+  (the list `scripts/guard/paths.sh` refuses to commit), requires sign-off before
+  editing `.claude/settings.local.json`, lists what no local gate sees, and lists the
+  GitHub settings a new repository must enable (secret scanning, push protection,
+  private vulnerability reporting, Dependabot alerts) and why the `main` ruleset has
+  no bypass actor.
+
 - A "Removing the example code" checklist in `docs/getting-started.md` covering the
   counter and the `FrontmostApp` port/adapter (port, view model, adapter, fake,
   local-machine test, `AppLog.frontmostApp`, the `ContentView` row, the composition
