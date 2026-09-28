@@ -123,10 +123,13 @@ Two issues may share a batch only when **all** of these hold:
   grepping for the symbols and paths each issue body names -- a two-minute
   check that prevents a conflict pileup nobody wants to unpick later.
 - Neither changes shared infrastructure -- `Package.swift` and
-  `Package.resolved`, `project.yml`, `mise.toml`, CI config, a persisted schema --
-  or a shared append-target file (`CHANGELOG.md`, the ADR index in
-  `docs/architecture/README.md`, `AGENTS.md`'s Skills table). Anything touching those is serialized,
-  always, even when the code paths are disjoint.
+  `Package.resolved`, `project.yml`, `mise.toml`, CI config, a persisted schema.
+  Anything touching those is serialized, always, even when the code paths are
+  disjoint. An append-only list is not shared infrastructure: every user-facing
+  change adds a `CHANGELOG.md` entry, and a new skill adds a row to `AGENTS.md`'s
+  Skills table, so serializing on them would serialize nearly every batch. Two
+  branches that each append there conflict only mechanically -- keep both entries
+  when bringing the later branch up to date ([recovery.md](recovery.md#a-merge-conflict)).
 - Neither is a `blocked: design` issue taken on deliberately. Step 2b's
   decision has to be settled and recorded before its implementation starts,
   and settling one while two other runs are in flight is how a design decision

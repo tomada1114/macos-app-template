@@ -93,7 +93,7 @@ before step 3 ([dependency-triage.md](references/dependency-triage.md#deciding-a
 ## 2c. Confirm the proposed batch
 
 The plan proposes; this step decides. Look for what a script cannot see -- two issues
-both editing `project.yml`, `Package.swift` or `CHANGELOG.md`
+both editing `project.yml`, `Package.swift` or a workflow (a `CHANGELOG.md` entry is not)
 ([dependency-triage.md](references/dependency-triage.md#parallel-vs-sequential-all-mode)).
 Take the narrower grouping on disagreement; shrinking never needs asking.
 
