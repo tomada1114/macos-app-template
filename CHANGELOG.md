@@ -345,6 +345,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Small factual drift in the docs: removed leftover references to a Python/uv sibling
+  project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
+  `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`
+  no longer claims `project.yml` already sets usage-description keys; the `create-pr` and
+  `smart-commit` type lists now match `check-pr-title.yml`; `running-the-app` no longer
+  assumes the repository is public; `.claude/rules/testing.md` no longer claims the
+  line-coverage floor notices a missed branch; `.claude/rules/swift.md` states the
+  SwiftLint limits actually enforced; `.github/zizmor.yml` no longer hard-codes a use
+  count; `SECURITY.md` drops response times a template cannot promise
+
 - `just check` step lists in `README.md`, `docs/getting-started.md`, `CONTRIBUTING.md`,
   `AGENTS.md`, and the `create-pr` and `tdd` skills now match the justfile's `check`
   recipe, and every recipe shows a one-line summary in `just --list` (`[doc(...)]`).

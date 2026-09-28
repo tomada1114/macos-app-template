@@ -150,7 +150,7 @@ you ran, not a paraphrase, and paste:
   showing the state the change produces.
 
 Never paste a Team ID, a signing identity, a certificate common name, or a personal
-name: this repository is public, and `codesign`, `security`, and System Settings output
+name: a pull request here, or in a repository cut from this template, may be public, and `codesign`, `security`, and System Settings output
 all carry them. Redact before pasting, and say that you did.
 
 Leave nothing behind: quit the app, remove any throwaway test file and re-run
