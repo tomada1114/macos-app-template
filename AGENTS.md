@@ -193,6 +193,7 @@ tool that sees the generated copy rather than the authored one:
 | `smart-commit` | committing and pushing changes: grouping them into Conventional Commits, excluding sensitive files |
 | `create-pr` | opening or updating a pull request: the `just check` pre-check, title, template, and checklist |
 | `tdd` | a behavior change in `MyAppCore`: writing a failing Swift Testing test before the implementation |
+| `designing-errors` | an `Error` type, a `throws`/`throws(E)` signature, a `do`/`catch`, or cancellation: Core error enums, typed throws, no user data in errors or logs, `CancellationError`, and mapping `OSStatus`/`NSError`/`AXError` in an adapter |
 | `changing-gates` | a file that enforces rather than implements: `.swiftlint.yml`, `.swiftformat`, `Package.swift`'s `strictSettings`, `mise.toml`, `.githooks/pre-commit`, `scripts/lint.sh`, `scripts/coverage.sh`, the `scripts/guard/` commit-time guard, or a workflow — and which gate would catch a change |
 | `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, and the `Depends on #N` convention |
 | `authoring-skills` | adding, editing, or reviewing a skill: authoring under `.agents/skills/`, the `just agents-sync` mirror, frontmatter, layout, and size limits |
@@ -201,6 +202,7 @@ tool that sees the generated copy rather than the authored one:
 | `writing-repo-scripts` | writing or testing a shell script under `scripts/`, `.githooks/pre-commit`, or `scripts/tests/`: why bash, refusing or skipping outside a git checkout, the stderr contract by example, and `scripts/tests/lib.sh` |
 | `running-the-app` | seeing a change work in the real app: `just run` and confirming the running process is the fresh build, reading `just logs`, screenshotting a window, a throwaway XCUITest, the human hand-off for a TCC prompt, and the evidence a PR then carries |
 | `integrating-system-apis` | calling a macOS system API from `MyAppPlatform`: choosing the mechanism (`CGEventTap`, `AXObserver`, a Carbon hotkey), a C callback's refcon and teardown under Swift 6 strict concurrency, TCC-gated permissions (Accessibility, Input Monitoring, Screen Recording), and what can be tested where |
+| `designing-core-logic` | shaping logic in `MyAppCore`: injecting time (`Clock`, a `() -> Date`), `Locale`, and a `RandomNumberGenerator`; one `Tuning` type for tunables; action-shaped `@Observable` view models; and the patterns deliberately not adopted |
 | `starting-an-app` | turning this template into a new app: `scripts/bootstrap.sh`'s rename, what the new repository keeps, its `just labels` and `just ruleset` setup, choosing the app shape (windowed or menu-bar agent), and deciding the sandbox posture |
 | `shipping-issues` | shipping the open issue backlog: ranking issues by `priority: P0`-`P3`, implementing the top one, reviewing it with `/code-review`, and taking its PR through CI to merge |
 
@@ -240,6 +242,14 @@ Only what is mechanically decidable is blocked at commit time; whether a commit
 what is checked: the pre-commit hook's "Staged guard" section (`scripts/check-staged.sh`)
 refuses a secret-shaped staged path or credential-shaped staged content.
 
+Never read a secret-shaped file, even to check it: `.env` or `.env.*` (the
+`.example`/`.sample`/`.template` samples excepted), anything under a `secrets/`
+directory, `*.p12`, `*.pfx`, `*.p8`, `*.provisionprofile`, `*.mobileprovision`,
+`*.keychain`/`*.keychain-db`, `*key*.pem`, `private-key.*`, `.netrc`,
+`credentials.json`, `secrets.json`, and `Config/Local.xcconfig`. This is the same list
+`scripts/guard/paths.sh` refuses to commit, so the read rule and the commit guard
+agree; if a task seems to need one, ask the human for the non-secret fact instead.
+
 Get a human's sign-off before acting on any of these. No file in this repository
 blocks them mechanically today — this section is the rule itself, not a description
 of a check that enforces it.
@@ -249,6 +259,10 @@ of a check that enforces it.
   notarization, or release secret. Creating your own `Config/Local.xcconfig` is not
   such a change: it is gitignored, never committed, and changes nobody else's build.
 - Creating or pushing a release tag.
+- Editing `.claude/settings.local.json`, or a user-level settings file such as
+  `~/.claude/settings.json`: an agent adding an `allow` rule there widens its own
+  permissions, and neither file is committed, so no review ever sees it. The committed
+  `.claude/settings.json` is reviewed in its pull request like any other file.
 - Adding a new package dependency — see the dependency policy in
   `.claude/rules/project.md`.
 - Weakening any gate: lowering the coverage floor, disabling or relaxing a SwiftLint
@@ -292,6 +306,34 @@ None of them covers anything else in the list above: a force push or other histo
 rewrite, `--no-verify`, weakening a gate, entitlements or signing, a release tag, a
 new dependency, `just labels`, or `just ruleset`. A skill that reaches one of those
 stops and asks.
+
+### What no local gate sees
+
+Every local layer can be skipped, so these reach `main` only if CI or GitHub stops them
+(see "Enforcement layers" for the gaps each one leaves):
+
+- `git commit --no-verify`, a clone where `just install` never ran, or a commit made
+  outside this checkout's hooks — the pre-commit hook and staged guard never run.
+- An edit made through GitHub's web UI or API, which touches no local hook.
+- A secret inside a file whose path and content pattern the guard does not know.
+- Any tool other than Claude Code: `.claude/settings.json` binds nothing else.
+
+### GitHub settings a new repository must enable
+
+"Use this template" copies files, not settings, so a repository's admin turns these on
+once under Settings › Advanced Security (Code security on older UIs):
+
+- **Secret scanning** and **Push protection** — the server-side layer for secrets that
+  the staged guard misses or a bypass skips; push protection blocks a detected secret
+  at `git push`.
+- **Private vulnerability reporting** — `SECURITY.md` sends reporters to a private
+  security advisory, which this setting enables.
+- **Dependabot alerts** — `.github/dependabot.yml` configures version updates; alerts
+  for known-vulnerable dependencies are a separate switch.
+- The `main` ruleset, applied by `just ruleset`. `.github/rulesets/main.json`
+  deliberately lists no `bypass_actors`: a bypass lets an admin, or an agent acting
+  with an admin's token, merge without the PR and green checks the ruleset exists to
+  require, and an emergency change can still go through a PR.
 
 ## Repository scripts
 
@@ -355,7 +397,7 @@ The rules in this file are enforced by these layers, from mechanical to procedur
 | `scripts/verify-hooks.sh` (`just install`'s last step, and `just check`'s first) | `just install` and `just check` | anyone who runs either | git resolves the hooks directory to `.githooks/` and `.githooks/pre-commit` is executable — skips under CI or the `ALLOW_MISSING_GIT_HOOKS` opt-out |
 | `scripts/check-staged.sh` (the hook's "Staged guard" section; the rules live in `scripts/guard/`) | `git commit` when any change is staged, with or without a Swift file | anyone who ran `just install` | no obviously secret-shaped path (`.env*`, `secrets/`, signing material, `Config/Local.xcconfig`) or credential-shaped content (private-key header, GitHub token, AWS access key id) lands in a commit; staged deletions are never inspected |
 | `scripts/sync-agents.sh --check` (the hook's "Skills mirror" section, `just lint`, and CI's `lint` job) | `git commit` when a staged path is under `.agents/skills/` or `.claude/skills/`; unconditionally on `just lint` and CI | every author | `.agents/skills/` and `.claude/skills/` stay byte-identical |
-| `scripts/checks/run-all.sh` (`just check-harness`, part of `just check` before `just test`) | `just check-harness`, `just check`, and CI's `lint` job | every author | the harness's claims about itself stay true — every `just <recipe>` in this file exists, every workflow has a top-level `permissions:` and every non-local `uses:` (workflows and composite actions) is pinned to a full SHA with a `# v…` comment, every skill's frontmatter is exactly a matching `name` and a `description`, the Skills table matches `.agents/skills/`, every `Bash(just <recipe>…)` rule in `.claude/settings.json` names a recipe the justfile defines, and the `## Product` section above stays a `TODO:` skeleton here while `project.yml` still names the template's app-name placeholder and holds no `TODO:` marker once `scripts/bootstrap.sh` has renamed this into an app |
+| `scripts/checks/run-all.sh` (`just check-harness`, part of `just check` before `just test`) | `just check-harness`, `just check`, and CI's `lint` job | every author | the harness's claims about itself stay true — every `just <recipe>` in this file exists, every workflow has a top-level `permissions:` and every non-local `uses:` (workflows and composite actions) is pinned to a full SHA with a `# v…` comment, every skill's frontmatter is exactly a matching `name` and a `description`, no `SKILL.md` sits below a skill's top directory and every skill's `description` is printable ASCII, at most 1,024 characters, and free of unquoted values Codex CLI's YAML parser rejects, the Skills table matches `.agents/skills/`, every `Bash(just <recipe>…)` rule in `.claude/settings.json` names a recipe the justfile defines, and the `## Product` section above stays a `TODO:` skeleton here while `project.yml` still names the template's app-name placeholder and holds no `TODO:` marker once `scripts/bootstrap.sh` has renamed this into an app |
 | `.claude/settings.json` — its only two top-level keys, `permissions` and `hooks` | every tool call Claude Code makes in this checkout | Claude Code only — Codex CLI and a human read nothing here | the routine local loop runs without a prompt: the `just` recipes that read, build, or test, `swift build`/`swift test`, and read-only `gh` (`gh issue view`/`list`, `gh pr view`/`list`/`checks`/`diff`, `gh run view`/`list`). Everything that writes beyond the working tree is deliberately absent from `allow` — `just labels`, `just ruleset`, `just release-prep`, `just reset-permissions`, `just install` (it writes `core.hooksPath` and installs tools), `just clean` (it deletes the generated project and the build artifacts), `git push`, `gh pr create`, `gh pr merge`, `gh issue create` — so it still stops for the sign-off "Security and human approval" asks for; `just logs` is absent for a different reason, that it streams until Ctrl-C and would hang an unattended call. `deny` refuses `git commit --no-verify`/`-n`, a force push, and an edit to `App/*.entitlements`; JSON carries no comments, so read the deny list as five groups — `--no-verify`, `-n`, `--force`/`-f`, `--force-with-lease` with and without `=<ref>`, and a `+refspec` push, each written in the leading, trailing, and mid-command position. It is a prompt policy, not a boundary: a deny rule matches the command text Claude Code writes, so another spelling — `git -C . push --force`, `bash -c '…'`, or a bundled short flag such as `git commit -anm "…"`, which no text rule can decompose — is not stopped by it, and none of this constrains a human at a shell. `hooks` holds one `PostToolUse` hook that runs `swiftformat .` after every `Edit`/`Write`, a convenience that formats an agent's edit on this host only — the git hook, not it, is the gate. The file registers no plugin marketplace and enables no plugin: skills ship in-repo under `.agents/skills/` |
 | CI's `lint`, `test`, and `app` jobs (`.github/workflows/ci.yml`) | push to `main` and every pull request | everyone | the full gate: `scripts/lint.sh` (format, lint, shellcheck, actionlint, typos, the skills-mirror check), the script tests (`scripts/tests/run.sh`), the harness checks (`scripts/checks/run-all.sh`), tests with the coverage floor, build, UI test, and Release smoke |
 | This file | read at session start | every agent | everything else — the reasons behind the rules above |
