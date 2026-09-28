@@ -321,6 +321,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
+  (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
+  fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
+- `scripts/tests/lib.sh` now unsets every exported `GIT_*` variable, not a fixed five,
+  so `GIT_CONFIG_*`, `GIT_CEILING_DIRECTORIES` and the like no longer leak into fixture
+  repositories; the new `scripts/tests/lib_test.sh` asserts none remain.
+
 - `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
   (its own header, `README.md`'s "Using This Template" paragraph, and the
   `starting-an-app` skill), which read as nonsense after the rename: lines between a keep-begin
