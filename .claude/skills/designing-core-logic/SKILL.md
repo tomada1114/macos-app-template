@@ -102,7 +102,8 @@ only when the answer really comes from an OS framework Core may not import.
 
 - Every number someone might want to tweak — a delay, a threshold, a limit, a retry
   count — lives in one `public struct Tuning: Sendable, Equatable` in `MyAppCore` with a
-  `static let default`, never as a literal scattered through method bodies.
+  `` static let `default` `` (the backticks are required: `default` is a keyword), never
+  as a literal scattered through method bodies.
 - Types take a `Tuning` in their initializer (defaulting to `.default`), so a test
   passes a tiny delay or a low limit to reach a boundary quickly.
 - Durations are `Duration`, not `TimeInterval`; counts are `Int`. A doc comment on each
