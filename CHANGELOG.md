@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Private-repository setup steps in `README.md` "Using This Template" and the
+  `starting-an-app` skill (`references/private-repository.md`): which workflows to
+  delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
+  remove, and the `Dependency Review` required context to drop before `just ruleset`.
+
 - A "Removing the example code" checklist in `docs/getting-started.md` covering the
   counter and the `FrontmostApp` port/adapter (port, view model, adapter, fake,
   local-machine test, `AppLog.frontmostApp`, the `ContentView` row, the composition
