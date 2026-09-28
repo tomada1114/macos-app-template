@@ -10,8 +10,6 @@ description: >-
   dependency order, independent ones implemented in parallel git worktrees, with PR, CI
   and merge still serialized. Use when asked to ship the remaining issues, take on the
   next issue, or clear the ticket backlog.
-argument-hint: "[all | <issue number> | (empty = one issue)] [parallel N]"
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*.py:*), Bash(${CLAUDE_SKILL_DIR}/scripts/*.sh:*)
 ---
 
 # Shipping Issues
