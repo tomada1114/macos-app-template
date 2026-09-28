@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A "Removing the example code" checklist in `docs/getting-started.md` covering the
+  counter and the `FrontmostApp` port/adapter (port, view model, adapter, fake,
+  local-machine test, `AppLog.frontmostApp`, the `ContentView` row, the composition
+  root, and the docs that cite it), linked from `README.md`, the `starting-an-app`
+  skill, and `scripts/bootstrap.sh`'s next steps.
+
 - `AGENTS.md`'s "Security and human approval" now lists the concrete Swift and CI
   forms of weakening a gate (`// swiftlint:disable`, `// swiftformat:disable`,
   `@unchecked Sendable` / `nonisolated(unsafe)`, `.disabled`/`withKnownIssue`,
@@ -283,6 +289,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new `ERR_TESTS_INTERRUPTED`; `scripts/tests/run_test.sh` now covers the runner itself
 
 ### Fixed
+
+- `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
+  (its own header, `README.md`'s "Using This Template" paragraph, and the
+  `starting-an-app` skill), which read as nonsense after the rename: lines between a keep-begin
+  and a keep-end marker comment are skipped. CI's
+  `bootstrap-smoke` asserts the kept passages survive and ignores them in its leftover
+  check. The script's next steps now match `README.md`'s list.
 
 - `shipping-issues`' `ci_watch.sh` now enforces `--timeout` on stock macOS, which has
   neither `timeout` nor `gtimeout`; the watch used to run unbounded there.
