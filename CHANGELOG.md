@@ -12,6 +12,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `just test-scripts` (and so CI's `lint` job) now runs the Python `unittest` suite
   under `.agents/skills/shipping-issues/scripts/tests/`, through the new
   `scripts/tests/skill-scripts_test.sh`, with `PYTHONDONTWRITEBYTECODE=1`.
+- `AGENTS.md`'s "Security and human approval" now lists the concrete Swift and CI
+  forms of weakening a gate (`// swiftlint:disable`, `// swiftformat:disable`,
+  `@unchecked Sendable` / `nonisolated(unsafe)`, `.disabled`/`withKnownIssue`,
+  coverage excludes, loosened assertions, `continue-on-error`) and forbids re-spelling
+  a denied command (`git -C .`, `bash -c`, bundled flags): stop and ask instead.
+- An Architecture Decision Record tree for apps cut from the template:
+  `docs/architecture/README.md` (the index, shipped empty, with the status legend and
+  how an ADR changes) and `docs/architecture/adr/template.md`. `AGENTS.md`'s new
+  "Before changing the architecture" section names the changes that owe an ADR — a new
+  target or port, the app shape, the sandbox posture, persistence, a new dependency,
+  distribution, `deploymentTarget`, a TCC permission — and a
+  `recording-architecture-decisions` skill sets out when one is owed, its statuses
+  (an Accepted ADR takes small, dated "Amended" corrections; a replaced decision gets
+  a new ADR and the old one becomes Superseded), and its fact discipline: every
+  external claim carries a URL and a checked date. The template's own reasoning stays
+  in README's Design Philosophy.
+- `.claude/agents/executor.md`, `architect.md`, and `worker.md`: named Claude Code
+  sub-agent tiers (Opus low, Opus high, Sonnet medium) a skill can hand a step to,
+  documented in `AGENTS.md` › Sub-agents with the Codex CLI fallback of running the
+  step inline.
 - `blocked: external`, `on hold`, and `tracking` labels in `.github/labels.yml`,
   defined in `triaging-issues`: an issue only a person can move forward, work parked
   on purpose, and a tracking issue whose sub-issues carry the work. `shipping-issues`
@@ -264,6 +284,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kills the files it started (a background job in a non-interactive shell ignores
   SIGINT) and prints every log it had not reported yet, marked `(interrupted)`, with a
   new `ERR_TESTS_INTERRUPTED`; `scripts/tests/run_test.sh` now covers the runner itself
+
+### Removed
+
+- The committed `.claude/settings.json` no longer registers the owner's personal
+  plugin marketplace or enables a plugin from it for everyone who opens the
+  repository; it keeps only `permissions` and `hooks`, and `AGENTS.md`'s Enforcement
+  layers row now describes both.
 
 ### Fixed
 

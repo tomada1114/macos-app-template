@@ -27,8 +27,9 @@ answer to "is this in scope?". Fill in every `TODO:` below right after the renam
   line an eager implementer crosses first: moving anything from here to a goal is a
   human's decision, not an implementer's.
 - **Where these decisions are recorded** — TODO: where the reasoning behind the three
-  entries above lives (a `docs/` file, a design issue, a decision log), so a reader can
-  find why and not only what.
+  entries above lives — an ADR under `docs/architecture/` (see "Before changing the
+  architecture"), a design issue, or another decision log — so a reader can find why
+  and not only what.
 
 ## Quick Reference
 
@@ -144,6 +145,30 @@ Config/Debug.xcconfig       # Debug-only build settings project.yml cannot expre
   by `.swiftlint.yml`'s `no_print_in_sources` (`.claude/rules/swift.md` › Logging)
 - `MyApp.xcodeproj` is generated — edit `project.yml` instead
 
+## Before changing the architecture
+
+An app cut from this template records its architecture decisions as ADRs under
+`docs/architecture/` — start at its `README.md`, the index, whose statuses say what is
+decided and what is only proposed. `docs/architecture.md` describes the layers every app
+starts with; the ADRs record what the app decided on top of them. A change to any of
+these owes an ADR, as `recording-architecture-decisions` sets out:
+
+- a new target (`project.yml`, `Package.swift`) or a new Core port;
+- the app shape — a windowed app or a menu-bar agent;
+- the sandbox posture — the App Sandbox on or off, or a new entitlement;
+- persistence — where and in what format the app keeps state;
+- a new dependency;
+- distribution — the Mac App Store, Developer ID with notarization, an in-app updater;
+- `deploymentTarget` in `project.yml`, with `platforms:` in `Package.swift`;
+- a TCC permission — Accessibility, Input Monitoring, Screen Recording, or any other
+  privacy grant.
+
+An agent writes an ADR as Proposed; only a human accepts it. An ADR records reasoning and
+grants nothing: an entitlement, a signing change, or a new dependency still needs the
+sign-off "Security and human approval" asks for. The template repository ships the index
+empty — its own reasoning lives in `README.md`'s Design Philosophy, and ADRs belong to
+the apps cut from it.
+
 ## Skills
 
 Each skill owns one kind of change. Load the one whose subject you are working on.
@@ -172,6 +197,7 @@ tool that sees the generated copy rather than the authored one:
 | `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, and the `Depends on #N` convention |
 | `authoring-skills` | adding, editing, or reviewing a skill: authoring under `.agents/skills/`, the `just agents-sync` mirror, frontmatter, layout, and size limits |
 | `updating-docs` | deciding whether a change owes a documentation update and which surface it lands on: `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/*.md`, a skill, or a `///` comment |
+| `recording-architecture-decisions` | the ADR tree under `docs/architecture/`: whether a change owes an ADR (a target or port, app shape, sandbox posture, persistence, a dependency, distribution, `deploymentTarget`, a TCC permission), an ADR's statuses, amending versus superseding, and fact discipline — every external claim with a URL and a checked date |
 | `writing-repo-scripts` | writing or testing a shell script under `scripts/`, `.githooks/pre-commit`, or `scripts/tests/`: why bash, refusing or skipping outside a git checkout, the stderr contract by example, and `scripts/tests/lib.sh` |
 | `running-the-app` | seeing a change work in the real app: `just run` and confirming the running process is the fresh build, reading `just logs`, screenshotting a window, a throwaway XCUITest, the human hand-off for a TCC prompt, and the evidence a PR then carries |
 | `integrating-system-apis` | calling a macOS system API from `MyAppPlatform`: choosing the mechanism (`CGEventTap`, `AXObserver`, a Carbon hotkey), a C callback's refcon and teardown under Swift 6 strict concurrency, TCC-gated permissions (Accessibility, Input Monitoring, Screen Recording), and what can be tested where |
@@ -189,6 +215,23 @@ matching its `paths:` globs.
 | `.claude/rules/docs.md` | `docs/**/*.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` |
 | `.claude/rules/swift.md` | `Packages/**/*.swift`, `App/**/*.swift` |
 | `.claude/rules/testing.md` | `Packages/**/Tests/**`, `LaunchUITests/**` |
+
+### Sub-agents
+
+`.claude/agents/` defines three named sub-agent tiers a skill or session can hand a
+step to by name (for example `subagent_type: executor`), each pinned to a model alias
+(`opus`/`sonnet`, never a dated model ID, so the definitions do not go stale) and an
+effort level:
+
+| Agent | Model / effort | Takes |
+|---|---|---|
+| `executor` | `opus` / low | a settled spec with a clear pass/fail: implementation, tests, getting a check green, bulk edits, research that only collects |
+| `architect` | `opus` / high | complex multi-file implementation, design judgment, review and bug finding, synthesis, a spec that still has holes |
+| `worker` | `sonnet` / medium | single-shot, tool-free writing or checking from a complete brief |
+
+These are Claude Code-only: like `.claude/rules/`, they are not mirrored, and Codex CLI
+reads nothing under `.claude/agents/`. Under Codex CLI, a step a skill hands to one of
+these agents runs inline in the main session instead.
 
 ## Security and human approval
 
@@ -210,7 +253,19 @@ of a check that enforces it.
   `.claude/rules/project.md`.
 - Weakening any gate: lowering the coverage floor, disabling or relaxing a SwiftLint
   rule, or widening a workflow's `permissions:`. If a gate looks wrong, say so and let
-  a human decide.
+  a human decide. In this repository that also means any of these, when used to make
+  a failing check pass:
+  - `// swiftlint:disable` (including `:next` and `:this`) or `// swiftformat:disable`,
+    or adding a path to `.swiftlint.yml`'s or `.swiftformat`'s excludes
+  - `@unchecked Sendable` or `nonisolated(unsafe)` to silence a concurrency diagnostic
+  - `.disabled(…)` or `withKnownIssue` on a failing test
+  - excluding a file or target from coverage (`scripts/coverage.sh`)
+  - deleting an assertion, or loosening one (`#expect`, `#require`) until it passes
+  - `continue-on-error` on a CI job or step, or `git commit --no-verify`
+- Working around a denied command. When a command is denied — by
+  `.claude/settings.json`, a hook, or a human — re-spelling it (`git -C . …`,
+  `bash -c '…'`, bundled short flags such as `-anm`, an alias or script wrapper) is
+  forbidden. Stop and ask.
 - Any write to a remote: `git push`, `gh pr create`, or any other remote write that
   is not performed by a script this repository ships. `scripts/sync-labels.sh`
   (`just labels`) is such a script for labels: it only ever creates or updates a
@@ -301,7 +356,7 @@ The rules in this file are enforced by these layers, from mechanical to procedur
 | `scripts/check-staged.sh` (the hook's "Staged guard" section; the rules live in `scripts/guard/`) | `git commit` when any change is staged, with or without a Swift file | anyone who ran `just install` | no obviously secret-shaped path (`.env*`, `secrets/`, signing material, `Config/Local.xcconfig`) or credential-shaped content (private-key header, GitHub token, AWS access key id) lands in a commit; staged deletions are never inspected |
 | `scripts/sync-agents.sh --check` (the hook's "Skills mirror" section, `just lint`, and CI's `lint` job) | `git commit` when a staged path is under `.agents/skills/` or `.claude/skills/`; unconditionally on `just lint` and CI | every author | `.agents/skills/` and `.claude/skills/` stay byte-identical |
 | `scripts/checks/run-all.sh` (`just check-harness`, part of `just check` before `just test`) | `just check-harness`, `just check`, and CI's `lint` job | every author | the harness's claims about itself stay true — every `just <recipe>` in this file exists, every workflow has a top-level `permissions:` and every non-local `uses:` (workflows and composite actions) is pinned to a full SHA with a `# v…` comment, every skill's frontmatter is exactly a matching `name` and a `description`, the Skills table matches `.agents/skills/`, every `Bash(just <recipe>…)` rule in `.claude/settings.json` names a recipe the justfile defines, and the `## Product` section above stays a `TODO:` skeleton here while `project.yml` still names the template's app-name placeholder and holds no `TODO:` marker once `scripts/bootstrap.sh` has renamed this into an app |
-| `.claude/settings.json`'s `permissions` block | every tool call Claude Code makes in this checkout | Claude Code only — Codex CLI and a human read nothing here | the routine local loop runs without a prompt: the `just` recipes that read, build, or test, `swift build`/`swift test`, and read-only `gh` (`gh issue view`/`list`, `gh pr view`/`list`/`checks`/`diff`, `gh run view`/`list`). Everything that writes beyond the working tree is deliberately absent from `allow` — `just labels`, `just ruleset`, `just release-prep`, `just reset-permissions`, `just install` (it writes `core.hooksPath` and installs tools), `just clean` (it deletes the generated project and the build artifacts), `git push`, `gh pr create`, `gh pr merge`, `gh issue create` — so it still stops for the sign-off "Security and human approval" asks for; `just logs` is absent for a different reason, that it streams until Ctrl-C and would hang an unattended call. `deny` refuses `git commit --no-verify`/`-n`, a force push, and an edit to `App/*.entitlements`; JSON carries no comments, so read the deny list as five groups — `--no-verify`, `-n`, `--force`/`-f`, `--force-with-lease` with and without `=<ref>`, and a `+refspec` push, each written in the leading, trailing, and mid-command position. It is a prompt policy, not a boundary: a deny rule matches the command text Claude Code writes, so another spelling — `git -C . push --force`, `bash -c '…'`, or a bundled short flag such as `git commit -anm "…"`, which no text rule can decompose — is not stopped by it, and none of this constrains a human at a shell |
+| `.claude/settings.json` — its only two top-level keys, `permissions` and `hooks` | every tool call Claude Code makes in this checkout | Claude Code only — Codex CLI and a human read nothing here | the routine local loop runs without a prompt: the `just` recipes that read, build, or test, `swift build`/`swift test`, and read-only `gh` (`gh issue view`/`list`, `gh pr view`/`list`/`checks`/`diff`, `gh run view`/`list`). Everything that writes beyond the working tree is deliberately absent from `allow` — `just labels`, `just ruleset`, `just release-prep`, `just reset-permissions`, `just install` (it writes `core.hooksPath` and installs tools), `just clean` (it deletes the generated project and the build artifacts), `git push`, `gh pr create`, `gh pr merge`, `gh issue create` — so it still stops for the sign-off "Security and human approval" asks for; `just logs` is absent for a different reason, that it streams until Ctrl-C and would hang an unattended call. `deny` refuses `git commit --no-verify`/`-n`, a force push, and an edit to `App/*.entitlements`; JSON carries no comments, so read the deny list as five groups — `--no-verify`, `-n`, `--force`/`-f`, `--force-with-lease` with and without `=<ref>`, and a `+refspec` push, each written in the leading, trailing, and mid-command position. It is a prompt policy, not a boundary: a deny rule matches the command text Claude Code writes, so another spelling — `git -C . push --force`, `bash -c '…'`, or a bundled short flag such as `git commit -anm "…"`, which no text rule can decompose — is not stopped by it, and none of this constrains a human at a shell. `hooks` holds one `PostToolUse` hook that runs `swiftformat .` after every `Edit`/`Write`, a convenience that formats an agent's edit on this host only — the git hook, not it, is the gate. The file registers no plugin marketplace and enables no plugin: skills ship in-repo under `.agents/skills/` |
 | CI's `lint`, `test`, and `app` jobs (`.github/workflows/ci.yml`) | push to `main` and every pull request | everyone | the full gate: `scripts/lint.sh` (format, lint, shellcheck, actionlint, typos, the skills-mirror check), the script tests (`scripts/tests/run.sh`), the harness checks (`scripts/checks/run-all.sh`), tests with the coverage floor, build, UI test, and Release smoke |
 | This file | read at session start | every agent | everything else — the reasons behind the rules above |
 
