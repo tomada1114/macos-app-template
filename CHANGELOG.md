@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- An Architecture Decision Record tree for apps cut from the template:
+  `docs/architecture/README.md` (the index, shipped empty, with the status legend and
+  how an ADR changes) and `docs/architecture/adr/template.md`. `AGENTS.md`'s new
+  "Before changing the architecture" section names the changes that owe an ADR — a new
+  target or port, the app shape, the sandbox posture, persistence, a new dependency,
+  distribution, `deploymentTarget`, a TCC permission — and a
+  `recording-architecture-decisions` skill sets out when one is owed, its statuses
+  (an Accepted ADR takes small, dated "Amended" corrections; a replaced decision gets
+  a new ADR and the old one becomes Superseded), and its fact discipline: every
+  external claim carries a URL and a checked date. The template's own reasoning stays
+  in README's Design Philosophy.
 - `blocked: external`, `on hold`, and `tracking` labels in `.github/labels.yml`,
   defined in `triaging-issues`: an issue only a person can move forward, work parked
   on purpose, and a tracking issue whose sub-issues carry the work. `shipping-issues`
