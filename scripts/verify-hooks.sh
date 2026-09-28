@@ -67,25 +67,28 @@ fail() { # fail <code> <what failed> <expected> <actual> <next>
 # config, an unreadable .git, a dubious-ownership refusal) is a broken git, not
 # an absent one, and must fail rather than pass silently. LC_ALL=C pins git's
 # message to English so the match does not depend on the caller's locale.
+# git's answer ("true"/"false") decides first, whatever the exit code, so a git
+# that answers and then exits nonzero is still read by its answer.
 INSIDE_EXIT=0
 INSIDE_OUT=$(LC_ALL=C git rev-parse --is-inside-work-tree 2>&1) || INSIDE_EXIT=$?
-if [ "${INSIDE_EXIT}" -ne 0 ]; then
-    case "${INSIDE_OUT}" in
-        *"not a git repository"*)
-            echo "verify-hooks: not inside a git work tree; not checking the pre-commit hook."
-            exit 0
-            ;;
-    esac
-    fail ERR_HOOKS_GIT_FAILED \
-        "\`git rev-parse --is-inside-work-tree\` failed for a reason other than \"not a git repository\"" \
-        "git either answers, or reports \"not a git repository\"" \
-        "exit ${INSIDE_EXIT}: $(printf '%s' "${INSIDE_OUT}" | head -n 1)" \
-        "run \`git rev-parse --is-inside-work-tree\` here and fix what it reports (often a malformed .git/config or ~/.gitconfig)."
-fi
-if [ "${INSIDE_OUT}" != "true" ]; then
-    echo "verify-hooks: not inside a git work tree; not checking the pre-commit hook."
-    exit 0
-fi
+case "${INSIDE_OUT}" in
+    true) ;;
+    false)
+        echo "verify-hooks: not inside a git work tree; not checking the pre-commit hook."
+        exit 0
+        ;;
+    *"not a git repository"*)
+        echo "verify-hooks: not inside a git work tree; not checking the pre-commit hook."
+        exit 0
+        ;;
+    *)
+        fail ERR_HOOKS_GIT_FAILED \
+            "\`git rev-parse --is-inside-work-tree\` failed for a reason other than \"not a git repository\"" \
+            "git either answers, or reports \"not a git repository\"" \
+            "exit ${INSIDE_EXIT}: $(printf '%s' "${INSIDE_OUT}" | head -n 1)" \
+            "run \`git rev-parse --is-inside-work-tree\` here and fix what it reports (often a malformed .git/config or ~/.gitconfig)."
+        ;;
+esac
 
 TOPLEVEL=$(git rev-parse --show-toplevel)
 EXPECTED_DIR="${TOPLEVEL}/.githooks"
