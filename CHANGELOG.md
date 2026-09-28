@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `changing-gates` records why `.githooks/pre-commit` stays lint-only (no
+  formatting, compiling, or related tests).
+
 - Private-repository setup steps in `README.md` "Using This Template" and the
   `starting-an-app` skill (`references/private-repository.md`): which workflows to
   delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
