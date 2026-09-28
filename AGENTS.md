@@ -39,7 +39,7 @@ just fmt       # Format code (swiftformat)
 just fix       # Format, auto-fix SwiftLint violations, then run just lint
 just lint      # Lint (scripts/lint.sh: swiftformat --lint + swiftlint --strict + shellcheck + actionlint + typos)
 just verify-hooks  # Verify the git hooks are installed and executable (scripts/verify-hooks.sh)
-just test-scripts  # Run the plain-bash tests for scripts/ (scripts/tests/run.sh)
+just test-scripts  # Run the plain-bash tests for scripts/ and the skills' Python suites (scripts/tests/run.sh)
 just check-harness # Re-assert the harness's claims about itself (scripts/checks/run-all.sh)
 just test      # Run tests with the 80% coverage floor on MyAppCore
 just test-fast CounterTests  # Run only the matching tests, no coverage floor (iteration only)

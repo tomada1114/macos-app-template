@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `just test-scripts` (and so CI's `lint` job) now runs the Python `unittest` suite
+  under `.agents/skills/shipping-issues/scripts/tests/`, through the new
+  `scripts/tests/skill-scripts_test.sh`, with `PYTHONDONTWRITEBYTECODE=1`.
 - `blocked: external`, `on hold`, and `tracking` labels in `.github/labels.yml`,
   defined in `triaging-issues`: an issue only a person can move forward, work parked
   on purpose, and a tracking issue whose sub-issues carry the work. `shipping-issues`
