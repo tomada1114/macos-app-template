@@ -1,8 +1,8 @@
 ---
 name: shipping-issues
 description: >-
-  Rank open GitHub Issues by their `priority: P0`-`P3` labels — backfilling a missing
-  label from how much an issue unblocks and how far its impact spreads — then implement
+  Rank open GitHub Issues by their `priority: P0`-`P3` labels - backfilling a missing
+  label from how much an issue unblocks and how far its impact spreads - then implement
   the top one, review the branch locally with /code-review, open a PR that auto-closes
   the issue (Closes #N), watch CI to green, merge with no approval pause, and return the
   checkout to the default branch. With no argument it ships the highest-priority issue
