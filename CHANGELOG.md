@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The `triaging-issues` skill's "Requests from daily use" section: a friction or
+  idea raised while using the app is filed now, parked as `on hold` with its reason,
+  or dropped with the reason stated, and a parked issue is promoted or closed only by
+  a decision.
+
 - Private-repository setup steps in `README.md` "Using This Template" and the
   `starting-an-app` skill (`references/private-repository.md`): which workflows to
   delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
