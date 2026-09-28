@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ERR_CHECK_SKILL_DESCRIPTION`). The em-dashes in the `changing-gates`,
   `integrating-system-apis`, `shipping-issues`, and `starting-an-app` descriptions are
   now ASCII hyphens.
+- A "Removing the example code" checklist in `docs/getting-started.md` covering the
+  counter and the `FrontmostApp` port/adapter (port, view model, adapter, fake,
+  local-machine test, `AppLog.frontmostApp`, the `ContentView` row, the composition
+  root, and the docs that cite it), linked from `README.md`, the `starting-an-app`
+  skill, and `scripts/bootstrap.sh`'s next steps.
+
 - `just test-scripts` (and so CI's `lint` job) now runs the Python `unittest` suite
   under `.agents/skills/shipping-issues/scripts/tests/`, through the new
   `scripts/tests/skill-scripts_test.sh`, with `PYTHONDONTWRITEBYTECODE=1`.
@@ -245,6 +251,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `shipping-issues` is adapted to this template: its `SKILL.md` fits the
+  `authoring-skills` 200-line budget (step detail moved to
+  `references/implement-and-review.md` and `references/pr-ci-merge.md`), and the
+  whole skill tree is English-only ASCII. Every spawn names a `.claude/agents/` tier
+  (`executor`, `architect`, `worker`) instead of a bare model, a resume goes to the
+  still-running agent via `SendMessage`, and Codex CLI runs each step inline. It
+  reviews every branch at `/code-review medium`, watches CI in the background (or in
+  the foreground under the Bash tool's 600-second cap), clears `blocked: dependency`
+  right after each merge as `triaging-issues` requires, and sends back a user-facing
+  change that lacks a `CHANGELOG.md` entry. `worktree_setup.sh` copies
+  `Config/Local.xcconfig` into each worktree, and `preflight.sh` prefers a justfile
+  recipe (`just check`) over any `package.json` or Makefile target
 - `just run` relaunches the build it just made instead of activating an old process:
   `scripts/run-app.sh` quits every running instance of this app — matched by bundle
   identifier, never by process name — and waits for it to exit, bounded, reporting a
@@ -301,6 +319,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
+  (its own header, `README.md`'s "Using This Template" paragraph, and the
+  `starting-an-app` skill), which read as nonsense after the rename: lines between a keep-begin
+  and a keep-end marker comment are skipped. CI's
+  `bootstrap-smoke` asserts the kept passages survive and ignores them in its leftover
+  check. The script's next steps now match `README.md`'s list.
+
+- CI runs of pushes to `main` no longer cancel each other: `.github/workflows/ci.yml`
+  groups push runs by commit SHA and cancels in progress only for a superseded pull
+  request run, so two quick merges each finish their run.
 - `shipping-issues`' `ci_watch.sh` now enforces `--timeout` on stock macOS, which has
   neither `timeout` nor `gtimeout`; the watch used to run unbounded there.
 - `shipping-issues`' Python scripts no longer write `__pycache__/` into the
