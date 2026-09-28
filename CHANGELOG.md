@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A `designing-errors` skill: error enums in `MyAppCore`, typed `throws(E)` only where
+  a caller switches on the cases, no user data in error payloads or log lines,
+  `CancellationError` propagated rather than swallowed, and how a `MyAppPlatform`
+  adapter maps `OSStatus`, `NSError`, and `AXError` into Core errors.
 - `AGENTS.md`'s "Security and human approval" now lists the concrete Swift and CI
   forms of weakening a gate (`// swiftlint:disable`, `// swiftformat:disable`,
   `@unchecked Sendable` / `nonisolated(unsafe)`, `.disabled`/`withKnownIssue`,
