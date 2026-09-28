@@ -316,6 +316,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
+  `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
+  running `swiftformat .` over the whole tree after every edit; non-Swift paths and files
+  outside the checkout are skipped, and a swiftformat failure is reported to the agent
+  rather than silenced.
 - `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
   (its own header, `README.md`'s "Using This Template" paragraph, and the
   `starting-an-app` skill), which read as nonsense after the rename: lines between a keep-begin
