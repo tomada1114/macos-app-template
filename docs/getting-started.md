@@ -93,8 +93,8 @@ That drops your own grants for it, so the next launch prompts from scratch.
 The template ships two examples, and both are illustrations for a new app to
 replace or delete — example code in a skill or a doc is likewise a sketch of
 the pattern, never something the app must keep. Work through this list after
-`scripts/bootstrap.sh` (paths below use the template's `MyApp` names; after the
-rename they carry your app's name), then run `just check`.
+`scripts/bootstrap.sh` (the paths below carry your app's name once it has run),
+then run `just check`.
 
 **The counter** (the app's single screen):
 

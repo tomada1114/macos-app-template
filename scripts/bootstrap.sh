@@ -23,7 +23,7 @@
 #
 # Passages that explain the placeholders (this header, README's "Using This
 # Template", the starting-an-app skill) sit between a keep-begin and a keep-end
-# marker line (each line containing "bootstrap:keep-" plus the word) and are never
+# marker line (KEEP_BEGIN and KEEP_END below spell them) and are never
 # rewritten, so they still read correctly after the rename.
 # bootstrap:keep-end
 set -euo pipefail
