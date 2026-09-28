@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `scripts/checks/ruleset-contexts.sh`, run by `just check-harness`: fails when a
+  required status-check context in `.github/rulesets/main.json` matches no job `name:`
+  (or id, when a job has none) in a workflow triggered on `pull_request`, so renaming a
+  CI job can no longer leave a required check that never reports and blocks every PR.
+  A `${{ … }}` expression in a job name matches any text; `pull_request_target` does
+  not count as a pull_request trigger.
 - `.claude/rules/project.md`'s Toolchain Pinning is now the one statement of the
   pin-bump policy: bot PRs (Dependabot `deps:`/`ci:`, Renovate `deps:`) after a 7-day
   cooldown, and `.xcode-version` as the single hand-bumped pin with the reason and
