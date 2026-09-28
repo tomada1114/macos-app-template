@@ -40,7 +40,7 @@ just fmt       # Format code (swiftformat)
 just fix       # Format, auto-fix SwiftLint violations, then run just lint
 just lint      # Lint (scripts/lint.sh: swiftformat --lint + swiftlint --strict + shellcheck + actionlint + typos)
 just verify-hooks  # Verify the git hooks are installed and executable (scripts/verify-hooks.sh)
-just test-scripts  # Run the plain-bash tests for scripts/ (scripts/tests/run.sh)
+just test-scripts  # Run the plain-bash tests for scripts/ and the skills' Python suites (scripts/tests/run.sh)
 just check-harness # Re-assert the harness's claims about itself (scripts/checks/run-all.sh)
 just test      # Run tests with the 80% coverage floor on MyAppCore
 just test-fast CounterTests  # Run only the matching tests, no coverage floor (iteration only)
@@ -87,7 +87,7 @@ job call.
 | `scripts/verify-hooks.sh` | `just lint`, then `just test-scripts`; `just verify-hooks` for the check itself |
 | A harness check under `scripts/checks/` (including the sourced `scripts/checks/lib.sh`) | `just lint`, then `just test-scripts`; `just check-harness` for the checks themselves |
 | A `just` recipe name, a workflow's `uses:` or `permissions:`, a skill's frontmatter, the Skills table, the `## Product` section, or `.claude/settings.json`'s `permissions` rules | `just check-harness` |
-| A skill under `.agents/skills/` | `just agents-sync`, then `just agents-check` and `just check-harness` |
+| A skill under `.agents/skills/` | `just agents-sync`, then `just agents-check` and `just check-harness`; `just test-scripts` too when the skill ships scripts (it runs their `scripts/tests/` unittest suite) |
 | A workflow under `.github/workflows/` | `just lint`, then `just check-harness` |
 | Markdown | `just lint` (its `typos` spell-check) |
 | `mise.toml` | `mise install`, then `just check` |
@@ -193,6 +193,7 @@ tool that sees the generated copy rather than the authored one:
 | `smart-commit` | committing and pushing changes: grouping them into Conventional Commits, excluding sensitive files |
 | `create-pr` | opening or updating a pull request: the `just check` pre-check, title, template, and checklist |
 | `tdd` | a behavior change in `MyAppCore`: writing a failing Swift Testing test before the implementation |
+| `designing-errors` | an `Error` type, a `throws`/`throws(E)` signature, a `do`/`catch`, or cancellation: Core error enums, typed throws, no user data in errors or logs, `CancellationError`, and mapping `OSStatus`/`NSError`/`AXError` in an adapter |
 | `changing-gates` | a file that enforces rather than implements: `.swiftlint.yml`, `.swiftformat`, `Package.swift`'s `strictSettings`, `mise.toml`, `.githooks/pre-commit`, `scripts/lint.sh`, `scripts/coverage.sh`, the `scripts/guard/` commit-time guard, or a workflow — and which gate would catch a change |
 | `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, and the `Depends on #N` convention |
 | `authoring-skills` | adding, editing, or reviewing a skill: authoring under `.agents/skills/`, the `just agents-sync` mirror, frontmatter, layout, and size limits |
