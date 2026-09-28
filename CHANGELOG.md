@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `.claude/rules/project.md`'s Toolchain Pinning is now the one statement of the
+  pin-bump policy: bot PRs (Dependabot `deps:`/`ci:`, Renovate `deps:`) after a 7-day
+  cooldown, and `.xcode-version` as the single hand-bumped pin with the reason and
+  procedure. The `changing-gates` skill, `mise.toml`, and `check-pr-title.yml` point to
+  it instead of contradicting it.
 - `just test-scripts` (and so CI's `lint` job) now runs the Python `unittest` suite
   under `.agents/skills/shipping-issues/scripts/tests/`, through the new
   `scripts/tests/skill-scripts_test.sh`, with `PYTHONDONTWRITEBYTECODE=1`.
