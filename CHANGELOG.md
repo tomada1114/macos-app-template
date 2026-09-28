@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A `designing-core-logic` skill: how `MyAppCore` logic is shaped — time (`Clock`,
+  an injected "now"), `Locale`, and a `RandomNumberGenerator` injected with a test
+  substitute for each, tunables in one `Tuning` type, action-shaped `@Observable` view
+  models, and a table of patterns deliberately not adopted, pointing at `README.md`'s
+  Design Philosophy and at an ADR for any app that adopts one.
 - `AGENTS.md`'s "Security and human approval" now lists the concrete Swift and CI
   forms of weakening a gate (`// swiftlint:disable`, `// swiftformat:disable`,
   `@unchecked Sendable` / `nonisolated(unsafe)`, `.disabled`/`withKnownIssue`,
