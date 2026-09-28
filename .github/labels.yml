@@ -54,3 +54,9 @@
 - name: "blocked: dependency"
   color: f9d0c4
   description: "Waits on a specific open issue named by a Depends on #N line."
+- name: "blocked: external"
+  color: d4c5f9
+  description: "Needs a step only a person can take (signing identity, Apple account, TCC grant); agents skip it."
+- name: "on hold"
+  color: ededed
+  description: "Not to be picked up: a tracking issue, or work parked on purpose."
