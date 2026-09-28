@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ERR_CHECK_SKILL_DESCRIPTION`). The em-dashes in the `changing-gates`,
   `integrating-system-apis`, `shipping-issues`, and `starting-an-app` descriptions are
   now ASCII hyphens.
+- A `designing-core-logic` skill: how `MyAppCore` logic is shaped — time (`Clock`,
+  an injected "now"), `Locale`, and a `RandomNumberGenerator` injected with a test
+  substitute for each, tunables in one `Tuning` type, action-shaped `@Observable` view
+  models, and a table of patterns deliberately not adopted, pointing at `README.md`'s
+  Design Philosophy and at an ADR for any app that adopts one.
+- A `designing-errors` skill: error enums in `MyAppCore`, typed `throws(E)` only where
+  a caller switches on the cases, no user data in error payloads or log lines,
+  `CancellationError` propagated rather than swallowed, and how a `MyAppPlatform`
+  adapter maps `OSStatus`, `NSError`, and `AXError` into Core errors.
 - A "Removing the example code" checklist in `docs/getting-started.md` covering the
   counter and the `FrontmostApp` port/adapter (port, view model, adapter, fake,
   local-machine test, `AppLog.frontmostApp`, the `ContentView` row, the composition
