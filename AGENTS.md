@@ -257,9 +257,10 @@ of a check that enforces it.
   notarization, or release secret. Creating your own `Config/Local.xcconfig` is not
   such a change: it is gitignored, never committed, and changes nobody else's build.
 - Creating or pushing a release tag.
-- Editing `.claude/settings.local.json` (or any settings file Claude Code reads): an
-  agent adding an `allow` rule there widens its own permissions, and the file is
-  gitignored, so no review ever sees it.
+- Editing `.claude/settings.local.json`, or a user-level settings file such as
+  `~/.claude/settings.json`: an agent adding an `allow` rule there widens its own
+  permissions, and neither file is committed, so no review ever sees it. The committed
+  `.claude/settings.json` is reviewed in its pull request like any other file.
 - Adding a new package dependency — see the dependency policy in
   `.claude/rules/project.md`.
 - Weakening any gate: lowering the coverage floor, disabling or relaxing a SwiftLint
