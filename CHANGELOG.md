@@ -16,6 +16,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   private vulnerability reporting, Dependabot alerts) and why the `main` ruleset has
   no bypass actor.
 
+- `.claude/rules/project.md`'s Toolchain Pinning is now the one statement of the
+  pin-bump policy: bot PRs (Dependabot `deps:`/`ci:`, Renovate `deps:`) after a 7-day
+  cooldown, and `.xcode-version` as the single hand-bumped pin with the reason and
+  procedure. The `changing-gates` skill, `mise.toml`, and `check-pr-title.yml` point to
+  it instead of contradicting it.
+- `scripts/checks/skills-descriptions.sh` (run by `just check-harness`) fails on a
+  `SKILL.md` nested below a skill's top directory (`ERR_CHECK_SKILL_NESTED`), and on a
+  skill `description` over 1,024 characters, one containing a non-ASCII character, or
+  an unquoted frontmatter value Codex CLI's YAML parser rejects
+  (`ERR_CHECK_SKILL_DESCRIPTION`). The em-dashes in the `changing-gates`,
+  `integrating-system-apis`, `shipping-issues`, and `starting-an-app` descriptions are
+  now ASCII hyphens.
+- A `designing-core-logic` skill: how `MyAppCore` logic is shaped — time (`Clock`,
+  an injected "now"), `Locale`, and a `RandomNumberGenerator` injected with a test
+  substitute for each, tunables in one `Tuning` type, action-shaped `@Observable` view
+  models, and a table of patterns deliberately not adopted, pointing at `README.md`'s
+  Design Philosophy and at an ADR for any app that adopts one.
 - A `designing-errors` skill: error enums in `MyAppCore`, typed `throws(E)` only where
   a caller switches on the cases, no user data in error payloads or log lines,
   `CancellationError` propagated rather than swallowed, and how a `MyAppPlatform`
