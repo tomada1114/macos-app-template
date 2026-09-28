@@ -59,4 +59,10 @@
   description: "Needs a step only a person can take (signing identity, Apple account, TCC grant); agents skip it."
 - name: "on hold"
   color: ededed
-  description: "Not to be picked up: a tracking issue, or work parked on purpose."
+  description: "Parked on purpose; the reason is in a comment. Agents skip it."
+
+# Tracking label: an issue that is a checklist of sub-issues, never work itself.
+# shipping-issues drops it from ranking, selection, and priority backfill.
+- name: tracking
+  color: bfdadc
+  description: "A tracking issue: its sub-issues carry the work; never implemented itself."

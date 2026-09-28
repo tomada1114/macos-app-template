@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `blocked: external` and `on hold` labels in `.github/labels.yml`, defined in
-  `triaging-issues`: an issue only a person can move forward, and one that must not be
-  picked up as work (a tracking issue). `shipping-issues` already skipped both.
+- `blocked: external`, `on hold`, and `tracking` labels in `.github/labels.yml`,
+  defined in `triaging-issues`: an issue only a person can move forward, work parked
+  on purpose, and a tracking issue whose sub-issues carry the work. `shipping-issues`
+  skips the first two and now drops a `tracking` issue from ranking, selection, and
+  priority backfill.
 - `AGENTS.md` › Security and human approval records the standing exceptions:
   invoking `smart-commit` (when asked to push), `create-pr`, or `shipping-issues` is
   the sign-off for the remote writes that skill exists to make, and for nothing else

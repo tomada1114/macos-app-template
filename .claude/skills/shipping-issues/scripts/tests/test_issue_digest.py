@@ -404,6 +404,26 @@ class MainEndToEndTest(DigestRunner, unittest.TestCase):
         self.assertEqual(payload["ranking"][0]["number"], 2)
         self.assertEqual(payload["ranking"][0]["tier"], "P0")
 
+    def test_tracking_issue_is_never_ranked_selected_or_offered_a_tier(self):
+        issues = [
+            gh_issue(96, title="back-port harness (tracking)", labels=["tracking"],
+                     body="- [ ] #97\n- [ ] #98"),
+            gh_issue(97, title="the work", labels=["priority: P2"]),
+            gh_issue(98, title="untiered work"),
+        ]
+        rc, out, err = self._run(["--select", "--json"], issues)
+        self.assertEqual(rc, 0, err)
+        payload = json.loads(out)
+        self.assertEqual(payload["tracking_issues"], [96])
+        self.assertNotIn(96, [r["number"] for r in payload["ranking"]])
+        self.assertNotIn(96, [r["number"] for r in payload["issues"]])
+        self.assertEqual(payload["label_coverage"]["unlabeled"], [98])
+
+        rc, out, err = self._run(["--select"], issues)
+        self.assertEqual(rc, 0, err)
+        self.assertIn("select: #97", out)
+        self.assertIn("tracking: #96", out)
+
     def test_select_text_output_names_the_pick(self):
         issues = [gh_issue(2, title="ship now", labels=["priority: P0"])]
         rc, out, err = self._run(["--select"], issues)
