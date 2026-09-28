@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A "Removing the example code" checklist in `docs/getting-started.md` covering the
+  counter and the `FrontmostApp` port/adapter (port, view model, adapter, fake,
+  local-machine test, `AppLog.frontmostApp`, the `ContentView` row, the composition
+  root, and the docs that cite it), linked from `README.md`, the `starting-an-app`
+  skill, and `scripts/bootstrap.sh`'s next steps.
+
+- `just test-scripts` (and so CI's `lint` job) now runs the Python `unittest` suite
+  under `.agents/skills/shipping-issues/scripts/tests/`, through the new
+  `scripts/tests/skill-scripts_test.sh`, with `PYTHONDONTWRITEBYTECODE=1`.
+- `AGENTS.md`'s "Security and human approval" now lists the concrete Swift and CI
+  forms of weakening a gate (`// swiftlint:disable`, `// swiftformat:disable`,
+  `@unchecked Sendable` / `nonisolated(unsafe)`, `.disabled`/`withKnownIssue`,
+  coverage excludes, loosened assertions, `continue-on-error`) and forbids re-spelling
+  a denied command (`git -C .`, `bash -c`, bundled flags): stop and ask instead.
 - An Architecture Decision Record tree for apps cut from the template:
   `docs/architecture/README.md` (the index, shipped empty, with the status legend and
   how an ADR changes) and `docs/architecture/adr/template.md`. `AGENTS.md`'s new
@@ -289,8 +303,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   SIGINT) and prints every log it had not reported yet, marked `(interrupted)`, with a
   new `ERR_TESTS_INTERRUPTED`; `scripts/tests/run_test.sh` now covers the runner itself
 
+### Removed
+
+- The committed `.claude/settings.json` no longer registers the owner's personal
+  plugin marketplace or enables a plugin from it for everyone who opens the
+  repository; it keeps only `permissions` and `hooks`, and `AGENTS.md`'s Enforcement
+  layers row now describes both.
+
 ### Fixed
 
+- `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
+  (its own header, `README.md`'s "Using This Template" paragraph, and the
+  `starting-an-app` skill), which read as nonsense after the rename: lines between a keep-begin
+  and a keep-end marker comment are skipped. CI's
+  `bootstrap-smoke` asserts the kept passages survive and ignores them in its leftover
+  check. The script's next steps now match `README.md`'s list.
+
+- CI runs of pushes to `main` no longer cancel each other: `.github/workflows/ci.yml`
+  groups push runs by commit SHA and cancels in progress only for a superseded pull
+  request run, so two quick merges each finish their run.
 - `shipping-issues`' `ci_watch.sh` now enforces `--timeout` on stock macOS, which has
   neither `timeout` nor `gtimeout`; the watch used to run unbounded there.
 - `shipping-issues`' Python scripts no longer write `__pycache__/` into the
