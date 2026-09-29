@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A weekly `.github/workflows/gitleaks.yml` workflow that runs gitleaks 8.30.1 over
+  the full git history to find leaked secrets. The release binary is pinned and its
+  checksum verified, the job has `contents: read` only, and findings are redacted in
+  the log. `.gitleaksignore` lists the exact fingerprints of known fake fixtures.
 - A function-coverage floor beside the 80% line floor on `MyAppCore`:
   `scripts/coverage.sh` (`just test`, CI's test and release jobs) also sums llvm-cov's
   function counts for `Sources/MyAppCore/` from the same export and fails below
@@ -58,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.claude/settings.local.json` by path, and Anthropic, OpenAI, Slack, Google API,
   Stripe live (`sk_live_`/`rk_live_`; test keys stay allowed) and JWT shapes, plus an
   AWS secret access key assigned to its variable name, by content.
+- `authoring-skills` gains a Conventions section: what the `**REQUIRED:**` and
+  `**BACKGROUND:**` cross-reference markers mean and when a sibling is named bare,
+  that example code in a skill is a deletable illustration nothing builds or tests
+  from, and that a platform skill holds only this repository's decisions and links
+  Apple's documentation instead of restating it. `tdd`, `merging-dependency-prs`,
+  `starting-an-app`, and `running-the-app` now mark their hand-off pointers that way.
 
 - `authoring-skills` records where a skill lives: in `.agents/skills/` by default,
   never a committed plugin marketplace, and when a ref-pinned shared plugin is allowed.
@@ -65,6 +75,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `changing-gates` records why `.githooks/pre-commit` stays lint-only (no
   formatting, compiling, or related tests).
 
+- `.claude/rules/testing.md` now covers an oracle independent of the implementation,
+  one contract suite per port run against both the fake and the adapter (worked through
+  for `FrontmostAppProviding`), a test clock or zero `Tuning` delay instead of sleeps,
+  a per-test temporary directory, plain `import MyAppCore` instead of `@testable
+  import`, and when a test belongs in `LaunchUITests`. `.claude/rules/swift.md` now
+  covers an exhaustive `switch` without `default:` over Core's enums, `package` access
+  for cross-module internals (invisible to `App/`), and where constants live.
 - The `triaging-issues` skill's "Requests from daily use" section: a friction or
   idea raised while using the app is filed now, parked as `on hold` with its reason,
   or dropped with the reason stated, and a parked issue is promoted or closed only by
@@ -432,12 +449,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The release workflow no longer strips `App/MyApp.entitlements` (and with it the App
+  Sandbox) from an ad-hoc-signed release: it keeps the signature `xcodebuild` applied
+  instead of re-signing without `--entitlements`, and a new step fails the release
+  unless `codesign -d --entitlements -` shows `com.apple.security.app-sandbox`.
+  `docs/distribution.md` now describes both signing paths.
 - `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
   (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
   fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
 - `scripts/tests/lib.sh` now unsets every exported `GIT_*` variable, not a fixed five,
   so `GIT_CONFIG_*`, `GIT_CEILING_DIRECTORIES` and the like no longer leak into fixture
   repositories; the new `scripts/tests/lib_test.sh` asserts none remain.
+- Stale claims about what the harness checks: `updating-docs` now names
+  `skills-index-complete.sh` and `just-recipes-exist.sh`, `authoring-skills` no longer
+  quotes outdated description and body sizes, `AGENTS.md` drops pointers to tracking
+  issues that do not exist and adds `just check-harness` to the `main.json` row, and
+  the `check-harness` comments in `justfile` and `ci.yml` point at `scripts/checks/`
+  instead of an enumeration that went stale.
+
 - Small factual drift in the docs: removed leftover references to a Python/uv sibling
   project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
   `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`
@@ -447,6 +476,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   line-coverage floor notices a missed branch; `.claude/rules/swift.md` states the
   SwiftLint limits actually enforced; `.github/zizmor.yml` no longer hard-codes a use
   count; `SECURITY.md` drops response times a template cannot promise
+- `ContentView`'s `−` and `+` buttons now carry the accessibility labels "Decrement"
+  and "Increment", so VoiceOver no longer reads the bare glyph.
 
 - `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
   `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
