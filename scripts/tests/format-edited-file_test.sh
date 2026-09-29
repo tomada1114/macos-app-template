@@ -13,8 +13,10 @@ SCRIPT="${REPO_ROOT}/scripts/format-edited-file.sh"
 
 payload() { printf '{"tool_name":"Edit","tool_input":{"file_path":"%s","old_string":"a"}}' "$1"; }
 
+pipe_to_hook() { printf '%s' "$2" | "${SCRIPT}" --root "$1"; }
+
 run_hook() { # run_hook ROOT PAYLOAD
-    capture bash -c 'printf "%s" "$2" | "$0" --root "$1"' "${SCRIPT}" "$1" "$2"
+    capture pipe_to_hook "$1" "$2"
 }
 
 case_formats_only_the_edited_swift_file() {
