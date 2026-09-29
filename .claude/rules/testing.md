@@ -51,7 +51,7 @@ reading as a broken adapter.
   the rest of the app calls, so an internal can be renamed without touching a test. A
   test that seems to need an internal is either testing a detail (test the behavior it
   produces) or has found a declaration another module legitimately needs — make that
-  `package`, which every target in `Packages/MyAppKit` sees (`swift.md` › Access control)
+  `package`, which every target in `Packages/MyAppKit` sees (`swift.md` › Access Control)
 
 ## What to Test
 
@@ -91,16 +91,17 @@ promises are asserted once, against both. The contract suite is a function over 
 protocol, not over either implementation, and every clause it checks is one the port's
 `///` states (add the clause there first). For `FrontmostAppProviding`:
 
-- `Tests/MyAppCoreTests/FrontmostAppProvidingContract.swift` declares
-  `package enum FrontmostAppProvidingContract` with
-  `package static func check(_ provider: some FrontmostAppProviding)`, asserting with
-  `#expect` — say, that a non-`nil` answer carries a non-empty `name`.
-- A `MyAppCoreTests` suite runs it against `FakeFrontmostAppProvider` (moved to its own
-  file so it is visible there): CI runs it, so the fake cannot drift from the port.
+- The fakes and one contract function per port live in a `MyAppTestSupport` target
+  both test targets depend on — the owner's decision in #141, which adds that target
+  (a `Package.swift` change under `changing-gates`, with `docs/architecture.md` and the
+  AGENTS.md tree updated). Until #141 lands there is no shared suite; do not improvise
+  another placement, such as one test target depending on another.
+- The function takes `some FrontmostAppProviding` and asserts with `#expect` — say, that
+  a non-`nil` answer carries a non-empty `name`.
+- A `MyAppCoreTests` suite runs it against the fake: CI runs it, so the fake cannot
+  drift from the port.
 - A `.requiresLocalMachine` suite in `MyAppPlatformTests` runs the same function against
-  `WorkspaceFrontmostAppProvider`, beside its translation test. Sharing it needs
-  `"MyAppCoreTests"` in that test target's `dependencies` in `Package.swift` — SwiftPM
-  lets a test target depend on another — added with the first contract suite.
+  `WorkspaceFrontmostAppProvider`, beside its translation test (`just test-local`).
 
 ## Edge Cases (always consider these)
 
