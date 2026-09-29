@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `authoring-skills` gains a Conventions section: what the `**REQUIRED:**` and
+  `**BACKGROUND:**` cross-reference markers mean and when a sibling is named bare,
+  that example code in a skill is a deletable illustration nothing builds or tests
+  from, and that a platform skill holds only this repository's decisions and links
+  Apple's documentation instead of restating it. `tdd`, `merging-dependency-prs`,
+  `starting-an-app`, and `running-the-app` now mark their hand-off pointers that way.
+
 - `authoring-skills` records where a skill lives: in `.agents/skills/` by default,
   never a committed plugin marketplace, and when a ref-pinned shared plugin is allowed.
 
