@@ -1,3 +1,4 @@
+import Foundation
 import MyAppCore
 import Testing
 
@@ -72,5 +73,10 @@ struct CounterViewModelTests {
         let model = try CounterViewModel(counter: Counter(value: 5, range: 1 ... 10))
         model.reset()
         #expect(model.value == 1)
+    }
+
+    @Test
+    func `the reset button's title is Core's wording`() {
+        #expect(CounterViewModel.resetTitle.resolved(in: .english) == "Reset")
     }
 }

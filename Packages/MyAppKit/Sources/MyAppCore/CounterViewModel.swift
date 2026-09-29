@@ -1,12 +1,24 @@
+import Foundation
 import Observation
 
 /// Observable presentation state for a ``Counter``.
 ///
-/// Lives in Core (imports Observation only, never SwiftUI) so its logic stays
+/// Lives in Core (imports Foundation and Observation, never SwiftUI) so its logic stays
 /// unit-testable with plain `swift test` and counts toward the coverage floor.
 @MainActor
 @Observable
 public final class CounterViewModel {
+    /// The reset button's title, from Core's String Catalog. Wording lives in Core, not
+    /// in the view, so a view in `MyAppUI` never carries a literal a reader sees.
+    public static var resetTitle: LocalizedStringResource {
+        LocalizedStringResource(
+            "counter.reset",
+            defaultValue: "Reset",
+            bundle: .module,
+            comment: "Button that sets the counter back to zero.",
+        )
+    }
+
     /// The underlying domain model.
     public private(set) var counter: Counter
 
