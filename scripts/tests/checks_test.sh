@@ -53,8 +53,13 @@ EOF
 # inside forbiddenModules and in a second array, a CI step that reaches a recipe
 # through its script, CI-only recipes and a CI-only job, a label assigned to a shell
 # variable, a quoted label name with a trailing comment, a job-level `defaults: run:`
-# mapping, a Dependabot `labels:` list at its key's own indentation, and a Dependabot
-# entry with no `labels:` key (the implied `dependencies`).
+# mapping, a Dependabot `labels:` list at its key's own indentation, a Dependabot
+# entry with no `labels:` key (the implied `dependencies`), a `permissions: {}` whose
+# write scope is on the job, a push workflow's per-tag concurrency group without
+# `github.workflow` that never cancels, ci.yml's cancel-only-on-pull-requests
+# expression, a `run:` block made fail-closed by its own `set -euo pipefail`, a
+# step-level and a composite `shell: bash`, a Dependabot prefix without its colon,
+# and a Renovate cooldown of `1 week` against Dependabot's 7 days.
 make_fixture() {
     local root
     root=$(make_temp_dir)
@@ -158,6 +163,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: \${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: \${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -189,11 +202,18 @@ EOF
 name: Label
 on: pull_request
 permissions: {}
+concurrency:
+  group: label-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   label:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - run: |
+          # The label this PR's type maps to.
+          set -euo pipefail
           case "$TYPE" in
             fix) label=bug ;;
             ci) label="ci" ;;
@@ -206,6 +226,9 @@ name: Release
 on:
   push:
 permissions: {}
+concurrency:
+  group: release-\${{ github.ref_name }}
+  cancel-in-progress: false
 jobs:
   build:
     permissions:
@@ -213,6 +236,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: jdx/mise-action@${SHA} # v4.2.0
+      - name: Package
+        shell: bash
+        run: scripts/package_dmg.sh | tee package.log
+EOF
+    cat >"${root}/.github/workflows/title.yml" <<EOF
+name: PR title
+on:
+  pull_request:
+    types: [opened, edited]
+permissions:
+  pull-requests: read
+concurrency:
+  group: \${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@${SHA} # v6.1.1
+        with:
+          types: |
+            feat
+            fix
+            ci
+            deps
 EOF
     mkdir -p "${root}/.github/rulesets"
     cat >"${root}/.github/rulesets/main.json" <<'EOF'
@@ -235,6 +283,8 @@ runs:
   using: composite
   steps:
     - uses: actions/cache@${SHA} # v4.2.3
+    - shell: bash
+      run: echo "cached" | tee -a "\$GITHUB_STEP_SUMMARY"
 EOF
     # The next rule's `(print|debugPrint)\b` would join the Core ban list if the
     # no_ui_import_in_core block did not end at it.
@@ -274,18 +324,28 @@ updates:
     groups:
       all:
         patterns: ["*"]
+    commit-message:
+      prefix: "deps:"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "github-actions"
     directory: "/"
     labels:
     - "dependencies"
     - ci
+    commit-message:
+      prefix: ci
+    cooldown:
+      default-days: 7
 EOF
     cat >"${root}/.github/renovate.json" <<'EOF'
 {
   "enabledManagers": ["mise"],
   "labels": [
     "dependencies"
-  ]
+  ],
+  "commitMessagePrefix": "deps:",
+  "minimumReleaseAge": "1 week"
 }
 EOF
     echo "${root}"
@@ -346,7 +406,7 @@ case_run_all_passes() {
     root=$(make_fixture)
     capture "${BASH}" "${CHECKS}/run-all.sh" --root "${root}"
     assert_exit 0
-    assert_stdout_contains "harness checks: 10 check(s) passed"
+    assert_stdout_contains "harness checks: 12 check(s) passed"
 }
 
 case_run_all_reports_every_failure() {
@@ -359,7 +419,7 @@ case_run_all_reports_every_failure() {
     assert_exit 1
     assert_stderr_contains "ERR_CHECK_RECIPE_MISSING"
     assert_stderr_contains "ERR_CHECK_WORKFLOW_PERMISSIONS"
-    assert_stderr_contains "ERR_CHECKS_FAILED: 2 of 10 harness check(s) failed: just-recipes-exist.sh workflow-pins-and-permissions.sh"
+    assert_stderr_contains "ERR_CHECKS_FAILED: 2 of 12 harness check(s) failed: just-recipes-exist.sh workflow-pins-and-permissions.sh"
     assert_stderr_not_contains "skills-frontmatter.sh" "a passing check named as failed"
     assert_stderr_not_contains "skills-index-complete.sh" "a passing check named as failed"
     assert_stdout_contains "==> scripts/checks/skills-index-complete.sh"
@@ -514,7 +574,7 @@ case_workflows_tag_pin_in_composite_action() {
     capture "${BASH}" "${CHECKS}/workflow-pins-and-permissions.sh" --root "${root}"
     assert_exit 1
     assert_contract ERR_CHECK_WORKFLOW_UNPINNED
-    assert_stderr_contains ".github/actions/setup/action.yml:6: actions/setup-python@v5"
+    assert_stderr_contains ".github/actions/setup/action.yml:$(wc -l <"${root}/.github/actions/setup/action.yml" | tr -d ' '): actions/setup-python@v5"
 }
 
 case_workflows_sha_without_version_comment() {
@@ -1171,8 +1231,10 @@ case_labels_workflow_add_label() {
     capture "${BASH}" "${CHECKS}/labels-declared.sh" --root "${root}"
     assert_exit 1
     assert_contract ERR_CHECK_LABEL_UNDECLARED
-    assert_stderr_contains ".github/workflows/label.yml:15: applies \`stale\`"
-    assert_stderr_contains ".github/workflows/label.yml:15: applies \`triaged\`"
+    local last
+    last=$(wc -l <"${root}/.github/workflows/label.yml" | tr -d ' ')
+    assert_stderr_contains ".github/workflows/label.yml:${last}: applies \`stale\`"
+    assert_stderr_contains ".github/workflows/label.yml:${last}: applies \`triaged\`"
     assert_stderr_not_contains "\`ci\`" "a declared label in a comma list reported"
     assert_stderr_not_contains "\`\$label\`" "a variable read as a label"
 }
@@ -1184,7 +1246,7 @@ case_labels_workflow_assignment() {
     capture "${BASH}" "${CHECKS}/labels-declared.sh" --root "${root}"
     assert_exit 1
     assert_contract ERR_CHECK_LABEL_UNDECLARED
-    assert_stderr_contains ".github/workflows/label.yml:11: applies \`infra\`"
+    assert_stderr_contains ".github/workflows/label.yml:$(grep -n "LABEL='infra'" "${root}/.github/workflows/label.yml" | cut -d: -f1): applies \`infra\`"
 }
 
 case_labels_dependabot_explicit() {

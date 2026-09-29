@@ -8,14 +8,20 @@ on:
       - edited
       - synchronize
 
-permissions:
-  pull-requests: write
+permissions: {}
+
+concurrency:
+  # A newer push or title edit supersedes the run in progress.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   label:
     name: Label by Conventional Commit type
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      pull-requests: write
     steps:
       - name: Apply label from PR title type
         env:
