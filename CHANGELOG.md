@@ -18,6 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the bundle identifier, `UserDefaults` keys, and file formats are contract, each with
   what depends on it and what changing it requires; everything else is private.
 
+- The commit-time staged guard now also refuses `.envrc.*` (samples excepted) and
+  `.claude/settings.local.json` by path, and Anthropic, OpenAI, Slack, Google API,
+  Stripe live (`sk_live_`/`rk_live_`; test keys stay allowed) and JWT shapes, plus an
+  AWS secret access key assigned to its variable name, by content.
+
+- `authoring-skills` records where a skill lives: in `.agents/skills/` by default,
+  never a committed plugin marketplace, and when a ref-pinned shared plugin is allowed.
+
+- `changing-gates` records why `.githooks/pre-commit` stays lint-only (no
+  formatting, compiling, or related tests).
+
+- The `triaging-issues` skill's "Requests from daily use" section: a friction or
+  idea raised while using the app is filed now, parked as `on hold` with its reason,
+  or dropped with the reason stated, and a parked issue is promoted or closed only by
+  a decision.
+
+- The `starting-an-app` skill now ends the app-shape and sandbox-posture steps by
+  writing ADR 0001 (app shape) and ADR 0002 (sandbox posture), as Proposed, in the
+  new app's `docs/architecture/` tree.
+- `scripts/checks/ruleset-contexts.sh`, run by `just check-harness`: fails when a
+  required status-check context in `.github/rulesets/main.json` matches no job `name:`
+  (or id, when a job has none) in a workflow triggered on `pull_request`, so renaming a
+  CI job can no longer leave a required check that never reports and blocks every PR.
+  A `${{ … }}` expression in a job name matches any text; `pull_request_target` does
+  not count as a pull_request trigger.
+- A `merging-dependency-prs` skill for landing Dependabot (SwiftPM, GitHub Actions) and
+  Renovate (`mise.toml`) PRs: a security checklist, one human approval per invocation
+  for a listed batch of passing PRs, a combined branch for conflicting bumps, and
+  failure modes. It points to `.claude/rules/project.md` › Toolchain Pinning for the
+  bump policy rather than restating it.
 - Private-repository setup steps in `README.md` "Using This Template" and the
   `starting-an-app` skill (`references/private-repository.md`): which workflows to
   delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
@@ -356,6 +386,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   layers row now describes both.
 
 ### Fixed
+
+- `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
+  (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
+  fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
+- `scripts/tests/lib.sh` now unsets every exported `GIT_*` variable, not a fixed five,
+  so `GIT_CONFIG_*`, `GIT_CEILING_DIRECTORIES` and the like no longer leak into fixture
+  repositories; the new `scripts/tests/lib_test.sh` asserts none remain.
+- Small factual drift in the docs: removed leftover references to a Python/uv sibling
+  project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
+  `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`
+  no longer claims `project.yml` already sets usage-description keys; the `create-pr` and
+  `smart-commit` type lists now match `check-pr-title.yml`; `running-the-app` no longer
+  assumes the repository is public; `.claude/rules/testing.md` no longer claims the
+  line-coverage floor notices a missed branch; `.claude/rules/swift.md` states the
+  SwiftLint limits actually enforced; `.github/zizmor.yml` no longer hard-codes a use
+  count; `SECURITY.md` drops response times a template cannot promise
 
 - `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
   `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
