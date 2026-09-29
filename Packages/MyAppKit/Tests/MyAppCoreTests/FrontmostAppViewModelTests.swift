@@ -7,8 +7,9 @@ import Testing
 /// value the test reads afterwards. No expectations are declared up front. Internal
 /// rather than private so `LocalizationTests` drives the view model with this same fake.
 final class FakeFrontmostAppProvider: FrontmostAppProviding, @unchecked Sendable {
-    /// Safe without a lock: every test below drives it from the `@MainActor` suite, so
-    /// the mutations and the reads happen on one actor. `@unchecked` is what lets a
+    /// Safe without a lock: every test that uses it — this file's and
+    /// `LocalizationTests`' — runs in a `@MainActor` suite, so the mutations and the
+    /// reads happen on one actor. `@unchecked` is what lets a
     /// recording fake satisfy a `Sendable` port without a lock it does not need.
     private(set) var callCount = 0
     private let answers: [FrontmostApp?]

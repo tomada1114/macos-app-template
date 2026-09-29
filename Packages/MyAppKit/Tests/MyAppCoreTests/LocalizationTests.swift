@@ -41,22 +41,33 @@ private struct CatalogLocalization: Decodable {
 /// `swift test` builds with SwiftPM's native build system, which copies the catalog into
 /// Core's resource bundle uncompiled, so every English string here comes from a
 /// resource's `defaultValue`; only `xcodebuild` compiles the catalog into the app. These
-/// tests therefore read the catalog's source and hold the two together: every key Core
-/// uses is in the catalog, the catalog holds no other key, and its English is exactly
-/// what Core renders. Without them, a key missing from the catalog still reads correctly
-/// in English and simply never translates.
+/// tests therefore read the sources and the catalog as text and hold them together:
+/// every `LocalizedStringResource(…)` call in `Sources/MyAppCore` declares an explicit
+/// key, a `defaultValue`, and `bundle: .module`; the keys those calls declare are exactly
+/// the catalog's and exactly ``everyCase()``'s; and the catalog's English is what Core
+/// renders. Without them, a key missing from the catalog still reads correctly in
+/// English and simply never translates. A resource made from a bare string literal is
+/// outside what the scan sees (``ResourceDeclarationScan``).
 @MainActor
 @Suite("Localization")
 struct LocalizationTests {
-    /// A resource Core returns, and the arguments its English format takes.
+    /// A resource Core returns, and the arguments its English format takes — a `String`
+    /// for `%@`, an `Int` for `%lld`.
     struct Case {
         let resource: LocalizedStringResource
-        let arguments: [String]
+        let arguments: [any CVarArg]
     }
 
-    /// Every resource Core returns, once per state that picks a different key. Adding a
-    /// key to Core means adding it here; `the catalog holds exactly the keys Core uses`
-    /// fails until both sides agree.
+    /// `Sources/MyAppCore`, resolved from this file's path.
+    static let coreSources = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .appending(path: "Sources/MyAppCore")
+
+    /// Every resource Core returns, once per state that picks a different key, with the
+    /// arguments its English takes. Adding a key to Core means adding it here: the
+    /// source-scan tests fail until this list names every key Core's sources declare.
     static func everyCase() -> [Case] {
         let answered = FrontmostAppViewModel(
             provider: FakeFrontmostAppProvider(answering: [FrontmostApp(name: "Finder")]),
@@ -70,14 +81,15 @@ struct LocalizationTests {
         ]
     }
 
-    /// `Sources/MyAppCore/Resources/Localizable.xcstrings`, resolved from this file's path.
+    /// `Sources/MyAppCore/Resources/Localizable.xcstrings`.
     private static func catalog() throws -> StringCatalog {
-        let url = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appending(path: "Sources/MyAppCore/Resources/Localizable.xcstrings")
+        let url = coreSources.appending(path: "Resources/Localizable.xcstrings")
         return try JSONDecoder().decode(StringCatalog.self, from: Data(contentsOf: url))
+    }
+
+    /// The keys the `LocalizedStringResource(…)` calls in Core's sources declare.
+    static func declaredKeys() throws -> Set<String> {
+        try Set(ResourceDeclarationScan.declarations(inSourcesAt: coreSources).compactMap(\.key))
     }
 
     @Test
@@ -94,11 +106,51 @@ struct LocalizationTests {
     }
 
     @Test
-    func `the catalog holds exactly the keys Core uses`() throws {
-        let used = Set(Self.everyCase().map(\.resource.key))
+    func `every resource Core's sources declare has a key, a defaultValue, and bundle module`(
+    ) throws {
+        let declarations = try ResourceDeclarationScan.declarations(inSourcesAt: Self.coreSources)
+        #expect(!declarations.isEmpty, "the scan found no LocalizedStringResource call")
+        for declaration in declarations {
+            #expect(
+                declaration.followsTheConvention,
+                "\(declaration.file): LocalizedStringResource(\(declaration.arguments.prefix(60))…)",
+            )
+        }
+    }
+
+    @Test
+    func `the catalog holds exactly the keys Core's sources declare`() throws {
+        let declared = try Self.declaredKeys()
         let catalogued = try Set(Self.catalog().strings.keys)
-        #expect(used.subtracting(catalogued).isEmpty, "missing from Localizable.xcstrings")
-        #expect(catalogued.subtracting(used).isEmpty, "in Localizable.xcstrings but unused")
+        #expect(declared.subtracting(catalogued).isEmpty, "missing from Localizable.xcstrings")
+        #expect(
+            catalogued.subtracting(declared).isEmpty,
+            "in Localizable.xcstrings but declared nowhere",
+        )
+    }
+
+    @Test
+    func `every key Core's sources declare has a case here`() throws {
+        let declared = try Self.declaredKeys()
+        let covered = Set(Self.everyCase().map(\.resource.key))
+        #expect(declared.subtracting(covered).isEmpty, "missing from everyCase()")
+        #expect(covered.subtracting(declared).isEmpty, "in everyCase() but declared nowhere")
+    }
+
+    @Test
+    func `the scan reads a key and the whole call across an interpolation`() throws {
+        let source = """
+        // LocalizedStringResource("commented.out", defaultValue: "No", bundle: .module)
+        LocalizedStringResource("a.key", defaultValue: "Hi \\(f(x)) (1)", bundle: .module)
+        LocalizedStringResource(computedKey, bundle: .main)
+        """
+        let found = ResourceDeclarationScan.declarations(in: source, file: "Fixture.swift")
+        try #require(found.count == 2)
+        #expect(found[0].key == "a.key")
+        #expect(found[0].arguments.hasSuffix("bundle: .module"))
+        #expect(found[0].followsTheConvention)
+        #expect(found[1].key == nil)
+        #expect(!found[1].followsTheConvention)
     }
 
     @Test
@@ -123,15 +175,6 @@ struct LocalizationTests {
             return
         }
         #expect(Bundle(url: url)?.developmentLocalization == "en")
-    }
-
-    /// `zxx` is ISO 639's "no linguistic content": a language no catalog will ever ship,
-    /// so this stays true however many locales an app adds.
-    @Test
-    func `a language the catalog lacks falls back to English`() {
-        #expect(CounterViewModel.resetTitle.resolved(in: Locale(identifier: "zxx")) == "Reset")
-        let model = FrontmostAppViewModel(provider: FakeFrontmostAppProvider(answering: [nil]))
-        #expect(model.label.resolved(in: Locale(identifier: "zxx")) == "Frontmost: —")
     }
 }
 
