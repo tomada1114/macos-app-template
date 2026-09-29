@@ -13,6 +13,7 @@ LIB="${REPO_ROOT}/scripts/tests/lib.sh"
 # Sources lib.sh in a child bash that inherits the given GIT_* variables, then
 # prints every exported GIT_* name still set (one per line; empty means none).
 remaining_git_names() {
+    # shellcheck disable=SC2016 # expanded by the child bash, not here
     env "$@" "${BASH}" -c '
         . "$1"
         cleanup_temp
@@ -43,6 +44,7 @@ GIT_FAKE=second" GIT_PLAIN=y)
 
 case_leaves_other_variables_alone() {
     local out
+    # shellcheck disable=SC2016 # expanded by the child bash, not here
     out=$(env GIT_DIR=/nonexistent NOT_GIT_VAR=kept "${BASH}" -c '. "$1"; cleanup_temp; echo "${NOT_GIT_VAR-}"' lib_probe "${LIB}")
     [ "${out}" = "kept" ] || _fail "NOT_GIT_VAR was changed: '${out}'"
 }
