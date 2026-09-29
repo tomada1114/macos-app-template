@@ -12,13 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Two harness checks, run by `just check-harness`, for workflow and dependency-bot
   hygiene. `scripts/checks/workflow-hygiene.sh` fails when a workflow grants a `write`
   scope or `read-all`/`write-all` at the top level instead of on the job, when a
-  `pull_request` workflow has no `concurrency:` or a group is constant, shared with
-  another workflow, or lets a push run be cancelled, and when a `run:` step does not
-  resolve to `shell: bash` (`-eo pipefail`) or open with `set -euo pipefail`.
-  `scripts/checks/dependency-bots-agree.sh` fails when a Dependabot entry's or
-  Renovate's commit prefix is missing or not a type `check-pr-title.yml` accepts, or
-  when their release cooldowns are missing or disagree. Both read YAML through a new
-  line-based `check_yaml_flatten` helper in `scripts/checks/lib.sh` (#129).
+  `pull_request` workflow has no `concurrency:` or a group is constant (a
+  pull-request-only key such as `github.head_ref` counts as constant when the workflow
+  has other triggers), shared with another workflow, or lets a push run be cancelled,
+  and when a sh-family `run:` step does not resolve to `shell: bash` (`-eo pipefail`)
+  or open with a `set` enabling `pipefail`. `scripts/checks/dependency-bots-agree.sh`
+  fails when a Dependabot entry's or a JSON Renovate config's commit prefix is
+  missing, has no type, or is not a type `check-pr-title.yml` accepts, or when their
+  release cooldowns are missing or disagree; a JSON5 Renovate config gets a notice.
+  Both read YAML through a new line-based `check_yaml_flatten` helper in
+  `scripts/checks/lib.sh`, and a reader that fails reports `ERR_CHECK_READ_FAILED`
+  (#129).
 - A `MyAppTestSupport` target in `Packages/MyAppKit/Package.swift` for test code both
   test targets share, and one contract suite per port in it:
   `FrontmostAppProvidingContract` checks that every non-`nil` answer of a
@@ -416,7 +420,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `osv-scan.yml`, and `pr-label.yml` cancel a superseded pull request run through a
   per-ref `concurrency:` group, and `ci.yml`, `codeql.yml`, `gitleaks.yml`,
   `osv-scan.yml`, `pr-label.yml`, and `release.yml` default their `run:` steps to
-  `shell: bash`, so a failing command before a `|` now fails its step (#129).
+  `shell: bash`, so a failing command before a `|` now fails its step. `release.yml`
+  keeps its own error messages under that default: its notary-log parsing reads
+  here-strings instead of `printf | grep -q`/`| awk '…exit'` pipes that could stop
+  on SIGPIPE, and its MARKETING_VERSION and signing-identity lookups end in
+  `|| true` so their empty-value checks still report (#129).
 - `FakeFrontmostAppProvider` moved from `FrontmostAppViewModelTests.swift` to
   `Tests/MyAppTestSupport/FakeFrontmostAppProvider.swift` as a `package` type, and is now
   `Sendable` through an `OSAllocatedUnfairLock` around its call count instead of

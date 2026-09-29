@@ -6,21 +6,28 @@
 #
 #   scripts/checks/dependency-bots-agree.sh [--root DIR]
 #
-# Files, each optional: <root>/.github/dependabot.yml, <root>/renovate.json and
-# <root>/.github/renovate.json, and <root>/.github/workflows/*.yml|*.yaml.
+# Files, each optional: <root>/.github/dependabot.yml; the JSON Renovate configs
+# <root>/renovate.json, .github/renovate.json, .gitlab/renovate.json, .renovaterc, and
+# .renovaterc.json (RENOVATE_JSON below); and <root>/.github/workflows/*.yml|*.yaml.
+# A JSON5 Renovate config (renovate.json5, .github/renovate.json5,
+# .gitlab/renovate.json5, .renovaterc.json5) is not read — the check prints a notice
+# naming it — and neither is a `renovate` key in package.json.
 #   - the title check: every workflow step that `uses:`
 #     amannn/action-semantic-pull-request. Its accepted types are its `with.types`
 #     input (split on newlines, spaces, and commas), or the action's default list when
 #     the input is absent (DEFAULT_TYPES below). With no such step there is nothing to
 #     compare prefixes against, and the prefix rule is skipped with a notice.
 #   - prefixes: each Dependabot `updates` entry states `commit-message.prefix` (and
-#     `prefix-development`, when present, is checked the same way); Renovate states
+#     `prefix-development`, when present, is checked the same way; a one-level flow
+#     mapping, `commit-message: { prefix: "deps:" }`, is read too); Renovate states
 #     `commitMessagePrefix` (every `commitMessagePrefix` and `semanticCommitType`
 #     string is checked). A prefix's type is its leading run of letters, digits, `_`,
 #     and `-` (`deps:` -> deps, `chore(deps)` -> chore), and every title check must
-#     list it. A missing prefix fails too: the bot then titles its PRs `Bump …` or
+#     list it; a prefix that starts with anything else (`[deps]`) has no type and
+#     fails. A missing prefix fails too: the bot then titles its PRs `Bump …` or
 #     guesses a type from the history.
-#   - cooldowns: each Dependabot entry states `cooldown.default-days`, and Renovate
+#   - cooldowns: each Dependabot entry states `cooldown.default-days` (block style or a
+#     one-level flow mapping), and Renovate
 #     states `minimumReleaseAge` (or the deprecated `stabilityDays`); a Renovate age is
 #     read as `N day(s)`, `N week(s)`, or a whole number of days in `N hour(s)`. Every
 #     stated value must be the same number of days — a Renovate age inside
@@ -48,19 +55,26 @@ DEFAULT_TYPES="feat fix docs style refactor perf test build ci chore revert"
 DEPENDABOT=".github/dependabot.yml"
 TAB=$(printf '\t')
 
+RENOVATE_JSON="renovate.json .github/renovate.json .gitlab/renovate.json .renovaterc .renovaterc.json"
+RENOVATE_JSON5="renovate.json5 .github/renovate.json5 .gitlab/renovate.json5 .renovaterc.json5"
+
 RENOVATES=()
-for rel in renovate.json .github/renovate.json; do
+for rel in ${RENOVATE_JSON}; do
     if [ -f "${CHECK_ROOT}/${rel}" ]; then RENOVATES+=("${rel}"); fi
 done
+for rel in ${RENOVATE_JSON5}; do
+    if [ -f "${CHECK_ROOT}/${rel}" ]; then
+        echo "dependency-bots-agree: notice: ${rel} is JSON5, which this check does not read; its prefix and cooldown are not compared."
+    fi
+done
 if [ ! -f "${CHECK_ROOT}/${DEPENDABOT}" ] && [ ${#RENOVATES[@]} -eq 0 ]; then
-    check_finish "dependency-bots-agree: no ${DEPENDABOT} or renovate.json; nothing to compare."
+    check_finish "dependency-bots-agree: no ${DEPENDABOT} or JSON Renovate config; nothing to compare."
+    exit 0
 fi
 
-# `<where>\t<types>` for every title-check step.
-TITLE_CHECKS=""
-for file in "${CHECK_ROOT}"/.github/workflows/*.yml "${CHECK_ROOT}"/.github/workflows/*.yaml; do
-    [ -f "${file}" ] || continue
-    rows=$(check_yaml_flatten "${file}" | awk -F '\t' -v f="${file#"${CHECK_ROOT}"/}" -v d="${DEFAULT_TYPES}" '
+# title_types FILE REL — prints `<REL:line>\t<types>` for every title-check step.
+title_types() {
+    check_yaml_flatten "$1" | awk -F '\t' -v f="$2" -v d="${DEFAULT_TYPES}" '
         function step(p) { sub(/\.(uses|with\.types|with\.types\.\|)$/, "", p); return p }
         $2 ~ /^jobs\.[^.]+\.steps\.[0-9]+\.uses$/ && $3 ~ /^amannn\/action-semantic-pull-request@/ {
             k = step($2); line[k] = $1; n++; order[n] = k
@@ -75,27 +89,38 @@ for file in "${CHECK_ROOT}"/.github/workflows/*.yml "${CHECK_ROOT}"/.github/work
                 print f ":" line[k] "\t" t
             }
         }
-    ')
-    if [ -n "${rows}" ]; then
-        TITLE_CHECKS="${TITLE_CHECKS}${rows}
-"
-    fi
-done
+    '
+}
 
-# `<PREFIX|COOLDOWN>\t<where>\t<which bot setting>\t<value, empty when unstated>`.
-SETTINGS=""
-if [ -f "${CHECK_ROOT}/${DEPENDABOT}" ]; then
-    SETTINGS=$(check_yaml_flatten "${CHECK_ROOT}/${DEPENDABOT}" | awk -F '\t' -v f="${DEPENDABOT}" '
+# dependabot_settings FILE REL — prints the settings rows below for each updates entry.
+dependabot_settings() {
+    check_yaml_flatten "$1" | awk -F '\t' -v f="$2" '
+        # flow(n, key, v, line) — the pairs of a one-level `{ a: b, c: d }` mapping.
+        function flow(n, key, v, line,    parts, i, k, val, m) {
+            sub(/^[[:space:]]*\{/, "", v); sub(/\}[[:space:]]*$/, "", v)
+            m = split(v, parts, ",")
+            for (i = 1; i <= m; i++) {
+                k = parts[i]; sub(/:.*$/, "", k); gsub(/^[[:space:]]+|[[:space:]]+$/, "", k)
+                val = parts[i]; if (!sub(/^[^:]*:/, "", val)) continue
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", val); gsub(/^"|"$/, "", val); gsub(/^\047|\047$/, "", val)
+                set(n, key "." k, val, line)
+            }
+        }
+        function set(n, key, v, line) {
+            if (key == "commit-message.prefix") { prefix[n] = v; pline[n] = line }
+            else if (key == "commit-message.prefix-development") { pdev[n] = v; pdline[n] = line }
+            else if (key == "cooldown.default-days") { days[n] = v; dline[n] = line }
+        }
         {
             if ($2 !~ /^updates\.[0-9]+(\.|$)/) next
             split($2, parts, ".")
             n = parts[2]
             if (!(n in start)) { start[n] = $1; count++; order[count] = n }
+            key = $2; sub(/^updates\.[0-9]+\.?/, "", key)
         }
-        $2 ~ /^updates\.[0-9]+\.package-ecosystem$/ { eco[n] = $3 }
-        $2 ~ /^updates\.[0-9]+\.commit-message\.prefix$/ { prefix[n] = $3; pline[n] = $1 }
-        $2 ~ /^updates\.[0-9]+\.commit-message\.prefix-development$/ { pdev[n] = $3; pdline[n] = $1 }
-        $2 ~ /^updates\.[0-9]+\.cooldown\.default-days$/ { days[n] = $3; dline[n] = $1 }
+        key == "package-ecosystem" { eco[n] = $3 }
+        (key == "commit-message" || key == "cooldown") && $3 ~ /^\{/ { flow(n, key, $3, $1) }
+        { set(n, key, $3, $1) }
         END {
             for (i = 1; i <= count; i++) {
                 n = order[i]
@@ -106,12 +131,12 @@ if [ -f "${CHECK_ROOT}/${DEPENDABOT}" ]; then
                 else print "COOLDOWN\t" f ":" start[n] "\t" who " cooldown.default-days\t"
             }
         }
-    ')
-    SETTINGS="${SETTINGS}
-"
-fi
-for rel in ${RENOVATES[@]+"${RENOVATES[@]}"}; do
-    rows=$(awk -v f="${rel}" '
+    '
+}
+
+# renovate_settings FILE REL — prints the settings rows below for one JSON config.
+renovate_settings() {
+    awk -v f="$2" '
         {
             s = $0
             while (match(s, /"(commitMessagePrefix|semanticCommitType|minimumReleaseAge)"[[:space:]]*:[[:space:]]*"[^"]*"/)) {
@@ -132,7 +157,29 @@ for rel in ${RENOVATES[@]+"${RENOVATES[@]}"}; do
             if (!prefix) print "PREFIX\t" f "\tRenovate commitMessagePrefix\t"
             if (!cool) print "COOLDOWN\t" f "\tRenovate minimumReleaseAge\t"
         }
-    ' "${CHECK_ROOT}/${rel}")
+    ' "$1"
+}
+
+# `<where>\t<types>` for every title-check step.
+TITLE_CHECKS=""
+for file in "${CHECK_ROOT}"/.github/workflows/*.yml "${CHECK_ROOT}"/.github/workflows/*.yaml; do
+    [ -f "${file}" ] || continue
+    rows=$(check_read "${file#"${CHECK_ROOT}"/}" title_types "${file}" "${file#"${CHECK_ROOT}"/}")
+    if [ -n "${rows}" ]; then
+        TITLE_CHECKS="${TITLE_CHECKS}${rows}
+"
+    fi
+done
+
+# `<PREFIX|COOLDOWN>\t<where>\t<which bot setting>\t<value, empty when unstated>`.
+SETTINGS=""
+if [ -f "${CHECK_ROOT}/${DEPENDABOT}" ]; then
+    SETTINGS=$(check_read "${DEPENDABOT}" dependabot_settings "${CHECK_ROOT}/${DEPENDABOT}" "${DEPENDABOT}")
+    SETTINGS="${SETTINGS}
+"
+fi
+for rel in ${RENOVATES[@]+"${RENOVATES[@]}"}; do
+    rows=$(check_read "${rel}" renovate_settings "${CHECK_ROOT}/${rel}" "${rel}")
     SETTINGS="${SETTINGS}${rows}
 "
 done
@@ -148,6 +195,10 @@ else
             continue
         fi
         type=$(printf '%s\n' "${value}" | sed -E 's/^[[:space:]]*([A-Za-z0-9_-]*).*$/\1/')
+        if [ -z "${type}" ]; then
+            check_problem "${where}: ${which} \`${value}\` has no type: it does not start with a letter, digit, \`_\`, or \`-\`"
+            continue
+        fi
         while IFS="${TAB}" read -r title types; do
             [ -n "${title}" ] || continue
             case " ${types} " in

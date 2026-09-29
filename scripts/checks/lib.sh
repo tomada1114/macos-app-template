@@ -9,6 +9,7 @@
 #   check_report ERR_CHECK_X "what failed" "expected" "next"
 #   check_finish "x: ok"
 #   check_yaml_flatten .github/workflows/ci.yml     # `<line>\t<path>\t<value>` rows
+#   rows=$(check_read "ci.yml" some_reader ci.yml)  # a reader failure -> ERR_CHECK_READ_FAILED
 #
 # Every check reads files under CHECK_ROOT and nothing else. CHECK_ROOT is the
 # --root DIR argument when given (tests point it at a fixture tree), otherwise the
@@ -18,6 +19,7 @@
 # Errors raised here (each followed by Expected:/Actual:/Next: lines):
 #   ERR_CHECK_USAGE          unknown argument, or a --root DIR that does not exist (exit 1 now)
 #   ERR_CHECK_INPUT_MISSING  a file or directory the check reads is absent (exit 1 now)
+#   ERR_CHECK_READ_FAILED    a reader run through check_read exited non-zero (exit 1 now)
 # A check's own codes are reported through check_report, which lets the check keep
 # going; check_finish then exits 1 if anything was reported.
 
@@ -199,4 +201,23 @@ check_yaml_flatten() {
             }
         }
     ' "$1"
+}
+
+# check_read REL CMD... — runs CMD, a reader of the file REL, and prints its stdout.
+# If CMD exits non-zero it fails now with ERR_CHECK_READ_FAILED and CMD's first stderr
+# line, so an awk or sed error surfaces under the failure contract instead of as a
+# bare message. Call it inside `$(…)`: the failure exits that subshell, and the
+# assignment's non-zero status then stops the check under `set -e`.
+check_read() {
+    local rel="$1" out status=0 message
+    shift
+    out=$("$@" 2>/dev/null) || status=$?
+    if [ "${status}" -ne 0 ]; then
+        message=$("$@" 2>&1 >/dev/null | head -n 1) || true
+        check_fail ERR_CHECK_READ_FAILED "could not read ${rel}" \
+            "the reader of ${rel} to exit 0" \
+            "exit ${status}: ${message:-no message}" \
+            "check that ${rel} is a readable text file, then re-run the check"
+    fi
+    printf '%s\n' "${out}"
 }

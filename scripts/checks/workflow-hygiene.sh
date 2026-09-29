@@ -14,26 +14,38 @@
 #     it; no job uses the shorthand either. A missing top-level key is
 #     workflow-pins-and-permissions.sh's to report.
 #   - concurrency: a workflow triggered by `pull_request` or `pull_request_target` has
-#     a top-level `concurrency:`. Wherever one is declared, its group names something
-#     that differs between runs (`github.ref…`, `github.head_ref`, `github.sha`,
-#     `github.run_id`, `github.run_number`, `github.event.number`, or
-#     `github.event.pull_request.…`) — a constant group makes every run queue behind
-#     one another and GitHub drops all but the newest pending run; a group that does
-#     not mention `github.workflow` is unique to its file, or two workflows cancel each
-#     other; and a workflow triggered by `push` never cancels in progress: its
-#     `cancel-in-progress:` is absent, `false`, or an expression on
-#     `github.event_name` (ci.yml's pull-request-only cancel). Job-level
-#     `concurrency:` is not checked.
-#   - fail-closed shells: every `shell:` (a workflow's or job's `defaults.run.shell`,
-#     or a step's) is `bash` — which GitHub runs as
+#     a top-level `concurrency:`. Wherever one is declared:
+#       - its group names something that differs between runs — a constant group makes
+#         every run queue behind one another, and GitHub drops all but the newest
+#         pending run. `github.ref`, `github.ref_name`, `github.sha`, `github.run_id`,
+#         and `github.run_number` count for any trigger; `github.head_ref`,
+#         `github.event.number`, and `github.event.pull_request.…` only when every
+#         trigger is a pull request event, because they are empty on a push or a
+#         schedule (write `${{ github.head_ref || github.run_id }}` to mix them);
+#       - a group that does not mention `github.workflow` is unique to its file, or
+#         two workflows cancel or queue behind each other;
+#       - a workflow triggered by `push` never cancels a push run: its
+#         `cancel-in-progress:` is absent, `false`, or an expression testing
+#         `github.event_name == 'pull_request'` (or `pull_request_target`) or
+#         `github.event_name != 'push'`, as ci.yml does.
+#     Job-level `concurrency:` is not checked.
+#   - fail-closed shells, for the sh family only (`sh`, `bash`, `dash`, `ksh`, `zsh`,
+#     by the first word's basename; `pwsh`, `python`, and other interpreters are
+#     outside this rule): every such `shell:` (a workflow's or job's
+#     `defaults.run.shell`, or a step's) is `bash` — which GitHub runs as
 #     `bash --noprofile --norc -eo pipefail {0}` — or a custom `bash … {0}` template
-#     with `-e` and `pipefail`. Every `run:` step resolves to such a shell (step,
-#     then job defaults, then workflow defaults), or its first line that is not a
-#     comment is a `set` with `-e` and `pipefail`: a step with no explicit shell runs
-#     as `bash -e {0}`, where a failing command before a `|` goes unnoticed.
-#   The reading is line-based, not a YAML parser (see check_yaml_flatten): a trigger,
-#   permission, or concurrency setting spelled in a multi-line flow collection is not
-#   seen.
+#     that sets errexit (`-e` or `-o errexit`) and `pipefail`. Every `run:` step
+#     resolves to an explicit shell (step, then job defaults, then workflow
+#     defaults), or its first line that is not a comment is a `set` enabling
+#     `pipefail` (and not turning errexit off): a step with no explicit shell runs as
+#     `bash -e {0}` on a Linux or macOS runner, where a failing command before a `|`
+#     goes unnoticed. The check assumes those runners; a Windows job's implicit shell
+#     is pwsh, and naming it is enough.
+#   The reading is line-based, not a YAML parser (see check_yaml_flatten). A one-line
+#   flow `on:` (`on: [push, pull_request]`, `on: {pull_request: {}}`) is read for its
+#   event names; any other setting spelled as a flow collection — a
+#   `defaults: { run: { shell: bash } }`, a `concurrency: { group: … }` — is not seen,
+#   so write those in block style.
 #
 # Git work tree: not required — the check reads files under --root, which defaults
 # to the checkout containing this script (scripts/checks/lib.sh).
@@ -55,25 +67,45 @@ check_parse_args "scripts/checks/workflow-hygiene.sh" "$@"
 # below).
 analyze() {
     check_yaml_flatten "$1" | awk -F '\t' -v f="$2" '
-    function add_events(v,    n, parts, i, e) {
-        gsub(/\[|\]/, "", v)
-        n = split(v, parts, ",")
-        for (i = 1; i <= n; i++) {
-            e = parts[i]
-            gsub(/^[[:space:]]+|[[:space:]]+$/, "", e)
-            gsub(/^"|"$/, "", e)
-            gsub(/^\047|\047$/, "", e)
-            if (e != "") ev[e] = 1
+    # add_events(v) — records the event names of a one-line `on:` value: a scalar,
+    # a flow list, or a flow mapping (its top-level keys; nested values skipped).
+    function add_event(e) {
+        sub(/:.*$/, "", e)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", e)
+        gsub(/^"|"$/, "", e)
+        gsub(/^\047|\047$/, "", e)
+        if (e != "") ev[e] = 1
+    }
+    function add_events(v,    i, c, depth, item) {
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+        if (v ~ /^[[{]/) v = substr(v, 2, length(v) - 2)
+        depth = 0; item = ""
+        for (i = 1; i <= length(v); i++) {
+            c = substr(v, i, 1)
+            if (c == "{" || c == "[") depth++
+            else if (c == "}" || c == "]") depth--
+            if (c == "," && depth == 0) { add_event(item); item = ""; continue }
+            if (depth == 0) item = item c
         }
+        add_event(item)
     }
-    function fail_closed_shell(v) {
-        return v == "bash" || (v ~ /^bash[[:space:]]/ && v ~ /[[:space:]]-[A-Za-z]*e/ && v ~ /pipefail/ && v ~ /\{0\}/)
+    function sh_family(v,    w) {
+        w = v; sub(/[[:space:]].*$/, "", w); sub(/^.*\//, "", w)
+        return w ~ /^(sh|bash|dash|ksh|zsh)$/
     }
+    function errexit(s) { return s ~ /[[:space:]]-[A-Za-z]*e/ || s ~ /-o[[:space:]]+errexit/ }
+    function pipefail(s) { return s ~ /-[A-Za-z]*o[[:space:]]+pipefail/ }
+    function fail_closed_shell(v,    w) {
+        w = v; sub(/[[:space:]].*$/, "", w); sub(/^.*\//, "", w)
+        return v == "bash" || (w == "bash" && errexit(v) && pipefail(v) && v ~ /\{0\}/)
+    }
+    # The implicit shell is already `bash -e {0}`: a leading `set` needs only to add
+    # pipefail, and must not switch errexit back off.
     function fail_closed_set(s) {
-        return s ~ /^set[[:space:]]/ && s ~ /[[:space:]]-[A-Za-z]*e/ && s ~ /pipefail/
+        return s ~ /^set[[:space:]]/ && pipefail(s) && s !~ /[[:space:]]\+[A-Za-z]*e/ && s !~ /\+o[[:space:]]+errexit/
     }
     function shell_value(line, v) {
-        if (!fail_closed_shell(v)) print "SHELL\t" f ":" line ": `shell: " v "` does not stop at a failing command (`-e`) or a failing pipeline stage (`pipefail`)"
+        if (sh_family(v) && !fail_closed_shell(v)) print "SHELL\t" f ":" line ": `shell: " v "` does not stop at a failing command (`-e`) or a failing pipeline stage (`pipefail`)"
     }
     function step_key(p) { sub(/\.(run|shell)(\.\|)?$/, "", p); return p }
     { line = $1; p = $2; v = $3 }
@@ -124,18 +156,26 @@ analyze() {
         }
 
         pr = ("pull_request" in ev) || ("pull_request_target" in ev)
+        pr_only = pr
+        for (e in ev) if (e != "pull_request" && e != "pull_request_target") pr_only = 0
         if (pr && !hasconc) print "CONC\t" f ": runs on pull requests but has no top-level `concurrency:`, so a superseded run keeps its runner until it finishes"
         if (!hasconc) exit
         if (group == "") {
             print "CONC\t" f ":" concline ": `concurrency:` has no `group:`"
-        } else if (group !~ /github\.(ref|head_ref|sha|run_id|run_number|event\.number|event\.pull_request\.)/) {
-            print "CONC\t" f ":" groupline ": group `" group "` is the same for every run, so runs queue behind one another and all but the newest pending one are dropped"
+        } else if (group !~ /github\.(ref|ref_name|sha|run_id|run_number)([^A-Za-z0-9_.]|$)/) {
+            if (pr_only && group ~ /github\.(head_ref([^A-Za-z0-9_.]|$)|event\.number([^A-Za-z0-9_.]|$)|event\.pull_request\.)/) {
+                # keyed by the pull request: fine while nothing else triggers the workflow
+            } else if (group ~ /github\.(head_ref([^A-Za-z0-9_.]|$)|event\.number([^A-Za-z0-9_.]|$)|event\.pull_request\.)/) {
+                print "CONC\t" f ":" groupline ": group `" group "` is keyed by the pull request, which is empty for the workflow\047s other triggers, so their runs share one group"
+            } else {
+                print "CONC\t" f ":" groupline ": group `" group "` is the same for every run, so runs queue behind one another and all but the newest pending one are dropped"
+            }
         }
         if ("push" in ev) {
             if (cancel == "true") {
                 print "CONC\t" f ":" cancelline ": `cancel-in-progress: true` on a push-triggered workflow lets a newer push cancel the run of an earlier one"
-            } else if (index(cancel, "{{") > 0 && cancel !~ /github\.event_name/) {
-                print "CONC\t" f ":" cancelline ": `cancel-in-progress: " cancel "` on a push-triggered workflow does not depend on `github.event_name`, so it may cancel a push run"
+            } else if (index(cancel, "{{") > 0 && cancel !~ /github\.event_name[[:space:]]*==[[:space:]]*(\047|")pull_request(_target)?(\047|")/ && cancel !~ /github\.event_name[[:space:]]*!=[[:space:]]*(\047|")push(\047|")/) {
+                print "CONC\t" f ":" cancelline ": `cancel-in-progress: " cancel "` on a push-triggered workflow is not limited to pull request runs (`github.event_name == \047pull_request\047`), so it may cancel a push run"
             }
         }
         if (group != "" && group !~ /github\.workflow/) print "GROUP\t" group "\t" f ":" groupline
@@ -151,7 +191,7 @@ done
 
 FINDINGS=""
 for file in ${FILES[@]+"${FILES[@]}"}; do
-    rows=$(analyze "${file}" "${file#"${CHECK_ROOT}"/}")
+    rows=$(check_read "${file#"${CHECK_ROOT}"/}" analyze "${file}" "${file#"${CHECK_ROOT}"/}")
     if [ -n "${rows}" ]; then
         FINDINGS="${FINDINGS}${rows}
 "
@@ -192,7 +232,7 @@ check_report ERR_CHECK_WORKFLOW_CONCURRENCY "a workflow's concurrency is missing
 
 report_category SHELL
 check_report ERR_CHECK_WORKFLOW_SHELL "a workflow step does not run in a fail-closed shell" \
-    "every \`run:\` step to resolve to \`shell: bash\` (step, job, or workflow \`defaults.run.shell\`), or to start with \`set -euo pipefail\`" \
-    "add a top-level \`defaults: { run: { shell: bash } }\` block to the workflow (a composite step takes \`shell: bash\`), or start the script with \`set -euo pipefail\`"
+    "every sh-family \`shell:\` to be \`bash\` (or a \`bash … {0}\` template with -e and pipefail), and every \`run:\` step to resolve to an explicit shell (step, job, or workflow \`defaults.run.shell\`) or to start with \`set -euo pipefail\`" \
+    "add a top-level block-style \`defaults:\` key to the workflow — \`defaults:\`, then \`  run:\`, then \`    shell: bash\`, one per line (a flow mapping is not read) — give a composite step \`shell: bash\`, or start the script with \`set -euo pipefail\`"
 
 check_finish "workflow-hygiene: write permissions are job-level, concurrency is safe, and every run: step fails closed."
