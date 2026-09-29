@@ -20,7 +20,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "GITLEAKS_VERSION in gitleaks.yml. Renovate cannot rewrite GITLEAKS_SHA256, so the bump PR fails the checksum step until a human updates it (fail-closed).",
+      "description": "GITLEAKS_VERSION in gitleaks.yml. Renovate cannot rewrite GITLEAKS_SHA256, so the bump PR's gitleaks run (pull_request trigger) fails the checksum step until a human updates it (fail-closed).",
       "managerFilePatterns": [
         "/^\\.github/workflows/gitleaks\\.yml$/"
       ],
@@ -41,7 +41,7 @@
         "gitleaks/gitleaks"
       ],
       "prBodyNotes": [
-        "GITLEAKS_SHA256 in .github/workflows/gitleaks.yml is not updated by Renovate. Before merging, copy the linux_x64 line's hash from this release's gitleaks_<version>_checksums.txt into GITLEAKS_SHA256, then run the Gitleaks History Scan workflow (workflow_dispatch) on this branch and confirm its sha256sum --check step passes."
+        "GITLEAKS_SHA256 in .github/workflows/gitleaks.yml is not updated by Renovate, so this PR's Gitleaks History Scan run fails its sha256sum check until it is. Copy the linux_x64 line's hash from this release's gitleaks_<version>_checksums.txt into GITLEAKS_SHA256, push, and merge only once that run passes."
       ]
     }
   ]

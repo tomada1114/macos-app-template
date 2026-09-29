@@ -25,15 +25,16 @@ the `zizmor` job partly check and review holds for the rest:
 `GITLEAKS_VERSION` and `GITLEAKS_SHA256` in the job's `env:`. Neither Dependabot nor
 mise tracks that pin, so a Renovate regex manager in `.github/renovate.json` opens the
 version bump. Renovate cannot derive a checksum it could verify, so the bump stays
-half manual, and fail-closed: the PR changes only `GITLEAKS_VERSION`, and the install
-step's `sha256sum --check` fails until someone finishes it:
+half manual, and fail-closed: the PR changes only `GITLEAKS_VERSION`, the workflow's
+`pull_request` trigger (scoped to edits of that file) runs the job on the PR, and the
+install step's `sha256sum --check` fails until someone finishes it:
 
 1. download `gitleaks_<version>_checksums.txt` from
    `https://github.com/gitleaks/gitleaks/releases/tag/v<version>`;
 2. copy the `gitleaks_<version>_linux_x64.tar.gz` line's hash into `GITLEAKS_SHA256`;
 3. check it against the tarball itself:
    `echo "<sha>  gitleaks_<version>_linux_x64.tar.gz" | shasum -a 256 -c`;
-4. run the "Gitleaks History Scan" workflow (`workflow_dispatch`) on the branch and
-   confirm the install step passes before merging.
+4. push it and confirm the PR's "Scan full git history for leaked credentials" run
+   passes before merging.
 
 Never make the step pass by dropping or loosening the checksum check.
