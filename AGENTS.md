@@ -242,13 +242,15 @@ Only what is mechanically decidable is blocked at commit time; whether a commit
 what is checked: the pre-commit hook's "Staged guard" section (`scripts/check-staged.sh`)
 refuses a secret-shaped staged path or credential-shaped staged content.
 
-Never read a secret-shaped file, even to check it: `.env` or `.env.*` (the
-`.example`/`.sample`/`.template` samples excepted), anything under a `secrets/`
+Never read a secret-shaped file, even to check it: `.env`, `.env.*`, or `.envrc.*`
+(the `.example`/`.sample`/`.template` samples excepted), anything under a `secrets/`
 directory, `*.p12`, `*.pfx`, `*.p8`, `*.provisionprofile`, `*.mobileprovision`,
 `*.keychain`/`*.keychain-db`, `*key*.pem`, `private-key.*`, `.netrc`,
 `credentials.json`, `secrets.json`, and `Config/Local.xcconfig`. This is the same list
 `scripts/guard/paths.sh` refuses to commit, so the read rule and the commit guard
-agree; if a task seems to need one, ask the human for the non-secret fact instead.
+agree (the guard also refuses `.claude/settings.local.json`, which is per-user
+settings rather than a secret, so reading it is fine and only committing it is not);
+if a task seems to need one, ask the human for the non-secret fact instead.
 
 Get a human's sign-off before acting on any of these. No file in this repository
 blocks them mechanically today — this section is the rule itself, not a description
