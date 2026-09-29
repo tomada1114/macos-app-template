@@ -331,6 +331,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `scripts/bootstrap.sh`'s "Next steps" and `README.md`'s "Using This Template" now
+  point a new app at the `docs/architecture/roadmap.md` skeleton right after its
+  `## Product` section.
+
 - `.github/dependabot.yml` groups minor and patch updates per ecosystem (SwiftPM and
   GitHub Actions), so one upstream release arrives as one PR; majors still get their
   own PR, and the 7-day cooldown is unchanged.
