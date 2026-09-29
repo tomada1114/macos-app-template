@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Renovate's commit prefix is missing or not a type `check-pr-title.yml` accepts, or
   when their release cooldowns are missing or disagree. Both read YAML through a new
   line-based `check_yaml_flatten` helper in `scripts/checks/lib.sh` (#129).
+- A `MyAppTestSupport` target in `Packages/MyAppKit/Package.swift` for test code both
+  test targets share, and one contract suite per port in it:
+  `FrontmostAppProvidingContract` checks that every non-`nil` answer of a
+  `FrontmostAppProviding` names the application (a non-empty `name`) across repeated
+  calls. `MyAppCoreTests` runs it against `FakeFrontmostAppProvider` on every
+  `just test` and in CI, and `MyAppPlatformTests` runs it against
+  `WorkspaceFrontmostAppProvider` under `.requiresLocalMachine` (`just test-local`).
+  The target's sources live under `Tests/MyAppTestSupport`, outside the `MyAppCore`
+  coverage floors; no product exports it, and `ArchitectureBoundaryTests` fails if
+  `MyAppCore`, `MyAppUI`, or `MyAppPlatform` imports it.
 
 - `scripts/label-pr.sh`, tested by `scripts/tests/label-pr_test.sh`, now labels pull
   requests for `.github/workflows/pr-label.yml`, which runs it from a checkout of the
@@ -26,6 +36,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `deps`, and the rest were unlabeled before), removes a type label a retitle left
   stale, and never creates a label: the old colorless `gh label create` fallback is
   gone, and a label missing from `.github/labels.yml` fails the job instead.
+- String Catalog localization plumbing: `Packages/MyAppKit/Package.swift` sets
+  `defaultLocalization: "en"`, and `MyAppCore` ships
+  `Sources/MyAppCore/Resources/Localizable.xcstrings` (English only). Core view models
+  now own the wording and return `LocalizedStringResource`:
+  `FrontmostAppViewModel.label` replaces `displayName` and `unavailableDisplayName`,
+  and `CounterViewModel.resetTitle`, `decrementLabel`, and `incrementLabel` replace the
+  view's "Reset" title and its "Decrement" and "Increment" accessibility labels. `LocalizationTests`
+  scans `Sources/MyAppCore` for `LocalizedStringResource(…)` calls and fails when one
+  lacks an explicit key, a `defaultValue`, or `bundle: .module`, when a declared key is
+  missing from the catalog or a catalog key is declared nowhere, or when the catalog's
+  English differs from the code's. A `localizing-the-app` skill holds the
+  rules, `AGENTS.md`'s English-only rule gains one exception (translated values in a
+  `*.xcstrings` catalog), and a shipped language beyond English is now an ADR trigger.
 - A weekly `.github/workflows/gitleaks.yml` workflow that runs gitleaks 8.30.1 over
   the full git history to find leaked secrets. The release binary is pinned and its
   checksum verified, the job has `contents: read` only, and findings are redacted in
@@ -394,6 +417,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   per-ref `concurrency:` group, and `ci.yml`, `codeql.yml`, `gitleaks.yml`,
   `osv-scan.yml`, `pr-label.yml`, and `release.yml` default their `run:` steps to
   `shell: bash`, so a failing command before a `|` now fails its step (#129).
+- `FakeFrontmostAppProvider` moved from `FrontmostAppViewModelTests.swift` to
+  `Tests/MyAppTestSupport/FakeFrontmostAppProvider.swift` as a `package` type, and is now
+  `Sendable` through an `OSAllocatedUnfairLock` around its call count instead of
+  `@unchecked Sendable`. `FrontmostAppProviding`'s doc comment now states the clause
+  the contract checks, and `WorkspaceFrontmostAppProvider` answers `nil` for an
+  application whose `localizedName` is empty, as it already did for a missing one.
 - `scripts/lint.sh`'s `shellcheck` and `typos` (`typos.toml`) no longer scan the
   generated `.claude/skills/` mirror, which doubled every finding in `.agents/skills/`;
   the mirror stays held byte-identical by `scripts/sync-agents.sh --check`
