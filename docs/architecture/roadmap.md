@@ -35,21 +35,21 @@ request, and the change lands only once the owner has approved it.
 
 The outcomes being worked on, one to three of them. Each has its issues filed.
 
-- TODO: **<an outcome, as what a user can do>** — why it comes first, in one sentence.
-  Issues: #N, #N. Done when: <what can be observed — a launch, a `just` recipe, a
-  behavior in the running app — not a task that was finished>.
+- TODO: **[an outcome, as what a user can do]** — why it comes first, in one sentence.
+  Issues: #N, #N. Done when: [what can be observed — a launch, a `just` recipe, a
+  behavior in the running app — not a task that was finished].
 
 ## Next
 
 The outcomes that follow once Now's are done. An issue may already exist for one, often
 parked as `on hold`; none is required.
 
-- TODO: **<an outcome>** — why it follows Now. Before it moves up: <an ADR to write, an
-  outcome in Now to land, an open question for the owner>. Issues, if any: #N.
+- TODO: **[an outcome]** — why it follows Now. Before it moves up: [an ADR to write, an
+  outcome in Now to land, an open question for the owner]. Issues, if any: #N.
 
 ## Later
 
 Direction the app intends to take but has not ordered. No issue is filed for a line
 here, apart from a parked one that a line names.
 
-- TODO: **<an outcome>** — what would bring it forward.
+- TODO: **[an outcome]** — what would bring it forward.
