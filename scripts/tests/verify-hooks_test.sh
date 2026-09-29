@@ -143,6 +143,18 @@ case_git_other_failure_fails() {
     head -n 1 "${CASE_DIR}/stderr" | grep -q '^ERR_HOOKS_GIT_FAILED: ' || _fail "first stderr line is not ERR_HOOKS_GIT_FAILED"
 }
 
+# A warning git prints on stderr does not override its answer on stdout: an
+# installed repo whose git warns (and still answers "true") passes.
+case_git_warning_on_stderr_still_passes() {
+    local repo real_git
+    repo=$(make_installed_repo)
+    real_git=$(command -v git)
+    cd "${repo}"
+    stub_command git "if [ \"\$*\" = 'rev-parse --is-inside-work-tree' ]; then echo 'warning: something odd' >&2; fi; exec '${real_git}' \"\$@\""
+    capture "${BASH}" "${VERIFY_SRC}"
+    assert_exit 0
+}
+
 # The skip decision does not depend on the caller's locale: the script pins
 # LC_ALL=C on the git call it matches against.
 case_outside_work_tree_skips_under_other_locale() {
@@ -178,6 +190,7 @@ run_case "CI=0 with hooks unset still fails" case_ci_zero_still_fails
 run_case "outside a git work tree skips" case_outside_work_tree_skips
 run_case "a malformed .git/config fails ERR_HOOKS_GIT_FAILED" case_broken_git_config_fails
 run_case "any other git failure fails ERR_HOOKS_GIT_FAILED" case_git_other_failure_fails
+run_case "a git warning on stderr does not override its answer" case_git_warning_on_stderr_still_passes
 run_case "outside a git work tree skips under a non-C locale" case_outside_work_tree_skips_under_other_locale
 run_case "a linked worktree of an installed repo exits 0" case_linked_worktree_passes
 finish

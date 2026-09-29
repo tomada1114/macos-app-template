@@ -65,27 +65,30 @@ fail() { # fail <code> <what failed> <expected> <actual> <next>
 
 # Only "not a git repository" means skip. Any other git failure (a malformed
 # config, an unreadable .git, a dubious-ownership refusal) is a broken git, not
-# an absent one, and must fail rather than pass silently. LC_ALL=C pins git's
-# message to English so the match does not depend on the caller's locale.
-# git's answer ("true"/"false") decides first, whatever the exit code, so a git
-# that answers and then exits nonzero is still read by its answer.
+# an absent one, and must fail rather than pass silently. git's answer on stdout
+# ("true"/"false") decides first, whatever the exit code or any warning on
+# stderr, so a git that answers is read by its answer. Only when it gives none
+# is stderr read, with LC_ALL=C so the match does not depend on the locale.
 INSIDE_EXIT=0
-INSIDE_OUT=$(LC_ALL=C git rev-parse --is-inside-work-tree 2>&1) || INSIDE_EXIT=$?
+INSIDE_OUT=$(LC_ALL=C git rev-parse --is-inside-work-tree 2>/dev/null) || INSIDE_EXIT=$?
 case "${INSIDE_OUT}" in
     true) ;;
     false)
         echo "verify-hooks: not inside a git work tree; not checking the pre-commit hook."
         exit 0
         ;;
-    *"not a git repository"*)
-        echo "verify-hooks: not inside a git work tree; not checking the pre-commit hook."
-        exit 0
-        ;;
     *)
+        INSIDE_ERR=$(LC_ALL=C git rev-parse --is-inside-work-tree 2>&1 >/dev/null || true)
+        case "${INSIDE_ERR}" in
+            *"not a git repository"*)
+                echo "verify-hooks: not inside a git work tree; not checking the pre-commit hook."
+                exit 0
+                ;;
+        esac
         fail ERR_HOOKS_GIT_FAILED \
             "\`git rev-parse --is-inside-work-tree\` failed for a reason other than \"not a git repository\"" \
             "git either answers, or reports \"not a git repository\"" \
-            "exit ${INSIDE_EXIT}: $(printf '%s' "${INSIDE_OUT}" | head -n 1)" \
+            "exit ${INSIDE_EXIT}: $(printf '%s' "${INSIDE_ERR:-${INSIDE_OUT}}" | head -n 1)" \
             "run \`git rev-parse --is-inside-work-tree\` here and fix what it reports (often a malformed .git/config or ~/.gitconfig)."
         ;;
 esac
