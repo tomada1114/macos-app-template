@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A weekly `.github/workflows/gitleaks.yml` workflow that runs gitleaks 8.30.1 over
+  the full git history to find leaked secrets. The release binary is pinned and its
+  checksum verified, the job has `contents: read` only, and findings are redacted in
+  the log. `.gitleaksignore` lists the exact fingerprints of known fake fixtures.
 - Three harness checks, run by `just check-harness`, for lists that were kept in sync
   by hand: `scripts/checks/core-ban-lists-agree.sh` fails when `.swiftlint.yml`'s
   `no_ui_import_in_core` regex and `ArchitectureBoundaryTests.forbiddenModules` ban
@@ -353,6 +357,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the workflow conventions move to `changing-gates/references/`, and the pre-commit
   hook recovery steps to `smart-commit/references/`, each linked from the body with no
   rule dropped (#166).
+- `scripts/bootstrap.sh`'s "Next steps" and `README.md`'s "Using This Template" now
+  point a new app at the `docs/architecture/roadmap.md` skeleton right after its
+  `## Product` section.
 
 - `.github/dependabot.yml` groups minor and patch updates per ecosystem (SwiftPM and
   GitHub Actions), so one upstream release arrives as one PR; majors still get their
@@ -425,6 +432,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The release workflow no longer strips `App/MyApp.entitlements` (and with it the App
+  Sandbox) from an ad-hoc-signed release: it keeps the signature `xcodebuild` applied
+  instead of re-signing without `--entitlements`, and a new step fails the release
+  unless `codesign -d --entitlements -` shows `com.apple.security.app-sandbox`.
+  `docs/distribution.md` now describes both signing paths.
 - `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
   (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
   fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
@@ -440,6 +452,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   line-coverage floor notices a missed branch; `.claude/rules/swift.md` states the
   SwiftLint limits actually enforced; `.github/zizmor.yml` no longer hard-codes a use
   count; `SECURITY.md` drops response times a template cannot promise
+- `ContentView`'s `−` and `+` buttons now carry the accessibility labels "Decrement"
+  and "Increment", so VoiceOver no longer reads the bare glyph.
 
 - `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
   `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
