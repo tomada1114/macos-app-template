@@ -2,6 +2,7 @@
 # Tests for scripts/label-pr.sh. `gh` is stubbed: `gh pr view` prints the labels in
 # ${STUB_BIN}/current, and every call is logged to ${STUB_BIN}/gh.log.
 set -euo pipefail
+# shellcheck source=scripts/tests/lib.sh
 . "$(dirname "$0")/lib.sh"
 trap cleanup_temp EXIT
 
