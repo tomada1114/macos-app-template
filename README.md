@@ -75,7 +75,8 @@ and one catalog — since a second language makes every later string owe a
 translation and a reviewer; an app that wants one records it as an ADR. The
 `localizing-the-app` skill holds the rules, including one that shapes the
 tests: `swift test` copies the catalog uncompiled (only `xcodebuild` compiles
-it), so `LocalizationTests` checks the catalog's source against the code.
+it), so `LocalizationTests` scans Core's sources for `LocalizedStringResource`
+calls and checks their keys and English against the catalog's source.
 
 ### Why Swift Testing?
 

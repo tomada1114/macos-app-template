@@ -94,7 +94,7 @@ job call.
 | Formatting or style of any Swift file | `just lint` |
 | A SwiftLint or SwiftFormat violation that may be auto-fixable | `just fix` (formats, runs `swiftlint --fix`, then `just lint` reports what still needs a hand edit) |
 | One Core suite, while iterating | `just test-fast <filter>` (e.g. `just test-fast CounterTests`) — no coverage floor, so finish with `just test` |
-| `Packages/MyAppKit/Sources/MyAppCore/Resources/Localizable.xcstrings`, or a `LocalizedStringResource` in Core | `just test` (`LocalizationTests` holds the catalog and the code together); `just build` to compile the catalog into the app |
+| `Packages/MyAppKit/Sources/MyAppCore/Resources/Localizable.xcstrings`, or a `LocalizedStringResource` in Core | `just test` (`LocalizationTests` scans Core's `LocalizedStringResource(…)` calls and holds their keys and English to the catalog); `just build` to compile the catalog into the app |
 | `project.yml`, or `Config/Debug.xcconfig` | `just generate && just build` |
 | A test under `LaunchUITests/`, or launch behavior | `just uitest` |
 | The Release configuration, or anything only a Release launch shows | `just smoke` |

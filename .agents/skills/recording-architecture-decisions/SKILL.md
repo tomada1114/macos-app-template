@@ -5,7 +5,8 @@ description: >
   and the numbered adr/NNNN-*.md records. Use when a change adds a target or a Core
   port, changes the app shape (LSUIElement, MenuBarExtra), the App Sandbox or an
   entitlement, persistence, a package dependency, distribution (Mac App Store,
-  Developer ID, Sparkle), deploymentTarget or platforms:, or a TCC permission; when
+  Developer ID, Sparkle), deploymentTarget or platforms:, a TCC permission, or a
+  shipped language beyond English (defaultLocalization); when
   proposing, accepting, amending, rejecting, or superseding an ADR; when writing a
   version, an availability, a price, or an Apple policy into a document; or when
   deciding whether a change owes an ADR at all.

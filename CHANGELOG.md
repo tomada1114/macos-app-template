@@ -15,8 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now own the wording and return `LocalizedStringResource`:
   `FrontmostAppViewModel.label` replaces `displayName` and `unavailableDisplayName`,
   and `CounterViewModel.resetTitle` replaces the view's "Reset" literal. `LocalizationTests`
-  fails when a key Core uses is missing from the catalog, a catalog key is unused, or the
-  catalog's English differs from the code's. A `localizing-the-app` skill holds the
+  scans `Sources/MyAppCore` for `LocalizedStringResource(…)` calls and fails when one
+  lacks an explicit key, a `defaultValue`, or `bundle: .module`, when a declared key is
+  missing from the catalog or a catalog key is declared nowhere, or when the catalog's
+  English differs from the code's. A `localizing-the-app` skill holds the
   rules, `AGENTS.md`'s English-only rule gains one exception (translated values in a
   `*.xcstrings` catalog), and a shipped language beyond English is now an ADR trigger.
 - Three harness checks, run by `just check-harness`, for lists that were kept in sync

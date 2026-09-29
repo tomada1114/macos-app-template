@@ -84,10 +84,15 @@ Every part is there for a reason:
 ## Keeping the catalog in step
 
 - A new or changed key lands in the Core code, `Localizable.xcstrings`, and
-  `LocalizationTests.everyCase()` in the same change. The suite fails until the three
-  agree: a key the code uses but the catalog lacks, a catalog key nothing uses, or a
-  catalog English value that differs from `defaultValue`. It reads the catalog's source,
-  not a compiled bundle, because `swift test` never compiles one.
+  `LocalizationTests.everyCase()` in the same change. The suite scans every
+  `LocalizedStringResource(…)` call in `Sources/MyAppCore` (`ResourceDeclarationScan`)
+  and fails until all three agree: a call without an explicit key, a `defaultValue`, or
+  `bundle: .module`; a declared key the catalog or `everyCase()` lacks; a catalog key
+  declared nowhere; or catalog English that differs from `defaultValue`. It reads the
+  catalog's source, not a compiled bundle, because `swift test` never compiles one.
+- The scan is text, not a parser. It does not see a resource made from a bare literal
+  (`let title: LocalizedStringResource = "Reset"`, which also lands in the main bundle),
+  `String(localized:)`, or anything in `MyAppUI` — review catches those.
 - Edit the catalog in Xcode's editor, or by hand in the format Xcode writes: two-space
   indent, `" : "` separators, keys sorted, no trailing newline (`.editorconfig`'s
   `[*.xcstrings]` section keeps an editor from fighting that). A key the code uses has a
