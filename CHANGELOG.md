@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for a listed batch of passing PRs, a combined branch for conflicting bumps, and
   failure modes. It points to `.claude/rules/project.md` › Toolchain Pinning for the
   bump policy rather than restating it.
+- Private-repository setup steps in `README.md` "Using This Template" and the
+  `starting-an-app` skill (`references/private-repository.md`): which workflows to
+  delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
+  remove, and the `Dependency Review` required context to drop before `just ruleset`.
+
+- `AGENTS.md` "Security and human approval" now forbids reading secret-shaped files
+  (the list `scripts/guard/paths.sh` refuses to commit), requires sign-off before
+  editing `.claude/settings.local.json`, lists what no local gate sees, and lists the
+  GitHub settings a new repository must enable (secret scanning, push protection,
+  private vulnerability reporting, Dependabot alerts) and why the `main` ruleset has
+  no bypass actor.
 
 - `.claude/rules/project.md`'s Toolchain Pinning is now the one statement of the
   pin-bump policy: bot PRs (Dependabot `deps:`/`ci:`, Renovate `deps:`) after a 7-day
@@ -271,6 +282,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `.github/dependabot.yml` groups minor and patch updates per ecosystem (SwiftPM and
+  GitHub Actions), so one upstream release arrives as one PR; majors still get their
+  own PR, and the 7-day cooldown is unchanged.
 - `shipping-issues` is adapted to this template: its `SKILL.md` fits the
   `authoring-skills` 200-line budget (step detail moved to
   `references/implement-and-review.md` and `references/pr-ci-merge.md`), and the
@@ -338,6 +352,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   layers row now describes both.
 
 ### Fixed
+
+- `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
+  `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
+  running `swiftformat .` over the whole tree after every edit; non-Swift paths and files
+  outside the checkout are skipped, and a swiftformat failure is reported to the agent
+  rather than silenced.
+- `just check` step lists in `README.md`, `docs/getting-started.md`, `CONTRIBUTING.md`,
+  `AGENTS.md`, and the `create-pr` and `tdd` skills now match the justfile's `check`
+  recipe, and every recipe shows a one-line summary in `just --list` (`[doc(...)]`).
 
 - `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
   (its own header, `README.md`'s "Using This Template" paragraph, and the
