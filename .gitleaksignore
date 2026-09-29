@@ -2,5 +2,3 @@
 # real secrets. Scoped to one commit each, so a new leak on the same line still fails.
 # The deliberately fake AWS example key the staged-guard tests feed to scripts/guard/.
 ed3bb5e655abafa68d080c8baa113466d5f8bf5b:scripts/tests/guard-credentials_test.sh:generic-api-key:23
-# The first wording of the #138 CHANGELOG entry on its feature branch (reworded since).
-49074bec27249f8d607288cf8048245e38643239:CHANGELOG.md:generic-api-key:13
