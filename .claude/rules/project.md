@@ -77,9 +77,11 @@ paths:
   Renovate (`.github/renovate.json`, `enabledManagers: ["mise"]`, prefix `deps:`) for
   `mise.toml`. CI on the PR is the gate; merge when it is green. A SwiftLint or
   SwiftFormat bump may fire new rules — fix the code on that PR, never skip the bump
+  (landing these PRs, and the human approval merging them needs: the
+  `merging-dependency-prs` skill)
 - Both wait 7 days after a release (Dependabot's `cooldown.default-days`, Renovate's
   `minimumReleaseAge`) before opening a PR, so a compromised fresh release has time to be pulled; note that
-  SwiftPM itself has no resolver-level cooldown (unlike uv's `exclude-newer`), so fresh installs
+  SwiftPM itself has no resolver-level cooldown, so fresh installs
   are only protected by the committed `Package.resolved`
 - `.xcode-version` is the one hand-bumped pin: neither bot has an ecosystem for it, and
   the value must name an Xcode that GitHub's macOS runner image actually installs
