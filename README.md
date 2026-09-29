@@ -136,7 +136,7 @@ secrets — no workflow edits. See docs/distribution.md.
    for, the core interaction, and the **Non-goals** it must not grow — the
    agent instructions have no other in-repo answer to "is this in scope?".
    Delete every `TODO:` marker as you go; `just check` fails while one is left
-   (`scripts/checks/product-section-filled.sh`)
+   (`scripts/checks/product-section-filled.sh`).
    Then fill in the `docs/architecture/roadmap.md` skeleton — the Now, Next,
    and Later outcomes that follow from it (the `steering-the-roadmap` skill);
    nothing checks that page, so its `TODO:` lines stay until you replace them
