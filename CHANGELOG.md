@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `designing-ui` and `building-swiftui-screens` skills. `designing-ui` holds the macOS
+  craft rules this repository adds on top of Apple's Human Interface Guidelines (each
+  cited with its URL) and the per-app design lock — accent color, type, spacing,
+  density, symbols, window sizing, motion, and copy style — which an app records as an
+  ADR under `docs/architecture/` with the next free number (`references/design-lock.md`).
+  `building-swiftui-screens` covers thin `MyAppUI` views over `MyAppCore` `@Observable`
+  view models: how a view holds its model, what `body` may contain, `#Preview` per
+  state, accessibility identifiers and labels, Reduce Motion, keyboard reachability, and
+  verifying a screen.
 - A `merging-dependency-prs` skill for landing Dependabot (SwiftPM, GitHub Actions) and
   Renovate (`mise.toml`) PRs: a security checklist, one human approval per invocation
   for a listed batch of passing PRs, a combined branch for conflicting bumps, and
