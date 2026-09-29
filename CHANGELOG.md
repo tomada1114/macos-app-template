@@ -9,6 +9,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `authoring-skills` records where a skill lives: in `.agents/skills/` by default,
+  never a committed plugin marketplace, and when a ref-pinned shared plugin is allowed.
+
+- `changing-gates` records why `.githooks/pre-commit` stays lint-only (no
+  formatting, compiling, or related tests).
+
+- The `triaging-issues` skill's "Requests from daily use" section: a friction or
+  idea raised while using the app is filed now, parked as `on hold` with its reason,
+  or dropped with the reason stated, and a parked issue is promoted or closed only by
+  a decision.
+
+- The `starting-an-app` skill now ends the app-shape and sandbox-posture steps by
+  writing ADR 0001 (app shape) and ADR 0002 (sandbox posture), as Proposed, in the
+  new app's `docs/architecture/` tree.
+- `scripts/checks/ruleset-contexts.sh`, run by `just check-harness`: fails when a
+  required status-check context in `.github/rulesets/main.json` matches no job `name:`
+  (or id, when a job has none) in a workflow triggered on `pull_request`, so renaming a
+  CI job can no longer leave a required check that never reports and blocks every PR.
+  A `${{ … }}` expression in a job name matches any text; `pull_request_target` does
+  not count as a pull_request trigger.
+- A `merging-dependency-prs` skill for landing Dependabot (SwiftPM, GitHub Actions) and
+  Renovate (`mise.toml`) PRs: a security checklist, one human approval per invocation
+  for a listed batch of passing PRs, a combined branch for conflicting bumps, and
+  failure modes. It points to `.claude/rules/project.md` › Toolchain Pinning for the
+  bump policy rather than restating it.
+- Private-repository setup steps in `README.md` "Using This Template" and the
+  `starting-an-app` skill (`references/private-repository.md`): which workflows to
+  delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
+  remove, and the `Dependency Review` required context to drop before `just ruleset`.
+
+- `AGENTS.md` "Security and human approval" now forbids reading secret-shaped files
+  (the list `scripts/guard/paths.sh` refuses to commit), requires sign-off before
+  editing `.claude/settings.local.json`, lists what no local gate sees, and lists the
+  GitHub settings a new repository must enable (secret scanning, push protection,
+  private vulnerability reporting, Dependabot alerts) and why the `main` ruleset has
+  no bypass actor.
+
+- `.claude/rules/project.md`'s Toolchain Pinning is now the one statement of the
+  pin-bump policy: bot PRs (Dependabot `deps:`/`ci:`, Renovate `deps:`) after a 7-day
+  cooldown, and `.xcode-version` as the single hand-bumped pin with the reason and
+  procedure. The `changing-gates` skill, `mise.toml`, and `check-pr-title.yml` point to
+  it instead of contradicting it.
+- `scripts/checks/skills-descriptions.sh` (run by `just check-harness`) fails on a
+  `SKILL.md` nested below a skill's top directory (`ERR_CHECK_SKILL_NESTED`), and on a
+  skill `description` over 1,024 characters, one containing a non-ASCII character, or
+  an unquoted frontmatter value Codex CLI's YAML parser rejects
+  (`ERR_CHECK_SKILL_DESCRIPTION`). The em-dashes in the `changing-gates`,
+  `integrating-system-apis`, `shipping-issues`, and `starting-an-app` descriptions are
+  now ASCII hyphens.
 - A `designing-core-logic` skill: how `MyAppCore` logic is shaped — time (`Clock`,
   an injected "now"), `Locale`, and a `RandomNumberGenerator` injected with a test
   substitute for each, tunables in one `Tuning` type, action-shaped `@Observable` view
@@ -253,6 +302,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `.github/dependabot.yml` groups minor and patch updates per ecosystem (SwiftPM and
+  GitHub Actions), so one upstream release arrives as one PR; majors still get their
+  own PR, and the 7-day cooldown is unchanged.
 - `shipping-issues` is adapted to this template: its `SKILL.md` fits the
   `authoring-skills` 200-line budget (step detail moved to
   `references/implement-and-review.md` and `references/pr-ci-merge.md`), and the
@@ -327,6 +379,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scripts/tests/lib.sh` now unsets every exported `GIT_*` variable, not a fixed five,
   so `GIT_CONFIG_*`, `GIT_CEILING_DIRECTORIES` and the like no longer leak into fixture
   repositories; the new `scripts/tests/lib_test.sh` asserts none remain.
+- Small factual drift in the docs: removed leftover references to a Python/uv sibling
+  project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
+  `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`
+  no longer claims `project.yml` already sets usage-description keys; the `create-pr` and
+  `smart-commit` type lists now match `check-pr-title.yml`; `running-the-app` no longer
+  assumes the repository is public; `.claude/rules/testing.md` no longer claims the
+  line-coverage floor notices a missed branch; `.claude/rules/swift.md` states the
+  SwiftLint limits actually enforced; `.github/zizmor.yml` no longer hard-codes a use
+  count; `SECURITY.md` drops response times a template cannot promise
+
+- `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
+  `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
+  running `swiftformat .` over the whole tree after every edit; non-Swift paths and files
+  outside the checkout are skipped, and a swiftformat failure is reported to the agent
+  rather than silenced.
+- `just check` step lists in `README.md`, `docs/getting-started.md`, `CONTRIBUTING.md`,
+  `AGENTS.md`, and the `create-pr` and `tdd` skills now match the justfile's `check`
+  recipe, and every recipe shows a one-line summary in `just --list` (`[doc(...)]`).
 
 - `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
   (its own header, `README.md`'s "Using This Template" paragraph, and the

@@ -158,6 +158,21 @@ jobs:
     steps:
       - uses: jdx/mise-action@${SHA} # v4.2.0
 EOF
+    mkdir -p "${root}/.github/rulesets"
+    cat >"${root}/.github/rulesets/main.json" <<'EOF'
+{
+  "rules": [
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          { "context": "lint", "integration_id": 15368 }
+        ]
+      }
+    }
+  ]
+}
+EOF
     cat >"${root}/.github/actions/setup/action.yml" <<EOF
 name: Setup
 runs:
@@ -213,7 +228,7 @@ case_run_all_passes() {
     root=$(make_fixture)
     capture "${BASH}" "${CHECKS}/run-all.sh" --root "${root}"
     assert_exit 0
-    assert_stdout_contains "harness checks: 5 check(s) passed"
+    assert_stdout_contains "harness checks: 7 check(s) passed"
 }
 
 case_run_all_reports_every_failure() {
@@ -226,7 +241,7 @@ case_run_all_reports_every_failure() {
     assert_exit 1
     assert_stderr_contains "ERR_CHECK_RECIPE_MISSING"
     assert_stderr_contains "ERR_CHECK_WORKFLOW_PERMISSIONS"
-    assert_stderr_contains "ERR_CHECKS_FAILED: 2 of 5 harness check(s) failed: just-recipes-exist.sh workflow-pins-and-permissions.sh"
+    assert_stderr_contains "ERR_CHECKS_FAILED: 2 of 7 harness check(s) failed: just-recipes-exist.sh workflow-pins-and-permissions.sh"
     assert_stderr_not_contains "skills-frontmatter.sh" "a passing check named as failed"
     assert_stderr_not_contains "skills-index-complete.sh" "a passing check named as failed"
     assert_stdout_contains "==> scripts/checks/skills-index-complete.sh"
@@ -476,6 +491,115 @@ case_frontmatter_missing_skill_file() {
     assert_stderr_contains ".agents/skills/gamma: no SKILL.md"
 }
 
+# --- skills-descriptions.sh ---------------------------------------------------
+
+# write_frontmatter ROOT NAME DESCRIPTION_LINES — replaces NAME's SKILL.md with a
+# frontmatter whose description is the given line(s), verbatim after `description:`.
+write_frontmatter() {
+    printf -- '---\nname: %s\ndescription:%s\n---\n\n# %s\n' "$2" "$3" "$2" >"$1/.agents/skills/$2/SKILL.md"
+}
+
+case_descriptions_pass() {
+    local root
+    root=$(make_fixture)
+    # Near misses: a quoted value with `: ` and ` #`, and a folded block holding both.
+    write_frontmatter "${root}" alpha " \"Covers alpha: the fixture #1. Use when testing.\""
+    write_frontmatter "${root}" beta " >
+  Covers beta: the fixture #2.
+  - Use when testing."
+    mkdir -p "${root}/.agents/skills/beta/references"
+    echo "# notes" >"${root}/.agents/skills/beta/references/failure-modes.md"
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 0
+}
+
+case_descriptions_too_long() {
+    local root long
+    root=$(make_fixture)
+    long=$(printf 'x%.0s' $(seq 1 1025))
+    write_frontmatter "${root}" alpha " >
+  ${long}"
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_SKILL_DESCRIPTION
+    assert_stderr_contains ".agents/skills/alpha: \`description\` is 1025 characters, over the 1024-character limit"
+    assert_stderr_not_contains ".agents/skills/beta:" "a well-formed skill reported"
+}
+
+case_descriptions_at_limit_passes() {
+    local root long
+    root=$(make_fixture)
+    long=$(printf 'x%.0s' $(seq 1 1024))
+    write_frontmatter "${root}" alpha " >
+  ${long}"
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 0
+}
+
+case_descriptions_non_ascii() {
+    local root
+    root=$(make_fixture)
+    write_frontmatter "${root}" alpha " >
+  Covers alpha $(printf '\342\200\224') the fixture skill."
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_SKILL_DESCRIPTION
+    assert_stderr_contains ".agents/skills/alpha: \`description\` contains a non-ASCII"
+}
+
+case_descriptions_unquoted_colon() {
+    local root
+    root=$(make_fixture)
+    write_frontmatter "${root}" alpha " Covers alpha: the fixture skill."
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_SKILL_DESCRIPTION
+    assert_stderr_contains ".agents/skills/alpha: line 3 (\`description\`) is an unquoted value containing \`: \`"
+}
+
+case_descriptions_plain_continuation_colon() {
+    local root
+    root=$(make_fixture)
+    write_frontmatter "${root}" alpha " Covers alpha.
+  Use when: testing."
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_SKILL_DESCRIPTION
+    assert_stderr_contains ".agents/skills/alpha: line 4 (\`description\`) is an unquoted value containing \`: \`"
+}
+
+case_descriptions_unquoted_comment() {
+    local root
+    root=$(make_fixture)
+    write_frontmatter "${root}" alpha " Covers alpha #1 fixture."
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_SKILL_DESCRIPTION
+    assert_stderr_contains ".agents/skills/alpha: line 3 (\`description\`) is an unquoted value containing \` #\`"
+}
+
+case_descriptions_indicator_start() {
+    local root
+    root=$(make_fixture)
+    write_frontmatter "${root}" alpha " *alpha covers the fixture."
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_SKILL_DESCRIPTION
+    assert_stderr_contains ".agents/skills/alpha: line 3 (\`description\`) starts with a YAML indicator character"
+}
+
+case_descriptions_nested_skill_file() {
+    local root
+    root=$(make_fixture)
+    mkdir -p "${root}/.agents/skills/alpha/references"
+    cp "${root}/.agents/skills/alpha/SKILL.md" "${root}/.agents/skills/alpha/references/SKILL.md"
+    capture "${BASH}" "${CHECKS}/skills-descriptions.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_SKILL_NESTED
+    assert_stderr_contains ".agents/skills/alpha/references/SKILL.md"
+    assert_stderr_not_contains "ERR_CHECK_SKILL_DESCRIPTION" "a well-formed description reported"
+}
+
 # --- skills-index-complete.sh -------------------------------------------------
 
 case_index_pass_ignores_rules_table() {
@@ -596,6 +720,92 @@ case_product_no_non_goals() {
     assert_stderr_contains "does not name its ${BT}**Non-goals**${BT}"
 }
 
+# --- ruleset-contexts.sh ----------------------------------------------------
+
+# add_context ROOT CONTEXT — appends a required status check to the fixture ruleset.
+add_context() {
+    sed "s|^          { \"context\": \"lint\", \"integration_id\": 15368 }$|&,\\
+          { \"context\": \"$2\", \"integration_id\": 15368 }|" "$1/.github/rulesets/main.json" >"${CASE_DIR}/rs"
+    mv "${CASE_DIR}/rs" "$1/.github/rulesets/main.json"
+}
+
+# write_pr_workflow ROOT FILE ON — a pull_request-style workflow with named jobs.
+write_pr_workflow() {
+    cat >"$1/.github/workflows/$2" <<EOF
+name: Extra
+on: $3
+permissions: {}
+jobs:
+  title:
+    name: "Validate PR title" # shown in the checks list
+    runs-on: ubuntu-latest
+    steps: []
+  build:
+    name: Build (\${{ matrix.os }})
+    runs-on: ubuntu-latest
+    steps: []
+EOF
+}
+
+case_contexts_pass_by_id() {
+    local root
+    root=$(make_fixture)
+    capture "${BASH}" "${CHECKS}/ruleset-contexts.sh" --root "${root}"
+    assert_exit 0
+    assert_stdout_contains "ruleset-contexts: every required status check"
+}
+
+case_contexts_pass_by_name_and_expression() {
+    local root
+    root=$(make_fixture)
+    write_pr_workflow "${root}" extra.yml "[push, pull_request]"
+    add_context "${root}" "Validate PR title"
+    add_context "${root}" "Build (macos-15)"
+    capture "${BASH}" "${CHECKS}/ruleset-contexts.sh" --root "${root}"
+    assert_exit 0
+}
+
+case_contexts_missing_job() {
+    local root
+    root=$(make_fixture)
+    add_context "${root}" "Renamed Job"
+    capture "${BASH}" "${CHECKS}/ruleset-contexts.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_RULESET_CONTEXT
+    assert_stderr_contains 'required context "Renamed Job" matches no job'
+    assert_stderr_not_contains 'context "lint"' "a matching context reported"
+}
+
+case_contexts_push_only_workflow() {
+    local root
+    root=$(make_fixture)
+    add_context "${root}" "build"
+    capture "${BASH}" "${CHECKS}/ruleset-contexts.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_RULESET_CONTEXT
+    assert_stderr_contains 'required context "build" matches no job'
+}
+
+case_contexts_pull_request_target_does_not_count() {
+    local root
+    root=$(make_fixture)
+    write_pr_workflow "${root}" extra.yml "pull_request_target"
+    add_context "${root}" "Validate PR title"
+    capture "${BASH}" "${CHECKS}/ruleset-contexts.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_RULESET_CONTEXT
+    assert_stderr_contains 'required context "Validate PR title" matches no job'
+}
+
+case_contexts_missing_ruleset() {
+    local root
+    root=$(make_fixture)
+    mv "${root}/.github/rulesets/main.json" "${CASE_DIR}/main.json"
+    capture "${BASH}" "${CHECKS}/ruleset-contexts.sh" --root "${root}"
+    assert_exit 1
+    assert_contract ERR_CHECK_INPUT_MISSING
+}
+
 run_case "run-all: passes on a conforming tree" case_run_all_passes
 run_case "run-all: two broken checks are both reported" case_run_all_reports_every_failure
 run_case "run-all: rejects an unknown argument" case_run_all_rejects_unknown_argument
@@ -621,6 +831,15 @@ run_case "frontmatter: an empty description fails" case_frontmatter_empty_descri
 run_case "frontmatter: no frontmatter block fails" case_frontmatter_missing_block
 run_case "frontmatter: an unclosed block fails" case_frontmatter_unclosed_block
 run_case "frontmatter: a skill directory without SKILL.md fails" case_frontmatter_missing_skill_file
+run_case "descriptions: passes, including quoted and block-scalar near misses" case_descriptions_pass
+run_case "descriptions: a description over 1024 characters fails" case_descriptions_too_long
+run_case "descriptions: a description of exactly 1024 characters passes" case_descriptions_at_limit_passes
+run_case "descriptions: a non-ASCII description fails" case_descriptions_non_ascii
+run_case "descriptions: an unquoted value containing a colon-space fails" case_descriptions_unquoted_colon
+run_case "descriptions: a plain continuation line containing a colon-space fails" case_descriptions_plain_continuation_colon
+run_case "descriptions: an unquoted value containing space-hash fails" case_descriptions_unquoted_comment
+run_case "descriptions: a value starting with a YAML indicator fails" case_descriptions_indicator_start
+run_case "descriptions: a nested SKILL.md fails" case_descriptions_nested_skill_file
 run_case "index: passes, and ignores the ### Rules table" case_index_pass_ignores_rules_table
 run_case "index: a skill directory without a row fails" case_index_directory_without_row
 run_case "index: a row without a directory fails" case_index_row_without_directory
@@ -632,4 +851,10 @@ run_case "product: the word TODO in real prose is not a marker" case_product_pro
 run_case "product: a skeleton filled in inside the template fails" case_product_skeleton_filled_in_the_template
 run_case "product: no Product section fails" case_product_no_section
 run_case "product: a section that never names its non-goals fails" case_product_no_non_goals
+run_case "contexts: passes when a context matches a job id" case_contexts_pass_by_id
+run_case "contexts: passes on a quoted name and a matrix expression" case_contexts_pass_by_name_and_expression
+run_case "contexts: a context matching no job fails" case_contexts_missing_job
+run_case "contexts: a job only in a push workflow does not count" case_contexts_push_only_workflow
+run_case "contexts: a pull_request_target workflow does not count" case_contexts_pull_request_target_does_not_count
+run_case "contexts: a missing main.json fails" case_contexts_missing_ruleset
 finish

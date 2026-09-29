@@ -8,7 +8,7 @@ description: >
   SwiftLint rule is added, disabled, or loosened, a SwiftFormat option changes, a target
   is added to Package.swift, a tool pin is added or bumped, a pre-commit section or a CI
   job or step is proposed, the coverage floor is touched, or the question is which gate
-  would have caught a change — including what none of them sees.
+  would have caught a change - including what none of them sees.
 ---
 
 # Changing Gates
@@ -125,11 +125,13 @@ data-race errors and with warnings allowed. Removing an entry, or adding an
 ## `mise.toml`
 
 It pins every CLI tool the gates call; scripts call those tools by bare name and the
-caller provides PATH. A pin is bumped deliberately, one commit per bump, after
-`just check` passes (`.claude/rules/project.md`'s Toolchain Pinning). A SwiftLint or
-SwiftFormat bump is a gate change in its own right: new rules or formatting may fire,
-and the fix is to the code or a reasoned `disabled_rules` entry, never to skip the bump
-silently. The Xcode pin lives in `.xcode-version`, not here.
+caller provides PATH. Pins are not bumped by hand: Renovate opens the bump PRs after
+a 7-day cooldown, and `.claude/rules/project.md`'s Toolchain Pinning is the one
+statement of that policy, including why `.xcode-version` is the exception that is
+hand-bumped. A SwiftLint or SwiftFormat bump PR is a gate change in its own right: new
+rules or formatting may fire, and the fix is to the code or a reasoned `disabled_rules`
+entry on that PR, never to skip the bump silently. The Xcode pin lives in
+`.xcode-version`, not here.
 
 ## `scripts/coverage.sh`
 
@@ -166,6 +168,12 @@ lost its executable bit, narrowing — not closing — that gap: a contributor w
 neither still commits without the hook, so CI stays the backstop. It skips under CI or
 the named `ALLOW_MISSING_GIT_HOOKS` opt-out, for an environment that genuinely cannot
 have git hooks.
+
+The hook stays lint-only by decision (#140): it never formats and re-stages, compiles,
+or runs related tests. A SwiftPM build takes tens of seconds and builds the worktree
+rather than the staged blobs, so it would check something other than the commit; and a
+slow or noisy hook teaches `--no-verify`, which also skips the staged secret guard. CI
+runs the build and tests. Do not reopen this without a new reason those costs miss.
 
 ## `scripts/guard/`
 
@@ -216,6 +224,11 @@ the `zizmor` job partly check and review holds for the rest:
 - a new check goes into an existing job unless it needs a different runner, trigger, or
   permission footprint. Widening `permissions:` or adding a workflow that writes is a
   security-relevant change that needs sign-off, not a routine CI edit.
+- a job's `name:` is what `.github/rulesets/main.json` requires as a status-check
+  context, so renaming, removing, or re-triggering a job means editing that file in the
+  same change; `scripts/checks/ruleset-contexts.sh` (`just check-harness`) fails while a
+  required context matches no job in a `pull_request` workflow, and `just ruleset` then
+  pushes the edited ruleset to the live repository (sign-off first).
 
 ## What no gate here sees
 

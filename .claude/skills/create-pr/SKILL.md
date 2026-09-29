@@ -44,7 +44,8 @@ Run the full quality check suite. This is the prerequisite for PR creation.
 just check
 ```
 
-`just check` runs `fmt -> lint -> test -> build` sequentially.
+`just check` runs `verify-hooks -> fmt -> lint -> test-scripts -> check-harness -> test -> build`
+sequentially (the justfile's `check` recipe is the source of truth).
 **If any step fails, abort PR creation** and report the failure.
 
 On success, the "All checks pass (`just check`)" checklist item is verified:
@@ -85,9 +86,9 @@ Generate a title in Conventional Commits format:
 
 **Rules:**
 - Analyze commits to select the most appropriate type
-- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`, `perf`,
-  `build`, `deps` (dependency bumps only — same list as smart-commit and
-  check-pr-title.yml)
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
+  `ci`, `chore`, `revert`, `deps` (dependency bumps only) — the list
+  check-pr-title.yml accepts, shared with smart-commit
 - If multiple types are mixed: use the type of the most significant change
 - Keep under 70 characters
 - Scope is optional (e.g., `core`, `ui`, `app`)
@@ -120,7 +121,7 @@ Fill each item based on verification results from Steps 2-3:
 
 | Item | Criteria |
 |------|----------|
-| All checks pass | `just check` passed (fmt, lint, test + coverage floor, build) |
+| All checks pass | `just check` passed (every step of the justfile's `check` recipe) |
 | New logic lives in MyAppCore and is covered | Verified in Step 3; no-logic changes = checked |
 | Adapter change: `just test-local` output in the Test Plan | Required only when `Sources/MyAppPlatform` changed — CI reports those tests as skipped, so the run is yours. No adapter change = checked |
 | Documentation updated | Required only when public API or behavior changed. No change = checked |

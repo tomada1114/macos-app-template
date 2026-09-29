@@ -4,8 +4,8 @@ description: >
   Covers turning this template into a new application with scripts/bootstrap.sh: its
   arguments, the placeholder literals it replaces across git-tracked files, re-running
   it safely, the leftover check, what the new repository keeps untouched, and choosing
-  the app's shape — a windowed app or a menu-bar agent (LSUIElement, MenuBarExtra, a
-  launch test with no window) — and whether it can stay sandboxed. Use when starting an
+  the app's shape - a windowed app or a menu-bar agent (LSUIElement, MenuBarExtra, a
+  launch test with no window) - and whether it can stay sandboxed. Use when starting an
   app from this repository, running or editing scripts/bootstrap.sh, a rename left a
   placeholder behind, filling in AGENTS.md's Product section (what the app is, its
   non-goals) or product-section-filled.sh failing,
@@ -155,6 +155,17 @@ what stays on either way (Hardened Runtime, Developer ID signing, notarization),
 `INFOPLIST_KEY_NS…UsageDescription` build settings a TCC-gated API needs in
 `project.yml`.
 
+## Recording both decisions
+
+Both steps end in the new app's first two ADRs, written after the rename in the tree
+`recording-architecture-decisions` owns: copy `docs/architecture/adr/template.md` to
+`docs/architecture/adr/0001-app-shape.md` (windowed or menu-bar agent, and why) and
+`0002-sandbox-posture.md` (sandboxed or not, naming any capability that forces the
+flip), each with status Proposed — only the owner accepts — and add both rows to
+`docs/architecture/README.md`'s Decisions table in the same change. Every external claim
+in them (an App Store rule, an API's sandbox behavior) carries its URL and checked date.
+The template itself ships no ADRs; these belong to the app.
+
 ## What the new app keeps
 
 Everything below is about the repository rather than the application, so it survives
@@ -183,6 +194,8 @@ the rename unchanged and is most of what starting from this template buys:
   repository it needs a paid GitHub plan. Run it last, after the bootstrap commit is on
   `main`: from then on every change needs a pull request whose required checks pass,
   so the check list must name only jobs the new app still runs.
+  On a **private repository**, delete the workflows it cannot run and drop their
+  required contexts first — **REQUIRED:** `references/private-repository.md`.
 
 Both `just labels` and `just ruleset` write to the live repository, so they need a
 human's sign-off (`AGENTS.md`'s "Security and human approval") — for a brand-new

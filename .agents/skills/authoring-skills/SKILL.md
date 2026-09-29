@@ -42,7 +42,8 @@ content of any individual skill.
   between the skills root and the skill's own files.
 - No file below a skill root may itself be named `SKILL.md`. A nested one registers as a
   second, nameless skill in both hosts. Name reference files for their content instead
-  (`failure-modes.md`, not another `SKILL.md`). Nothing checks this yet.
+  (`failure-modes.md`, not another `SKILL.md`). `scripts/checks/skills-descriptions.sh`
+  refuses one (`ERR_CHECK_SKILL_NESTED`).
 - No symlinks anywhere under either tree. `scripts/sync-agents.sh` refuses a symlink in
   the source tree, and a `.claude/skills` that is itself a symlink, with
   `ERR_AGENTS_SYMLINK`.
@@ -68,9 +69,12 @@ terms per host, so a portable skill keeps `description` as its one trigger surfa
   the ones here run 330-570 characters.
 
 Enforced by: `scripts/checks/skills-frontmatter.sh` (exactly `name` and `description`,
-`name` equal to the directory, a non-empty `description`). The character set, the
-English-only rule, the description's wording, and its length are not checked — see
-"Why this needs its own test" below.
+`name` equal to the directory, a non-empty `description`) and
+`scripts/checks/skills-descriptions.sh` (a printable-ASCII `description` of at most
+1,024 characters, and no unquoted plain value Codex CLI's strict YAML parser would
+reject, such as one containing `: ` or ` #`). The description's wording, and whether
+ASCII text is actually English, are not checked — see "Why this needs its own test"
+below.
 
 ## When a new skill is warranted
 
@@ -101,6 +105,16 @@ config cannot express — the same principle `AGENTS.md` states for itself.
 A skill added, renamed, or deleted gets its row in `AGENTS.md`'s Skills table updated in
 the same commit, and widening a skill's subject means widening its row. Enforced by:
 `scripts/checks/skills-index-complete.sh` (the row set, not its wording).
+
+## Where a skill lives
+
+A skill lives in `.agents/skills/` (mirrored to `.claude/skills/`), and the template
+commits no plugin marketplace (#98, #142). Codex CLI cannot read Claude Code plugins;
+`just agents-check`, the frontmatter and description checks, and CI never see a plugin
+skill; a plugin update changes behavior without a pull request unless pinned; and a
+public template cannot ask its users to trust a personal marketplace. A shared plugin
+pinned by ref is an option only for a stack-agnostic skill copied across repositories
+that demonstrably drifts.
 
 ## Size and structure
 
@@ -147,19 +161,22 @@ skill's Python tests land in the same place and are picked up without a runner c
 nothing about whether the source tree is well-formed. A `SKILL.md` whose frontmatter
 fails to parse, whose `name` disagrees with its directory, or whose frontmatter carries
 a stray key passes that check, mirrors cleanly, and simply never loads in either host.
-Two harness checks cover that, both run by `just check-harness` (part of `just check`)
+Three harness checks cover that, both run by `just check-harness` (part of `just check`)
 and CI's `lint` job through `scripts/checks/run-all.sh`:
 
 - `scripts/checks/skills-frontmatter.sh` — every `.agents/skills/<dir>/SKILL.md` opens
   with a `---` block holding exactly `name` and `description`, `name` equals `<dir>`,
   and `description` is non-empty (`ERR_CHECK_SKILL_FRONTMATTER`).
+- `scripts/checks/skills-descriptions.sh` — no `SKILL.md` below a skill's top directory
+  (`ERR_CHECK_SKILL_NESTED`); every `description` is printable ASCII and at most 1,024
+  characters, and every unquoted frontmatter value is Codex-YAML-safe
+  (`ERR_CHECK_SKILL_DESCRIPTION`).
 - `scripts/checks/skills-index-complete.sh` — the first table under `AGENTS.md`'s
   `## Skills` heading and the directories under `.agents/skills/` name the same skills,
   in both directions (`ERR_CHECK_SKILL_INDEX`).
 
-Neither check sees a `SKILL.md` nested below a skill root, the description's wording
-or length, or the size limits above — read those yourself. Before committing a new or
-changed skill run:
+None of them sees the description's wording or the size limits above — read those
+yourself. Before committing a new or changed skill run:
 
 ```bash
 just agents-sync
