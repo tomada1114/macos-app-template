@@ -110,9 +110,9 @@ cannot diverge between them.
 
 Two scripts predate the contract and are listed as exceptions in `AGENTS.md`:
 `scripts/bootstrap.sh` prints `error: …` lines, and `scripts/coverage.sh`'s
-below-the-floor failure is a bare `coverage … is below the …% floor` line (its
-environment-override rejection, `ERR_COVERAGE_OVERRIDE_REMOVED`, already follows the
-contract). Do not copy their shape into a new script.
+below-the-line-floor failure is a bare `coverage … is below the …% floor` line (its
+override rejection and function-floor failure, `ERR_COVERAGE_OVERRIDE_REMOVED` and
+`ERR_COVERAGE_FUNCTIONS_BELOW_FLOOR`, already follow the contract). Do not copy their shape into a new script.
 
 ## Testing a script
 
@@ -181,4 +181,5 @@ A new script usually lands with more than its own file:
 - a row in `AGENTS.md`'s "Validating a change" when no existing row covers it, and an
   Enforcement layers row when it enforces something (**REQUIRED:** `changing-gates`).
 
-`shellcheck` needs no wiring: `scripts/lint.sh` checks every tracked `*.sh`.
+`shellcheck` needs no wiring: `scripts/lint.sh` checks every tracked `*.sh`
+(except the generated `.claude/skills/` mirror).

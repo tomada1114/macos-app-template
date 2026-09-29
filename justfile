@@ -44,14 +44,13 @@ verify-hooks:
 test-scripts:
     mise exec -- scripts/tests/run.sh
 
-# Re-assert the harness's claims about itself: recipe names in AGENTS.md, workflow
-# pins and permissions, skill frontmatter, the Skills index, and the Product section
-# (scripts/checks/)
+# Re-assert the harness's claims about itself: every check under scripts/checks/,
+# each listed in AGENTS.md's Enforcement layers
 [doc("Re-assert the harness's claims about itself (scripts/checks/)")]
 check-harness:
     mise exec -- scripts/checks/run-all.sh
 
-# Run tests with the 80% line-coverage floor on MyAppCore
+# Run tests with the 80% line-coverage and 75% function-coverage floors on MyAppCore
 test:
     scripts/coverage.sh
 

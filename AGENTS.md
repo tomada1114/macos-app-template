@@ -20,8 +20,8 @@ keeping a second copy that goes stale.
 This is a macOS SwiftUI app built from a strict template: XcodeGen generates the
 Xcode project from `project.yml`, all real code lives in a local Swift package
 (`Packages/MyAppKit`), and quality gates (SwiftLint strict, SwiftFormat, Swift 6
-language mode, an 80% line-coverage floor on the Core module) are enforced from
-day one.
+language mode, an 80% line-coverage and a 75% function-coverage floor on the Core
+module) are enforced from day one.
 
 ## Product
 
@@ -57,7 +57,7 @@ just lint      # Lint (scripts/lint.sh: swiftformat --lint + swiftlint --strict 
 just verify-hooks  # Verify the git hooks are installed and executable (scripts/verify-hooks.sh)
 just test-scripts  # Run the plain-bash tests for scripts/ and the skills' Python suites (scripts/tests/run.sh)
 just check-harness # Re-assert the harness's claims about itself (scripts/checks/run-all.sh)
-just test      # Run tests with the 80% coverage floor on MyAppCore
+just test      # Run tests with the 80% line / 75% function coverage floors on MyAppCore
 just test-fast CounterTests  # Run only the matching tests, no coverage floor (iteration only)
 just test-local    # Run the local-machine adapter tests (MyAppPlatformTests) CI cannot run
 just build     # Build the app (Debug)
@@ -107,7 +107,7 @@ job call.
 | Markdown | `just lint` (its `typos` spell-check) |
 | `mise.toml` | `mise install`, then `just check` |
 | `.github/labels.yml`, or an issue form under `.github/ISSUE_TEMPLATE/` | `just lint` (its `typos` spell-check), then `just check-harness` (every applied label declared, once); `scripts/tests/sync-labels_test.sh` for `scripts/sync-labels.sh` itself |
-| `.github/rulesets/main.json`, or `scripts/apply-ruleset.sh` | `scripts/tests/apply-ruleset_test.sh` |
+| `.github/rulesets/main.json`, or `scripts/apply-ruleset.sh` | `scripts/tests/apply-ruleset_test.sh`; `just check-harness` for `main.json` (`scripts/checks/ruleset-contexts.sh` reads it) |
 
 ## Architecture
 
@@ -120,7 +120,8 @@ Packages/MyAppKit/
 │                           #   code is reached through — platform-agnostic, no
 │                           #   SwiftUI/AppKit/UIKit/Cocoa/ApplicationServices/
 │                           #   Carbon/ServiceManagement import (enforced by lint
-│                           #   and test), coverage-gated at 80%
+│                           #   and test), coverage-gated at 80% of lines
+│                           #   and 75% of functions
 ├── Sources/MyAppUI/        # SwiftUI views — thin, delegate to Core view models
 ├── Sources/MyAppPlatform/  # OS-integration adapters behind Core ports (AppKit and
 │                           #   friends) — translation only, no domain logic, and
@@ -191,7 +192,6 @@ the apps cut from it.
 ## Skills
 
 Each skill owns one kind of change. Load the one whose subject you are working on.
-The `translate-skills-*` issues add rows here as their skills land.
 
 Skills are authored under `.agents/skills/` — the path Codex CLI reads — and mirrored
 into `.claude/skills/`, the only path Claude Code reads. Claude Code is therefore the
@@ -370,7 +370,8 @@ reasons behind them, with worked examples, are in the `writing-repo-scripts` ski
 - `#!/usr/bin/env bash` and `set -euo pipefail`, and bash 3.2-compatible (macOS
   `/bin/bash`): no associative arrays, no `mapfile`/`readarray`, no `${var,,}`, and no
   `"${arr[@]}"` on a possibly empty array under `set -u` (use `${arr[@]+"${arr[@]}"}`).
-- `shellcheck`-clean — `scripts/lint.sh` checks every tracked `*.sh`.
+- `shellcheck`-clean — `scripts/lint.sh` checks every tracked `*.sh`
+  outside the generated `.claude/skills/` mirror.
 - Pinned tools are called by bare name; the caller provides PATH (`mise exec -- …`
   locally and in `just` recipes, `jdx/mise-action` in CI). Beyond that, assume only
   `git` and POSIX utilities, and no GNU- or BSD-only flag (`sed -i`, `readlink -f`,
@@ -403,14 +404,13 @@ reasons behind them, with worked examples, are in the `writing-repo-scripts` ski
   `smoke_launch.sh`, and `package_dmg.sh` (need Xcode and a build; exercised by the
   `test`, `app`, and `release` jobs) — `coverage.sh` still has a partial test file,
   `scripts/tests/coverage_test.sh`, which stubs `swift` to cover its rejection of the
-  removed environment override and its floor comparison, but not a real coverage run.
+  removed environment override and its line- and function-floor comparisons, but not
+  a real coverage run.
   `bootstrap.sh` also predates the failure contract and does not follow it yet, and
-  neither does `coverage.sh`'s below-the-floor failure.
+  neither does `coverage.sh`'s below-the-line-floor failure (its function-floor
+  failure, `ERR_COVERAGE_FUNCTIONS_BELOW_FLOOR`, does).
 
 ## Enforcement layers
-
-Later issues update the Enforcement layers table and gap list as they close each gap
-named here — see the linked issue in each bullet.
 
 The rules in this file are enforced by these layers, from mechanical to procedural:
 
@@ -427,7 +427,9 @@ The rules in this file are enforced by these layers, from mechanical to procedur
 | CI's `lint`, `test`, and `app` jobs (`.github/workflows/ci.yml`) | push to `main` and every pull request | everyone | the full gate: `scripts/lint.sh` (format, lint, shellcheck, actionlint, typos, the skills-mirror check), the script tests (`scripts/tests/run.sh`), the harness checks (`scripts/checks/run-all.sh`), tests with the coverage floor, build, UI test, and Release smoke |
 | This file | read at session start | every agent | everything else — the reasons behind the rules above |
 
-These gaps are deliberate and stay open until their tracking issue closes them:
+These gaps are deliberate. Closing one means adding a mechanism that enforces it —
+a hook, a harness check, or a CI job — and then updating its row in the table above and
+removing or narrowing its bullet here:
 
 - **`git commit --no-verify` bypasses the hook**, and nothing in this repository blocks
   it for every author. `.claude/settings.json`'s `deny` list refuses the usual spellings
