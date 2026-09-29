@@ -69,7 +69,7 @@ and `FrontmostAppViewModel` is the worked example; copy its shape.
 | `if let` on an optional model or value, to show or omit a part | Any rule, clamp, threshold, or comparison on domain values |
 | Calling an action from a `Button`, `.onSubmit`, a menu command | What the action does, and the state it leaves behind |
 | *When* to ask again — `.onChange(of: scenePhase)`, `.task` — as `ContentView` refreshes `frontmostApp` on activation | *What* asking again means (`refresh()`) |
-| Static labels ("Reset") | Wording that depends on state (`displayName`, `unavailableDisplayName`) |
+| `Text(verbatim:)` for a glyph or an already-formatted number | Every word a person reads, as a `LocalizedStringResource` (`resetTitle`, `label`) — `localizing-the-app` |
 | `.disabled(!model.canDecrement)` | Formatting numbers and dates with an injected `Locale` |
 
 - An action that waits is `async`; call it from `.task { await model.load() }` so

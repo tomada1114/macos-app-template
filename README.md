@@ -63,6 +63,20 @@ strict numeric gate *honest* for a GUI app instead of an invitation to write
 meaningless view tests. Note: Swift's llvm-cov has no dependable branch
 metric, so the gate uses line coverage.
 
+### Why one String Catalog in Core, and English only?
+
+User-facing wording is a decision like any other, so it lives where the
+coverage floor sees it: Core view models return `LocalizedStringResource`
+(Foundation, not a UI framework), and the one `Localizable.xcstrings` sits in
+`MyAppCore` beside them. Views render those resources and carry no literal of
+their own, because a SwiftUI literal is looked up in the app's main bundle, not
+the package's. The template ships English alone — `defaultLocalization: "en"`
+and one catalog — since a second language makes every later string owe a
+translation and a reviewer; an app that wants one records it as an ADR. The
+`localizing-the-app` skill holds the rules, including one that shapes the
+tests: `swift test` copies the catalog uncompiled (only `xcodebuild` compiles
+it), so `LocalizationTests` checks the catalog's source against the code.
+
 ### Why Swift Testing?
 
 `@Test`, `#expect`, and parameterized `@Test(arguments:)` are the modern

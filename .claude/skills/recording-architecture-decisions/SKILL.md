@@ -70,6 +70,9 @@ triggers; each is here with why it is expensive:
 - **A TCC permission** — Accessibility, Input Monitoring, Screen Recording, or any other
   privacy grant. Each one is a prompt the user must accept, a way the app can
   half-work, and often a reason the sandbox has to go.
+- **A shipped language beyond English** — the template sets `defaultLocalization: "en"`
+  and ships one. A second language makes every later string owe a translation and a
+  reviewer, and is hard to withdraw once users run the app in it (`localizing-the-app`).
 
 A refactor inside a module, a test, a view within the existing layers, a rename that
 crosses no boundary, or a fix that restores what an ADR already says owes none. Saying

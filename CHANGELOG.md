@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- String Catalog localization plumbing: `Packages/MyAppKit/Package.swift` sets
+  `defaultLocalization: "en"`, and `MyAppCore` ships
+  `Sources/MyAppCore/Resources/Localizable.xcstrings` (English only). Core view models
+  now own the wording and return `LocalizedStringResource`:
+  `FrontmostAppViewModel.label` replaces `displayName` and `unavailableDisplayName`,
+  and `CounterViewModel.resetTitle` replaces the view's "Reset" literal. `LocalizationTests`
+  fails when a key Core uses is missing from the catalog, a catalog key is unused, or the
+  catalog's English differs from the code's. A `localizing-the-app` skill holds the
+  rules, `AGENTS.md`'s English-only rule gains one exception (translated values in a
+  `*.xcstrings` catalog), and a shipped language beyond English is now an ADR trigger.
 - Three harness checks, run by `just check-harness`, for lists that were kept in sync
   by hand: `scripts/checks/core-ban-lists-agree.sh` fails when `.swiftlint.yml`'s
   `no_ui_import_in_core` regex and `ArchitectureBoundaryTests.forbiddenModules` ban
