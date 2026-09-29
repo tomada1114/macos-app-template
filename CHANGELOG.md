@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Two harness checks, run by `just check-harness`, for workflow and dependency-bot
+  hygiene. `scripts/checks/workflow-hygiene.sh` fails when a workflow grants a `write`
+  scope or `read-all`/`write-all` at the top level instead of on the job, when a
+  `pull_request` workflow has no `concurrency:` or a group is constant, shared with
+  another workflow, or lets a push run be cancelled, and when a `run:` step does not
+  resolve to `shell: bash` (`-eo pipefail`) or open with `set -euo pipefail`.
+  `scripts/checks/dependency-bots-agree.sh` fails when a Dependabot entry's or
+  Renovate's commit prefix is missing or not a type `check-pr-title.yml` accepts, or
+  when their release cooldowns are missing or disagree. Both read YAML through a new
+  line-based `check_yaml_flatten` helper in `scripts/checks/lib.sh` (#129).
+
 - Three harness checks, run by `just check-harness`, for lists that were kept in sync
   by hand: `scripts/checks/core-ban-lists-agree.sh` fails when `.swiftlint.yml`'s
   `no_ui_import_in_core` regex and `ArchitectureBoundaryTests.forbiddenModules` ban
@@ -342,6 +353,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The workflows now pass `scripts/checks/workflow-hygiene.sh` without widening any
+  token: `pr-label.yml`'s `pull-requests: write` moves from the workflow to its one job
+  (top level `{}`), `scorecard.yml`'s top-level `read-all` narrows to `contents: read`
+  (its job keeps its own block), `check-pr-title.yml`, `dependency-review.yml`,
+  `osv-scan.yml`, and `pr-label.yml` cancel a superseded pull request run through a
+  per-ref `concurrency:` group, and `ci.yml`, `codeql.yml`, `osv-scan.yml`, and
+  `release.yml` default their `run:` steps to `shell: bash`, so a failing command
+  before a `|` now fails its step (#129).
 - The `changing-gates` and `smart-commit` skills are back under the 200-line `SKILL.md`
   body cap: the `.swiftlint.yml` custom-rule detail, the `scripts/guard/` pattern list,
   and the workflow conventions move to `changing-gates/references/`, and the pre-commit
