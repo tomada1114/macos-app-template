@@ -346,6 +346,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The `changing-gates` and `smart-commit` skills are back under the 200-line `SKILL.md`
+  body cap: the `.swiftlint.yml` custom-rule detail, the `scripts/guard/` pattern list,
+  and the workflow conventions move to `changing-gates/references/`, and the pre-commit
+  hook recovery steps to `smart-commit/references/`, each linked from the body with no
+  rule dropped (#166).
+- `scripts/bootstrap.sh`'s "Next steps" and `README.md`'s "Using This Template" now
+  point a new app at the `docs/architecture/roadmap.md` skeleton right after its
+  `## Product` section.
+
 - `.github/dependabot.yml` groups minor and patch updates per ecosystem (SwiftPM and
   GitHub Actions), so one upstream release arrives as one PR; majors still get their
   own PR, and the 7-day cooldown is unchanged.
@@ -417,6 +426,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The release workflow no longer strips `App/MyApp.entitlements` (and with it the App
+  Sandbox) from an ad-hoc-signed release: it keeps the signature `xcodebuild` applied
+  instead of re-signing without `--entitlements`, and a new step fails the release
+  unless `codesign -d --entitlements -` shows `com.apple.security.app-sandbox`.
+  `docs/distribution.md` now describes both signing paths.
 - `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
   (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
   fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
