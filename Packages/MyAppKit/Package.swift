@@ -11,7 +11,7 @@ let strictSettings: [SwiftSetting] = [
 let package = Package(
     name: "MyAppKit",
     // The language the String Catalog is written in, and the one a reader falls back to
-    // when the catalog lacks theirs. Required once any target has a localized resource.
+    // when the catalog lacks theirs. A second language is an ADR (`localizing-the-app`).
     defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     products: [
@@ -21,7 +21,8 @@ let package = Package(
     ],
     targets: [
         // Core owns the user-facing wording (it returns `LocalizedStringResource`), so the
-        // one String Catalog lives here and compiles into Core's resource bundle.
+        // one String Catalog lives here. xcodebuild compiles it into Core's resource
+        // bundle; `swift build` only copies it, so tests read English from `defaultValue`.
         .target(
             name: "MyAppCore",
             resources: [.process("Resources/Localizable.xcstrings")],
