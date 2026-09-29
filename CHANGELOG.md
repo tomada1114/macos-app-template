@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `starting-an-app` skill now ends the app-shape and sandbox-posture steps by
   writing ADR 0001 (app shape) and ADR 0002 (sandbox posture), as Proposed, in the
   new app's `docs/architecture/` tree.
+- `scripts/checks/ruleset-contexts.sh`, run by `just check-harness`: fails when a
+  required status-check context in `.github/rulesets/main.json` matches no job `name:`
+  (or id, when a job has none) in a workflow triggered on `pull_request`, so renaming a
+  CI job can no longer leave a required check that never reports and blocks every PR.
+  A `${{ … }}` expression in a job name matches any text; `pull_request_target` does
+  not count as a pull_request trigger.
+- A `merging-dependency-prs` skill for landing Dependabot (SwiftPM, GitHub Actions) and
+  Renovate (`mise.toml`) PRs: a security checklist, one human approval per invocation
+  for a listed batch of passing PRs, a combined branch for conflicting bumps, and
+  failure modes. It points to `.claude/rules/project.md` › Toolchain Pinning for the
+  bump policy rather than restating it.
 - Private-repository setup steps in `README.md` "Using This Template" and the
   `starting-an-app` skill (`references/private-repository.md`): which workflows to
   delete (Scorecard, CodeQL, Dependency Review), the `release.yml` attestation step to
@@ -280,6 +291,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `.github/dependabot.yml` groups minor and patch updates per ecosystem (SwiftPM and
+  GitHub Actions), so one upstream release arrives as one PR; majors still get their
+  own PR, and the 7-day cooldown is unchanged.
 - `shipping-issues` is adapted to this template: its `SKILL.md` fits the
   `authoring-skills` 200-line budget (step detail moved to
   `references/implement-and-review.md` and `references/pr-ci-merge.md`), and the
@@ -347,6 +361,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   layers row now describes both.
 
 ### Fixed
+
+- `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
+  `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
+  running `swiftformat .` over the whole tree after every edit; non-Swift paths and files
+  outside the checkout are skipped, and a swiftformat failure is reported to the agent
+  rather than silenced.
+- `just check` step lists in `README.md`, `docs/getting-started.md`, `CONTRIBUTING.md`,
+  `AGENTS.md`, and the `create-pr` and `tdd` skills now match the justfile's `check`
+  recipe, and every recipe shows a one-line summary in `just --list` (`[doc(...)]`).
 
 - `scripts/bootstrap.sh` no longer rewrites the passages that explain its placeholders
   (its own header, `README.md`'s "Using This Template" paragraph, and the
