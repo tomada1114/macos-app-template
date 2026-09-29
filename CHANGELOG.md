@@ -9,6 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Three harness checks, run by `just check-harness`, for lists that were kept in sync
+  by hand: `scripts/checks/core-ban-lists-agree.sh` fails when `.swiftlint.yml`'s
+  `no_ui_import_in_core` regex and `ArchitectureBoundaryTests.forbiddenModules` ban
+  different modules; `scripts/checks/just-check-matches-ci.sh` fails when a
+  `just check` gate is not run by `.github/workflows/ci.yml` or a CI `run:` step runs
+  something `just check` does not, apart from a reasoned exception list in the script
+  (`verify-hooks` and `fmt` local-only; `uitest`, `smoke`, and the `bootstrap-smoke`
+  job CI-only); and `scripts/checks/labels-declared.sh` fails when an issue form, a
+  workflow, Dependabot (including its implied `dependencies` label), or Renovate
+  applies a label `.github/labels.yml` does not declare, or when labels.yml declares a
+  label twice.
+- A `steering-the-roadmap` skill and a `docs/architecture/roadmap.md` skeleton, linked
+  from the ADR index but not an ADR: the app's direction as Now / Next / Later outcomes
+  with no dates, filled in after `AGENTS.md`'s `## Product`. The skill says who changes
+  the page (the owner decides; an agent proposes in a pull request) and when, how
+  closed issues and parked `on hold` issues feed it through `triaging-issues`, and that
+  a roadmap line records direction and never authorizes implementation.
+- `designing-ui` and `building-swiftui-screens` skills. `designing-ui` holds the macOS
+  craft rules this repository adds on top of Apple's Human Interface Guidelines (each
+  cited with its URL) and the per-app design lock — accent color, type, spacing,
+  density, symbols, window sizing, motion, and copy style — which an app records as an
+  ADR under `docs/architecture/` with the next free number (`references/design-lock.md`).
+  `building-swiftui-screens` covers thin `MyAppUI` views over `MyAppCore` `@Observable`
+  view models: how a view holds its model, what `body` may contain, `#Preview` per
+  state, accessibility identifiers and labels, Reduce Motion, keyboard reachability, and
+  verifying a screen.
+- `AGENTS.md` opens with what it owns and what it leaves to skills, `.claude/rules/`,
+  and gate configs, and its "Important Reminders" gain three conventions: a comment
+  carries only what the code cannot, a problem found outside the task is filed as an
+  issue (or listed in the pull request) rather than fixed in it, and the pre-commit
+  hook stays limited to what is mechanically decidable.
+- `docs/architecture.md` › "What is contract and what is private": Core's public API,
+  the bundle identifier, `UserDefaults` keys, and file formats are contract, each with
+  what depends on it and what changing it requires; everything else is private.
+
+- The commit-time staged guard now also refuses `.envrc.*` (samples excepted) and
+  `.claude/settings.local.json` by path, and Anthropic, OpenAI, Slack, Google API,
+  Stripe live (`sk_live_`/`rk_live_`; test keys stay allowed) and JWT shapes, plus an
+  AWS secret access key assigned to its variable name, by content.
 - `authoring-skills` gains a Conventions section: what the `**REQUIRED:**` and
   `**BACKGROUND:**` cross-reference markers mean and when a sibling is named bare,
   that example code in a skill is a deletable illustration nothing builds or tests
@@ -380,6 +419,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
+  (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
+  fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
+- `scripts/tests/lib.sh` now unsets every exported `GIT_*` variable, not a fixed five,
+  so `GIT_CONFIG_*`, `GIT_CEILING_DIRECTORIES` and the like no longer leak into fixture
+  repositories; the new `scripts/tests/lib_test.sh` asserts none remain.
 - Small factual drift in the docs: removed leftover references to a Python/uv sibling
   project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
   `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`
