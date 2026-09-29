@@ -362,6 +362,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `ContentView`'s `−` and `+` buttons now carry the accessibility labels "Decrement"
+  and "Increment", so VoiceOver no longer reads the bare glyph.
+
 - `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
   `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
   running `swiftformat .` over the whole tree after every edit; non-Swift paths and files
