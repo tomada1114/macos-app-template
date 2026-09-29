@@ -66,7 +66,7 @@ terms per host, so a portable skill keeps `description` as its one trigger surfa
   skill's internal workflow. Both hosts select a skill on the description's _meaning_,
   so a trigger keyword mirrored into another language buys nothing.
 - Keep the description well under the 1,024-character limit of the Agent Skills format;
-  the ones here run 330-570 characters.
+  a longer one is not a better trigger.
 
 Enforced by: `scripts/checks/skills-frontmatter.sh` (exactly `name` and `description`,
 `name` equal to the directory, a non-empty `description`) and
@@ -106,6 +106,25 @@ A skill added, renamed, or deleted gets its row in `AGENTS.md`'s Skills table up
 the same commit, and widening a skill's subject means widening its row. Enforced by:
 `scripts/checks/skills-index-complete.sh` (the row set, not its wording).
 
+## Conventions
+
+- **Cross-reference markers.** A pointer that sends the reader to a sibling skill (by
+  name) or to this skill's own `references/` file (by relative path) as a step of the
+  task carries one of two markers and no other: `**REQUIRED:**` when the task cannot be
+  finished correctly without it, `**BACKGROUND:**` when it only explains why. A mention
+  that only names an owner — the ownership block, a scope note, an attribution such as
+  "(`changing-gates`)" — stays bare, with no marker and no "see".
+- **Deletable illustrations.** Example code in a skill is an illustration no build or
+  test depends on, and a reader may delete it or replace it with their own; the
+  template's example code a skill points to is deleted by an app, too
+  (`docs/getting-started.md` › "Removing the example code"). State the rule in its own
+  sentence and the example in the next, so the rule still reads once the example is gone.
+- **Platform skills.** A skill about a macOS or Apple API surface, such as
+  `integrating-system-apis`, holds only what this repository decided there and why. It
+  links Apple's documentation by URL instead of restating it, and a version,
+  availability, or policy it must state carries its URL and a checked date
+  (**BACKGROUND:** `recording-architecture-decisions` › "Fact discipline").
+
 ## Where a skill lives
 
 A skill lives in `.agents/skills/` (mirrored to `.claude/skills/`), and the template
@@ -118,7 +137,9 @@ that demonstrably drifts.
 
 ## Size and structure
 
-- Target 150 body lines per `SKILL.md`, never exceed 200.
+- Target 150 body lines per `SKILL.md`, never exceed 200; past that, move detail into
+  `references/`. No check enforces this, and the skills that run past it today are
+  being trimmed (#166) — do not take them as the norm.
 - A `references/*.md` file stays under 400 lines and is linked with a relative path one
   level deep, never with `@` and never as an absolute path.
 
@@ -139,7 +160,7 @@ neighboring skills use.
 A script shipped under `.agents/skills/<name>/scripts/` follows `AGENTS.md`'s
 "Repository scripts" section exactly like one under `scripts/`: `#!/usr/bin/env bash`
 with `set -euo pipefail`, bash 3.2-compatible, `shellcheck`-clean (`scripts/lint.sh`
-checks every tracked `*.sh`, at any depth), the `ERR_<STAGE>_<WHAT>` failure contract,
+checks every tracked `*.sh` at any depth but the `.claude/skills/` mirror), the `ERR_<STAGE>_<WHAT>` failure contract,
 and a test under `scripts/tests/` built on `scripts/tests/lib.sh`, which
 `scripts/tests/run.sh` (`just test-scripts`) runs. Keep it a thin dispatcher; anything
 with real branching logic belongs in `scripts/`, where it is easier to find and test.
@@ -161,7 +182,7 @@ skill's Python tests land in the same place and are picked up without a runner c
 nothing about whether the source tree is well-formed. A `SKILL.md` whose frontmatter
 fails to parse, whose `name` disagrees with its directory, or whose frontmatter carries
 a stray key passes that check, mirrors cleanly, and simply never loads in either host.
-Three harness checks cover that, both run by `just check-harness` (part of `just check`)
+Three harness checks cover that, all run by `just check-harness` (part of `just check`)
 and CI's `lint` job through `scripts/checks/run-all.sh`:
 
 - `scripts/checks/skills-frontmatter.sh` — every `.agents/skills/<dir>/SKILL.md` opens

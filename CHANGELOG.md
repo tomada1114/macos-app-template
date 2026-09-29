@@ -20,6 +20,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when their release cooldowns are missing or disagree. Both read YAML through a new
   line-based `check_yaml_flatten` helper in `scripts/checks/lib.sh` (#129).
 
+- `scripts/label-pr.sh`, tested by `scripts/tests/label-pr_test.sh`, now labels pull
+  requests for `.github/workflows/pr-label.yml`, which runs it from a checkout of the
+  base SHA. It maps every type the PR title check accepts, including `!` (`chore`,
+  `deps`, and the rest were unlabeled before), removes a type label a retitle left
+  stale, and never creates a label: the old colorless `gh label create` fallback is
+  gone, and a label missing from `.github/labels.yml` fails the job instead.
+- A weekly `.github/workflows/gitleaks.yml` workflow that runs gitleaks 8.30.1 over
+  the full git history to find leaked secrets. The release binary is pinned and its
+  checksum verified, the job has `contents: read` only, and findings are redacted in
+  the log. `.gitleaksignore` lists the exact fingerprints of known fake fixtures.
+- A function-coverage floor beside the 80% line floor on `MyAppCore`:
+  `scripts/coverage.sh` (`just test`, CI's test and release jobs) also sums llvm-cov's
+  function counts for `Sources/MyAppCore/` from the same export and fails below
+  `readonly FUNCTION_COVERAGE_FLOOR=75` with `ERR_COVERAGE_FUNCTIONS_BELOW_FLOOR`, so a
+  Core function no test calls can no longer hide under the line floor. Measured when
+  set: 19 of 23 functions (82.6%) — every named function is tested, and the four misses
+  are compiler-generated autoclosures (`os.Logger` interpolations, a
+  `preconditionFailure` message) that llvm-cov counts as functions. The per-file report
+  now shows lines and functions, and `scripts/tests/coverage_test.sh` covers the new
+  comparison.
 - Three harness checks, run by `just check-harness`, for lists that were kept in sync
   by hand: `scripts/checks/core-ban-lists-agree.sh` fails when `.swiftlint.yml`'s
   `no_ui_import_in_core` regex and `ArchitectureBoundaryTests.forbiddenModules` ban
@@ -59,6 +79,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.claude/settings.local.json` by path, and Anthropic, OpenAI, Slack, Google API,
   Stripe live (`sk_live_`/`rk_live_`; test keys stay allowed) and JWT shapes, plus an
   AWS secret access key assigned to its variable name, by content.
+- `authoring-skills` gains a Conventions section: what the `**REQUIRED:**` and
+  `**BACKGROUND:**` cross-reference markers mean and when a sibling is named bare,
+  that example code in a skill is a deletable illustration nothing builds or tests
+  from, and that a platform skill holds only this repository's decisions and links
+  Apple's documentation instead of restating it. `tdd`, `merging-dependency-prs`,
+  `starting-an-app`, and `running-the-app` now mark their hand-off pointers that way.
 
 - `authoring-skills` records where a skill lives: in `.agents/skills/` by default,
   never a committed plugin marketplace, and when a ref-pinned shared plugin is allowed.
@@ -66,6 +92,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `changing-gates` records why `.githooks/pre-commit` stays lint-only (no
   formatting, compiling, or related tests).
 
+- `.claude/rules/testing.md` now covers an oracle independent of the implementation,
+  one contract suite per port run against both the fake and the adapter (worked through
+  for `FrontmostAppProviding`), a test clock or zero `Tuning` delay instead of sleeps,
+  a per-test temporary directory, plain `import MyAppCore` instead of `@testable
+  import`, and when a test belongs in `LaunchUITests`. `.claude/rules/swift.md` now
+  covers an exhaustive `switch` without `default:` over Core's enums, `package` access
+  for cross-module internals (invisible to `App/`), and where constants live.
 - The `triaging-issues` skill's "Requests from daily use" section: a friction or
   idea raised while using the app is filed now, parked as `on hold` with its reason,
   or dropped with the reason stated, and a parked issue is promoted or closed only by
@@ -358,9 +391,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (top level `{}`), `scorecard.yml`'s top-level `read-all` narrows to `contents: read`
   (its job keeps its own block), `check-pr-title.yml`, `dependency-review.yml`,
   `osv-scan.yml`, and `pr-label.yml` cancel a superseded pull request run through a
-  per-ref `concurrency:` group, and `ci.yml`, `codeql.yml`, `osv-scan.yml`, and
-  `release.yml` default their `run:` steps to `shell: bash`, so a failing command
-  before a `|` now fails its step (#129).
+  per-ref `concurrency:` group, and `ci.yml`, `codeql.yml`, `gitleaks.yml`,
+  `osv-scan.yml`, `pr-label.yml`, and `release.yml` default their `run:` steps to
+  `shell: bash`, so a failing command before a `|` now fails its step (#129).
+- `scripts/lint.sh`'s `shellcheck` and `typos` (`typos.toml`) no longer scan the
+  generated `.claude/skills/` mirror, which doubled every finding in `.agents/skills/`;
+  the mirror stays held byte-identical by `scripts/sync-agents.sh --check`
+- The `integrating-system-apis` skill follows the platform-skill convention: its
+  `SKILL.md` and both references link each Apple API they rely on (developer.apple.com,
+  checked 2026-09-28) instead of restating its behavior, and word the rest as what this
+  repository decided and why.
 - The `changing-gates` and `smart-commit` skills are back under the 200-line `SKILL.md`
   body cap: the `.swiftlint.yml` custom-rule detail, the `scripts/guard/` pattern list,
   and the workflow conventions move to `changing-gates/references/`, and the pre-commit
@@ -441,12 +481,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The release workflow no longer strips `App/MyApp.entitlements` (and with it the App
+  Sandbox) from an ad-hoc-signed release: it keeps the signature `xcodebuild` applied
+  instead of re-signing without `--entitlements`, and a new step fails the release
+  unless `codesign -d --entitlements -` shows `com.apple.security.app-sandbox`.
+  `docs/distribution.md` now describes both signing paths.
 - `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
   (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
   fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
 - `scripts/tests/lib.sh` now unsets every exported `GIT_*` variable, not a fixed five,
   so `GIT_CONFIG_*`, `GIT_CEILING_DIRECTORIES` and the like no longer leak into fixture
   repositories; the new `scripts/tests/lib_test.sh` asserts none remain.
+- Stale claims about what the harness checks: `updating-docs` now names
+  `skills-index-complete.sh` and `just-recipes-exist.sh`, `authoring-skills` no longer
+  quotes outdated description and body sizes, `AGENTS.md` drops pointers to tracking
+  issues that do not exist and adds `just check-harness` to the `main.json` row, and
+  the `check-harness` comments in `justfile` and `ci.yml` point at `scripts/checks/`
+  instead of an enumeration that went stale.
+
 - Small factual drift in the docs: removed leftover references to a Python/uv sibling
   project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
   `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`
@@ -456,6 +508,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   line-coverage floor notices a missed branch; `.claude/rules/swift.md` states the
   SwiftLint limits actually enforced; `.github/zizmor.yml` no longer hard-codes a use
   count; `SECURITY.md` drops response times a template cannot promise
+- `ContentView`'s `−` and `+` buttons now carry the accessibility labels "Decrement"
+  and "Increment", so VoiceOver no longer reads the bare glyph.
 
 - `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
   `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of
