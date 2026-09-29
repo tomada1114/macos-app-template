@@ -57,7 +57,8 @@ as candidates.
 
 The mechanical list — secret-shaped paths (`.env*`, `secrets/`, signing material
 such as `.p12` or `.p8`, keychains, provisioning profiles, and the rest) and
-credential-shaped content (private-key blocks, GitHub tokens, AWS access key ids) —
+credential-shaped content (private-key blocks, GitHub tokens, AWS keys, Anthropic,
+OpenAI, Slack, Google, and Stripe live keys, JWTs) —
 lives in `scripts/guard/paths.sh` and `scripts/guard/credentials.sh`, and the
 pre-commit hook's "Staged guard" section (`scripts/check-staged.sh`) enforces it
 on every commit. Do not keep a second copy of that list here; read those files for
@@ -140,8 +141,8 @@ EOF
 
 **Commit message format:**
 - Conventional Commits: `<type>(<optional-scope>): <short summary>`
-- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`, `perf`,
-  `build`, `deps`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
+  `ci`, `chore`, `revert`, `deps` (the list check-pr-title.yml accepts)
 - Summary: imperative mood, lowercase start, no period at end
 - Under 72 characters
 - Focus on *what* changed, not *how*
