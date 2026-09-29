@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A weekly `.github/workflows/gitleaks.yml` workflow that scans the full git history
+  for leaked credentials with a pinned, SHA-256-verified gitleaks 8.30.1 binary
+  (`contents: read` only; findings are redacted in the log).
 - Three harness checks, run by `just check-harness`, for lists that were kept in sync
   by hand: `scripts/checks/core-ban-lists-agree.sh` fails when `.swiftlint.yml`'s
   `no_ui_import_in_core` regex and `ArchitectureBoundaryTests.forbiddenModules` ban
