@@ -108,9 +108,9 @@ the same commit, and widening a skill's subject means widening its row. Enforced
 
 ## Size and structure
 
-- Target about 150 body lines per `SKILL.md` and aim to stay under 200; past that, move
-  detail into `references/`. No check enforces this, and some existing skills already
-  run past 200 — do not take them as the norm.
+- Target 150 body lines per `SKILL.md`, never exceed 200; past that, move detail into
+  `references/`. No check enforces this, and the skills that run past it today are
+  being trimmed (#166) — do not take them as the norm.
 - A `references/*.md` file stays under 400 lines and is linked with a relative path one
   level deep, never with `@` and never as an absolute path.
 
