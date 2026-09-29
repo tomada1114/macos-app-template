@@ -18,6 +18,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   view models: how a view holds its model, what `body` may contain, `#Preview` per
   state, accessibility identifiers and labels, Reduce Motion, keyboard reachability, and
   verifying a screen.
+- `AGENTS.md` opens with what it owns and what it leaves to skills, `.claude/rules/`,
+  and gate configs, and its "Important Reminders" gain three conventions: a comment
+  carries only what the code cannot, a problem found outside the task is filed as an
+  issue (or listed in the pull request) rather than fixed in it, and the pre-commit
+  hook stays limited to what is mechanically decidable.
+- `docs/architecture.md` › "What is contract and what is private": Core's public API,
+  the bundle identifier, `UserDefaults` keys, and file formats are contract, each with
+  what depends on it and what changing it requires; everything else is private.
+
+- The commit-time staged guard now also refuses `.envrc.*` (samples excepted) and
+  `.claude/settings.local.json` by path, and Anthropic, OpenAI, Slack, Google API,
+  Stripe live (`sk_live_`/`rk_live_`; test keys stay allowed) and JWT shapes, plus an
+  AWS secret access key assigned to its variable name, by content.
+
+- `authoring-skills` records where a skill lives: in `.agents/skills/` by default,
+  never a committed plugin marketplace, and when a ref-pinned shared plugin is allowed.
+
+- `changing-gates` records why `.githooks/pre-commit` stays lint-only (no
+  formatting, compiling, or related tests).
+
+- The `triaging-issues` skill's "Requests from daily use" section: a friction or
+  idea raised while using the app is filed now, parked as `on hold` with its reason,
+  or dropped with the reason stated, and a parked issue is promoted or closed only by
+  a decision.
+
+- The `starting-an-app` skill now ends the app-shape and sandbox-posture steps by
+  writing ADR 0001 (app shape) and ADR 0002 (sandbox posture), as Proposed, in the
+  new app's `docs/architecture/` tree.
 - `scripts/checks/ruleset-contexts.sh`, run by `just check-harness`: fails when a
   required status-check context in `.github/rulesets/main.json` matches no job `name:`
   (or id, when a job has none) in a workflow triggered on `pull_request`, so renaming a
@@ -367,6 +395,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   layers row now describes both.
 
 ### Fixed
+
+- `scripts/verify-hooks.sh` now skips only when git reports "not a git repository"
+  (matched under `LC_ALL=C`); any other git failure, such as a malformed config,
+  fails with `ERR_HOOKS_GIT_FAILED` instead of passing silently.
+- `scripts/tests/lib.sh` now unsets every exported `GIT_*` variable, not a fixed five,
+  so `GIT_CONFIG_*`, `GIT_CEILING_DIRECTORIES` and the like no longer leak into fixture
+  repositories; the new `scripts/tests/lib_test.sh` asserts none remain.
+- Small factual drift in the docs: removed leftover references to a Python/uv sibling
+  project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
+  `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`
+  no longer claims `project.yml` already sets usage-description keys; the `create-pr` and
+  `smart-commit` type lists now match `check-pr-title.yml`; `running-the-app` no longer
+  assumes the repository is public; `.claude/rules/testing.md` no longer claims the
+  line-coverage floor notices a missed branch; `.claude/rules/swift.md` states the
+  SwiftLint limits actually enforced; `.github/zizmor.yml` no longer hard-codes a use
+  count; `SECURITY.md` drops response times a template cannot promise
 
 - `.claude/settings.json`'s `PostToolUse` hook now formats only the `.swift` file an
   `Edit`/`Write`/`MultiEdit` touched, through `scripts/format-edited-file.sh`, instead of

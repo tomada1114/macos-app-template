@@ -1,5 +1,20 @@
 # Project Guide
 
+This file holds what every agent needs before it knows which task it is on: what the
+app is, how to check a change, where code goes, and which decisions need a human. It is
+the one guide Claude Code and Codex CLI share, and it leaves three things to others:
+
+- **The conventions of one kind of change** belong to a skill under `.agents/skills/`,
+  loaded when the work calls for it — [Skills](#skills) is the index.
+- **The rules for one kind of file** belong to `.claude/rules/`, loaded by path —
+  [Rules](#rules) lists them.
+- **A value a gate enforces** — a lint rule, a format option, the coverage floor, a tool
+  pin — belongs to its config (`.swiftlint.yml`, `.swiftformat`, `Package.swift`,
+  `scripts/coverage.sh`, `mise.toml`); running the gate is how you learn it.
+
+A rule that belongs to one of those lands there, and this file points to it rather than
+keeping a second copy that goes stale.
+
 ## Overview
 
 This is a macOS SwiftUI app built from a strict template: XcodeGen generates the
@@ -144,6 +159,9 @@ Config/Debug.xcconfig       # Debug-only build settings project.yml cannot expre
   `print`, `debugPrint`, and `NSLog` are rejected under `Packages/*/Sources/` and `App/`
   by `.swiftlint.yml`'s `no_print_in_sources` (`.claude/rules/swift.md` › Logging)
 - `MyApp.xcodeproj` is generated — edit `project.yml` instead
+- Four things are contract rather than private — Core's public API, the bundle
+  identifier, `UserDefaults` keys, and file formats — and each changes only as
+  `docs/architecture.md` › What is contract and what is private says
 
 ## Before changing the architecture
 
@@ -195,7 +213,7 @@ tool that sees the generated copy rather than the authored one:
 | `tdd` | a behavior change in `MyAppCore`: writing a failing Swift Testing test before the implementation |
 | `designing-errors` | an `Error` type, a `throws`/`throws(E)` signature, a `do`/`catch`, or cancellation: Core error enums, typed throws, no user data in errors or logs, `CancellationError`, and mapping `OSStatus`/`NSError`/`AXError` in an adapter |
 | `changing-gates` | a file that enforces rather than implements: `.swiftlint.yml`, `.swiftformat`, `Package.swift`'s `strictSettings`, `mise.toml`, `.githooks/pre-commit`, `scripts/lint.sh`, `scripts/coverage.sh`, the `scripts/guard/` commit-time guard, or a workflow — and which gate would catch a change |
-| `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, and the `Depends on #N` convention |
+| `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, the `Depends on #N` convention, and routing a request from daily use (file, park as `on hold`, or drop) |
 | `authoring-skills` | adding, editing, or reviewing a skill: authoring under `.agents/skills/`, the `just agents-sync` mirror, frontmatter, layout, and size limits |
 | `updating-docs` | deciding whether a change owes a documentation update and which surface it lands on: `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/*.md`, a skill, or a `///` comment |
 | `recording-architecture-decisions` | the ADR tree under `docs/architecture/`: whether a change owes an ADR (a target or port, app shape, sandbox posture, persistence, a dependency, distribution, `deploymentTarget`, a TCC permission), an ADR's statuses, amending versus superseding, and fact discipline — every external claim with a URL and a checked date |
@@ -245,13 +263,15 @@ Only what is mechanically decidable is blocked at commit time; whether a commit
 what is checked: the pre-commit hook's "Staged guard" section (`scripts/check-staged.sh`)
 refuses a secret-shaped staged path or credential-shaped staged content.
 
-Never read a secret-shaped file, even to check it: `.env` or `.env.*` (the
-`.example`/`.sample`/`.template` samples excepted), anything under a `secrets/`
+Never read a secret-shaped file, even to check it: `.env`, `.env.*`, or `.envrc.*`
+(the `.example`/`.sample`/`.template` samples excepted), anything under a `secrets/`
 directory, `*.p12`, `*.pfx`, `*.p8`, `*.provisionprofile`, `*.mobileprovision`,
 `*.keychain`/`*.keychain-db`, `*key*.pem`, `private-key.*`, `.netrc`,
 `credentials.json`, `secrets.json`, and `Config/Local.xcconfig`. This is the same list
 `scripts/guard/paths.sh` refuses to commit, so the read rule and the commit guard
-agree; if a task seems to need one, ask the human for the non-secret fact instead.
+agree (the guard also refuses `.claude/settings.local.json`, which is per-user
+settings rather than a secret, so reading it is fine and only committing it is not);
+if a task seems to need one, ask the human for the non-secret fact instead.
 
 Get a human's sign-off before acting on any of these. No file in this repository
 blocks them mechanically today — this section is the rule itself, not a description
@@ -398,7 +418,7 @@ The rules in this file are enforced by these layers, from mechanical to procedur
 | `.swiftlint.yml`'s `no_ui_import_in_core` custom rule and `ArchitectureBoundaryTests` (`Packages/MyAppKit/Tests/MyAppCoreTests/`) | the lint rule: `git commit` (via the hook's `swiftlint --strict`), `just lint`, and CI's `lint` job; the test: `just test` and CI's `test` job | every author | `MyAppCore` imports none of SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon, or ServiceManagement, including attributed and kind-qualified imports — enforced twice, so removing either mechanism leaves the other. The test alone also holds the sibling boundary: `MyAppUI` and `MyAppPlatform` never import each other |
 | `.swiftlint.yml`'s `no_print_in_sources` custom rule | `git commit` (via the hook's `swiftlint --strict`), `just lint`, and CI's `lint` job | every author | no `print(`, `debugPrint(`, or `NSLog(` call site under `Packages/*/Sources/` or `App/` — shipped code logs through `MyAppCore`'s `AppLog` (`os.Logger`), whose output survives an `open`-launched `.app` and is what `just logs` streams. A mention inside a comment or a string literal does not count, and test targets are exempt |
 | `scripts/verify-hooks.sh` (`just install`'s last step, and `just check`'s first) | `just install` and `just check` | anyone who runs either | git resolves the hooks directory to `.githooks/` and `.githooks/pre-commit` is executable — skips under CI or the `ALLOW_MISSING_GIT_HOOKS` opt-out |
-| `scripts/check-staged.sh` (the hook's "Staged guard" section; the rules live in `scripts/guard/`) | `git commit` when any change is staged, with or without a Swift file | anyone who ran `just install` | no obviously secret-shaped path (`.env*`, `secrets/`, signing material, `Config/Local.xcconfig`) or credential-shaped content (private-key header, GitHub token, AWS access key id) lands in a commit; staged deletions are never inspected |
+| `scripts/check-staged.sh` (the hook's "Staged guard" section; the rules live in `scripts/guard/`) | `git commit` when any change is staged, with or without a Swift file | anyone who ran `just install` | no obviously secret-shaped path (`.env*`, `.envrc.*`, `secrets/`, signing material, `Config/Local.xcconfig`, `.claude/settings.local.json`) or credential-shaped content (private-key header, GitHub token, AWS access key id, AWS secret access key next to its variable name, Anthropic or OpenAI API key, Slack token, Google API key, Stripe live key, JWT) lands in a commit; staged deletions are never inspected |
 | `scripts/sync-agents.sh --check` (the hook's "Skills mirror" section, `just lint`, and CI's `lint` job) | `git commit` when a staged path is under `.agents/skills/` or `.claude/skills/`; unconditionally on `just lint` and CI | every author | `.agents/skills/` and `.claude/skills/` stay byte-identical |
 | `scripts/checks/run-all.sh` (`just check-harness`, part of `just check` before `just test`) | `just check-harness`, `just check`, and CI's `lint` job | every author | the harness's claims about itself stay true — every `just <recipe>` in this file exists, every workflow has a top-level `permissions:` and every non-local `uses:` (workflows and composite actions) is pinned to a full SHA with a `# v…` comment, every skill's frontmatter is exactly a matching `name` and a `description`, no `SKILL.md` sits below a skill's top directory and every skill's `description` is printable ASCII, at most 1,024 characters, and free of unquoted values Codex CLI's YAML parser rejects, the Skills table matches `.agents/skills/`, every `Bash(just <recipe>…)` rule in `.claude/settings.json` names a recipe the justfile defines, every required status-check context in `.github/rulesets/main.json` matches a job `name:` (or id) in a workflow triggered on `pull_request`, and the `## Product` section above stays a `TODO:` skeleton here while `project.yml` still names the template's app-name placeholder and holds no `TODO:` marker once `scripts/bootstrap.sh` has renamed this into an app |
 | `.claude/settings.json` — its only two top-level keys, `permissions` and `hooks` | every tool call Claude Code makes in this checkout | Claude Code only — Codex CLI and a human read nothing here | the routine local loop runs without a prompt: the `just` recipes that read, build, or test, `swift build`/`swift test`, and read-only `gh` (`gh issue view`/`list`, `gh pr view`/`list`/`checks`/`diff`, `gh run view`/`list`). Everything that writes beyond the working tree is deliberately absent from `allow` — `just labels`, `just ruleset`, `just release-prep`, `just reset-permissions`, `just install` (it writes `core.hooksPath` and installs tools), `just clean` (it deletes the generated project and the build artifacts), `git push`, `gh pr create`, `gh pr merge`, `gh issue create` — so it still stops for the sign-off "Security and human approval" asks for; `just logs` is absent for a different reason, that it streams until Ctrl-C and would hang an unattended call. `deny` refuses `git commit --no-verify`/`-n`, a force push, and an edit to `App/*.entitlements`; JSON carries no comments, so read the deny list as five groups — `--no-verify`, `-n`, `--force`/`-f`, `--force-with-lease` with and without `=<ref>`, and a `+refspec` push, each written in the leading, trailing, and mid-command position. It is a prompt policy, not a boundary: a deny rule matches the command text Claude Code writes, so another spelling — `git -C . push --force`, `bash -c '…'`, or a bundled short flag such as `git commit -anm "…"`, which no text rule can decompose — is not stopped by it, and none of this constrains a human at a shell. `hooks` holds one `PostToolUse` hook, `scripts/format-edited-file.sh`, that runs `swiftformat` on the one `.swift` file an `Edit`/`Write`/`MultiEdit` touched inside the checkout (any other path is skipped) and reports a swiftformat failure back to the agent (exit 2) instead of hiding it, a convenience that formats an agent's edit on this host only — the git hook, not it, is the gate. The file registers no plugin marketplace and enables no plugin: skills ship in-repo under `.agents/skills/` |
@@ -466,3 +486,16 @@ Before submitting a PR:
 - ALWAYS prefer editing an existing file to creating a new one
 - NEVER proactively create documentation files unless explicitly requested
 - NEVER lower the coverage floor or disable safety lint rules to make a check pass
+- A comment carries only what the code cannot: a non-obvious why, a trap the next edit
+  would spring, an external constraint. Default to none, and keep the rest to a line or
+  two — restating the code, or narrating how it came to be, is what the code and git
+  already do. A `///` on public API is its contract and stays (`.claude/rules/swift.md`)
+- A problem you find outside the task is recorded, not fixed: file it as an issue with
+  what `triaging-issues` asks of a body — a type label, a `path:line`, and an observable
+  close condition — or, where filing is not yours to do (it is a remote write; see
+  "Security and human approval"), list it in the pull request description. Never widen
+  the pull request to fix it
+- Keep `.githooks/pre-commit` to what is mechanically decidable (lint, the skills
+  mirror, the staged guard); a judgement call — a relaxed config, a deleted workflow, a
+  lowered threshold — is weighed in PR review, not blocked by the hook.
+  `changing-gates` › `.githooks/pre-commit` records why
