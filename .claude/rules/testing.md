@@ -37,7 +37,7 @@ A local-machine test never becomes the only test of a decision: it is human-run,
 proves nothing about the pull request nobody ran it for. Adapters stay translation-only,
 and outside the coverage floor, precisely so that stays true. When macOS withholds an
 answer for lack of a grant it reports nothing rather than an error, so unwrap through
-`LocalMachineTests.require(_:requires:)` — its failure names the grant instead of
+`LocalMachineTests.require(_:requires:grant:)` — its failure names the grant instead of
 reading as a broken adapter.
 
 ## Framework and Structure
