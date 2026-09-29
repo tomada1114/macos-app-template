@@ -367,6 +367,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Stale claims about what the harness checks: `updating-docs` now names
+  `skills-index-complete.sh` and `just-recipes-exist.sh`, `authoring-skills` no longer
+  quotes outdated description and body sizes, `AGENTS.md` drops pointers to tracking
+  issues that do not exist and adds `just check-harness` to the `main.json` row, and
+  the `check-harness` comments in `justfile` and `ci.yml` point at `scripts/checks/`
+  instead of an enumeration that went stale.
+
 - Small factual drift in the docs: removed leftover references to a Python/uv sibling
   project (`README.md`, `.swiftlint.yml`, `mise.toml`, `.claude/rules/project.md`);
   `docs/adding-ios.md` now names `os` among `MyAppCore`'s imports; `docs/distribution.md`

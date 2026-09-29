@@ -66,7 +66,7 @@ terms per host, so a portable skill keeps `description` as its one trigger surfa
   skill's internal workflow. Both hosts select a skill on the description's _meaning_,
   so a trigger keyword mirrored into another language buys nothing.
 - Keep the description well under the 1,024-character limit of the Agent Skills format;
-  the ones here run 330-570 characters.
+  a longer one is not a better trigger.
 
 Enforced by: `scripts/checks/skills-frontmatter.sh` (exactly `name` and `description`,
 `name` equal to the directory, a non-empty `description`) and
@@ -108,7 +108,9 @@ the same commit, and widening a skill's subject means widening its row. Enforced
 
 ## Size and structure
 
-- Target 150 body lines per `SKILL.md`, never exceed 200.
+- Target about 150 body lines per `SKILL.md` and aim to stay under 200; past that, move
+  detail into `references/`. No check enforces this, and some existing skills already
+  run past 200 — do not take them as the norm.
 - A `references/*.md` file stays under 400 lines and is linked with a relative path one
   level deep, never with `@` and never as an absolute path.
 
@@ -151,7 +153,7 @@ skill's Python tests land in the same place and are picked up without a runner c
 nothing about whether the source tree is well-formed. A `SKILL.md` whose frontmatter
 fails to parse, whose `name` disagrees with its directory, or whose frontmatter carries
 a stray key passes that check, mirrors cleanly, and simply never loads in either host.
-Three harness checks cover that, both run by `just check-harness` (part of `just check`)
+Three harness checks cover that, all run by `just check-harness` (part of `just check`)
 and CI's `lint` job through `scripts/checks/run-all.sh`:
 
 - `scripts/checks/skills-frontmatter.sh` — every `.agents/skills/<dir>/SKILL.md` opens
