@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `scripts/label-pr.sh`, tested by `scripts/tests/label-pr_test.sh`, now labels pull
+  requests for `.github/workflows/pr-label.yml`, which runs it from a checkout of the
+  base SHA. It maps every type the PR title check accepts, including `!` (`chore`,
+  `deps`, and the rest were unlabeled before), removes a type label a retitle left
+  stale, and never creates a label: the old colorless `gh label create` fallback is
+  gone, and a label missing from `.github/labels.yml` fails the job instead.
 - String Catalog localization plumbing: `Packages/MyAppKit/Package.swift` sets
   `defaultLocalization: "en"`, and `MyAppCore` ships
   `Sources/MyAppCore/Resources/Localizable.xcstrings` (English only). Core view models
@@ -26,6 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the full git history to find leaked secrets. The release binary is pinned and its
   checksum verified, the job has `contents: read` only, and findings are redacted in
   the log. `.gitleaksignore` lists the exact fingerprints of known fake fixtures.
+- A function-coverage floor beside the 80% line floor on `MyAppCore`:
+  `scripts/coverage.sh` (`just test`, CI's test and release jobs) also sums llvm-cov's
+  function counts for `Sources/MyAppCore/` from the same export and fails below
+  `readonly FUNCTION_COVERAGE_FLOOR=75` with `ERR_COVERAGE_FUNCTIONS_BELOW_FLOOR`, so a
+  Core function no test calls can no longer hide under the line floor. Measured when
+  set: 19 of 23 functions (82.6%) — every named function is tested, and the four misses
+  are compiler-generated autoclosures (`os.Logger` interpolations, a
+  `preconditionFailure` message) that llvm-cov counts as functions. The per-file report
+  now shows lines and functions, and `scripts/tests/coverage_test.sh` covers the new
+  comparison.
 - Three harness checks, run by `just check-harness`, for lists that were kept in sync
   by hand: `scripts/checks/core-ban-lists-agree.sh` fails when `.swiftlint.yml`'s
   `no_ui_import_in_core` regex and `ArchitectureBoundaryTests.forbiddenModules` ban
@@ -372,6 +388,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `scripts/lint.sh`'s `shellcheck` and `typos` (`typos.toml`) no longer scan the
+  generated `.claude/skills/` mirror, which doubled every finding in `.agents/skills/`;
+  the mirror stays held byte-identical by `scripts/sync-agents.sh --check`
+- The `integrating-system-apis` skill follows the platform-skill convention: its
+  `SKILL.md` and both references link each Apple API they rely on (developer.apple.com,
+  checked 2026-09-28) instead of restating its behavior, and word the rest as what this
+  repository decided and why.
 - The `changing-gates` and `smart-commit` skills are back under the 200-line `SKILL.md`
   body cap: the `.swiftlint.yml` custom-rule detail, the `scripts/guard/` pattern list,
   and the workflow conventions move to `changing-gates/references/`, and the pre-commit
