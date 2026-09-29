@@ -78,7 +78,7 @@ and `FrontmostAppViewModel` is the worked example; copy its shape.
   `private enum Layout` in the view's file, drawn from the design lock's scale
   (`designing-ui`). Enforced by: `.swiftlint.yml`'s `opt_in_rules: all`, which turns on
   `no_magic_numbers`.
-- When `body` grows toward `.claude/rules/swift.md`'s 40-line function limit, extract a
+- When `body` grows toward SwiftLint's `function_body_length` limit, extract a
   subview `struct` with its own inputs instead of a long computed `some View` property;
   the struct can take exactly the slice of state it renders and has its own preview.
 
