@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Both read YAML through a new line-based `check_yaml_flatten` helper in
   `scripts/checks/lib.sh`, and a reader that fails reports `ERR_CHECK_READ_FAILED`
   (#129).
+- Renovate now opens a PR when gitleaks releases a new version (a regex manager on
+  `.github/workflows/gitleaks.yml`); the checksum stays a manual step, fail-closed because
+  the workflow now also runs on a pull request that edits it; documented in the workflow
+  and in `changing-gates`.
 - A `MyAppTestSupport` target in `Packages/MyAppKit/Package.swift` for test code both
   test targets share, and one contract suite per port in it:
   `FrontmostAppProvidingContract` checks that every non-`nil` answer of a
