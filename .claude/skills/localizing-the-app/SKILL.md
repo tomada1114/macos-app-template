@@ -77,7 +77,8 @@ Every part is there for a reason:
   ship. Render a Core resource instead: `Text(frontmostApp.label)`,
   `Button(CounterViewModel.resetTitle) { model.reset() }`.
 - What is not language is `Text(verbatim:)`: a number (formatted in Core with an injected
-  `Locale` when formatting matters), a glyph such as `ContentView`'s "−" and "+", and a
+  `Locale` when formatting matters), a glyph such as `ContentView`'s "−" and "+" (whose
+  `.accessibilityLabel` is still a Core resource, `CounterViewModel.decrementLabel`), and a
   preview's note to the developer.
 - Accessibility identifiers are never localized (`building-swiftui-screens`).
 

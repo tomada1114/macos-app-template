@@ -35,13 +35,13 @@ public struct ContentView: View {
                 Button { model.decrement() } label: { Text(verbatim: "−") }
                     .disabled(!model.canDecrement)
                     // The glyph is not a name: VoiceOver reads the label instead.
-                    .accessibilityLabel("Decrement")
+                    .accessibilityLabel(CounterViewModel.decrementLabel)
                     .accessibilityIdentifier("decrementButton")
                 Button(CounterViewModel.resetTitle) { model.reset() }
                     .accessibilityIdentifier("resetButton")
                 Button { model.increment() } label: { Text(verbatim: "+") }
                     .disabled(!model.canIncrement)
-                    .accessibilityLabel("Increment")
+                    .accessibilityLabel(CounterViewModel.incrementLabel)
                     .accessibilityIdentifier("incrementButton")
             }
             if let frontmostApp {

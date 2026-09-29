@@ -19,6 +19,28 @@ public final class CounterViewModel {
         )
     }
 
+    /// What VoiceOver reads for the decrement button, whose visible "−" is a glyph, not
+    /// a name.
+    public static var decrementLabel: LocalizedStringResource {
+        LocalizedStringResource(
+            "counter.decrement",
+            defaultValue: "Decrement",
+            bundle: .module,
+            comment: "Accessibility label for the button shown as a minus sign, which lowers the counter by one.",
+        )
+    }
+
+    /// What VoiceOver reads for the increment button, whose visible "+" is a glyph, not
+    /// a name.
+    public static var incrementLabel: LocalizedStringResource {
+        LocalizedStringResource(
+            "counter.increment",
+            defaultValue: "Increment",
+            bundle: .module,
+            comment: "Accessibility label for the button shown as a plus sign, which raises the counter by one.",
+        )
+    }
+
     /// The underlying domain model.
     public private(set) var counter: Counter
 

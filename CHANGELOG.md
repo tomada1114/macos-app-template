@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Sources/MyAppCore/Resources/Localizable.xcstrings` (English only). Core view models
   now own the wording and return `LocalizedStringResource`:
   `FrontmostAppViewModel.label` replaces `displayName` and `unavailableDisplayName`,
-  and `CounterViewModel.resetTitle` replaces the view's "Reset" literal. `LocalizationTests`
+  and `CounterViewModel.resetTitle`, `decrementLabel`, and `incrementLabel` replace the
+  view's "Reset" title and its "Decrement" and "Increment" accessibility labels. `LocalizationTests`
   scans `Sources/MyAppCore` for `LocalizedStringResource(…)` calls and fails when one
   lacks an explicit key, a `defaultValue`, or `bundle: .module`, when a declared key is
   missing from the catalog or a catalog key is declared nowhere, or when the catalog's

@@ -78,6 +78,8 @@ struct LocalizationTests {
             Case(resource: answered.label, arguments: ["Finder"]),
             Case(resource: unanswered.label, arguments: []),
             Case(resource: CounterViewModel.resetTitle, arguments: []),
+            Case(resource: CounterViewModel.decrementLabel, arguments: []),
+            Case(resource: CounterViewModel.incrementLabel, arguments: []),
         ]
     }
 

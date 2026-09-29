@@ -79,4 +79,12 @@ struct CounterViewModelTests {
     func `the reset button's title is Core's wording`() {
         #expect(CounterViewModel.resetTitle.resolved(in: .english) == "Reset")
     }
+
+    /// The "−" and "+" buttons show a glyph, which is not a name; these are what
+    /// VoiceOver reads for them instead.
+    @Test
+    func `the glyph buttons' accessibility labels are Core's wording`() {
+        #expect(CounterViewModel.decrementLabel.resolved(in: .english) == "Decrement")
+        #expect(CounterViewModel.incrementLabel.resolved(in: .english) == "Increment")
+    }
 }
