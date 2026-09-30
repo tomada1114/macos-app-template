@@ -525,6 +525,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `scripts/bootstrap.sh` now runs `swiftformat` on the renamed tree, so a longer app
+  name no longer leaves lines past the max width or imports out of order for the
+  pre-commit hook to refuse the bootstrap commit. CI's `bootstrap-smoke` job now
+  bootstraps as `ClaudeUsageBar` and runs `scripts/lint.sh` on the result.
+
 - `pr-label.yml`'s job now has `contents: read`, so its base-SHA checkout works in a
   private repository cut from the template, not only a public one (#196).
 
