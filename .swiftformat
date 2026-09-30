@@ -6,3 +6,4 @@
 --wrapparameters before-first
 --extensionacl on-declarations
 --exclude .build,build
+--decimalgrouping 3,4

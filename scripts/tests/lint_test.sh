@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Tests for scripts/lint.sh's argument and tool checks. None of these cases reaches
-# a real linter, so they pass on a machine without the lint tools and on one (CI)
-# that has them: each tool-missing case builds its own restricted PATH.
+# Tests for scripts/lint.sh's argument and tool checks, which reach no real linter:
+# each tool-missing case builds its own restricted PATH. One more case runs the real
+# swiftformat and swiftlint against the repository's configs, and skips without them.
 set -euo pipefail
 # shellcheck source=scripts/tests/lib.sh
 . "$(dirname "$0")/lib.sh"
@@ -113,6 +113,34 @@ case_typos_skips_skills_mirror() {
         || _fail "typos.toml does not exclude .claude/skills"
 }
 
+# The repository's .swiftformat and .swiftlint.yml, run by the real pinned tools,
+# must agree on digit grouping (#205): SwiftFormat's numberFormatting and SwiftLint's
+# number_separator both accept a literal grouped from 4 digits, and SwiftFormat
+# rejects the ungrouped spelling. Skips with a notice when either tool is not on
+# PATH (`just test-scripts` and CI's lint job provide both).
+case_number_grouping_agrees() {
+    local dir tool
+    for tool in swiftformat swiftlint; do
+        if ! command -v "${tool}" >/dev/null 2>&1; then
+            echo "# skip: ${tool} is not on PATH"
+            return 0
+        fi
+    done
+    dir=$(make_temp_dir)
+    printf 'let small = 600\nlet hour = 3_600\nlet tenHours = 36_000\nlet million = 1_000_000\n' \
+        >"${dir}/Grouped.swift"
+    printf 'let hour = 3600\nlet tenHours = 36000\n' >"${dir}/Ungrouped.swift"
+    capture swiftformat --lint --config "${REPO_ROOT}/.swiftformat" "${dir}/Grouped.swift"
+    assert_exit 0
+    capture swiftlint lint --strict --quiet --config "${REPO_ROOT}/.swiftlint.yml" "${dir}/Grouped.swift"
+    assert_exit 0
+    capture swiftformat --lint --config "${REPO_ROOT}/.swiftformat" "${dir}/Ungrouped.swift"
+    assert_exit 1
+    capture swiftlint lint --strict --quiet --config "${REPO_ROOT}/.swiftlint.yml" "${dir}/Ungrouped.swift"
+    assert_exit 2
+    assert_stdout_contains "number_separator"
+}
+
 run_case "an unknown flag fails ERR_LINT_USAGE" case_unknown_flag
 run_case "a wrong argument count fails ERR_LINT_USAGE" case_wrong_argument_count
 run_case "--staged-tree with a missing directory fails ERR_LINT_USAGE" case_staged_tree_missing_dir
@@ -121,4 +149,5 @@ run_case "--staged-tree without swiftlint fails ERR_LINT_TOOL_MISSING" case_tool
 run_case "whole-repository mode outside a work tree fails ERR_LINT_NOT_A_REPO" case_whole_repo_outside_work_tree
 run_case "shellcheck skips the generated .claude/skills/ mirror" case_shellcheck_skips_skills_mirror
 run_case "typos.toml excludes the generated .claude/skills/ mirror" case_typos_skips_skills_mirror
+run_case "SwiftFormat and SwiftLint agree on 4- and 5-digit number grouping" case_number_grouping_agrees
 finish
