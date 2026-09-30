@@ -525,6 +525,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `scripts/bootstrap.sh` now removes `SECURITY.md`'s template-only passages (marked
+  `bootstrap:template-only-begin`/`-end`), so an app repository no longer tells its
+  reader what "a repository created from this template" should do; CI's
+  `bootstrap-smoke` job asserts it.
+
 - `scripts/bootstrap.sh` now runs `swiftformat` on the renamed tree, so a longer app
   name no longer leaves lines past the max width or imports out of order for the
   pre-commit hook to refuse the bootstrap commit. CI's `bootstrap-smoke` job now
