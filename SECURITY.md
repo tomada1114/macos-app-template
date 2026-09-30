@@ -18,9 +18,12 @@ Include:
 
 This project is maintained on a best-effort basis and makes no guaranteed response
 time. Reports are acknowledged and assessed as maintainer time allows, and a fix
-ships in the next release once one is ready. A repository created from this
-template should replace this section with the commitments its own maintainers
-can keep.
+ships in the next release once one is ready.
+
+<!-- bootstrap:template-only-begin -->
+A repository created from this template should replace this section with the
+commitments its own maintainers can keep.
+<!-- bootstrap:template-only-end -->
 
 ## Supported Versions
 
@@ -41,9 +44,12 @@ Packaging checks legitimately read N/A for a macOS GUI app.
 green, no force-push or deletion) and applied by a repository admin running
 `just ruleset` (`scripts/apply-ruleset.sh`). Whether it is actually in force on
 this repository is visible only via `gh api repos/{owner}/{repo}/rulesets`, not
-from the checkout — rulesets are server-side configuration, and "Use this
-template" does not copy them, so a repository created from this template needs
-its own admin to apply it.
+from the checkout — rulesets are server-side configuration.
+
+<!-- bootstrap:template-only-begin -->
+"Use this template" does not copy rulesets, so a repository created from this
+template needs its own admin to apply it.
+<!-- bootstrap:template-only-end -->
 
 ## Responsible Disclosure
 

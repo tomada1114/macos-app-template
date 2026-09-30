@@ -83,6 +83,9 @@ scripts/bootstrap.sh CoolApp --bundle-id-prefix io.example --github-user janedoe
   "Keeping up with template updates" is the reader-facing half.
 - **`CHANGELOG.md`** is reset to a one-entry history for the new project, guarded by a
   marker line so a re-run never wipes the new app's own entries.
+- **`SECURITY.md`** loses its template-only passages — each block between a
+  `bootstrap:template-only-begin` and a `bootstrap:template-only-end` HTML-comment
+  line, markers included — guarded by their presence, so a re-run is a no-op.
 - **Template-only CI job:** `bootstrap-smoke` and its `Template Bootstrap Smoke`
   required check in `.github/rulesets/main.json` are removed together, guarded by
   their presence. If either is in a shape the script cannot delete (the ruleset entry
@@ -97,7 +100,8 @@ for the same reason the script quote-splits them.
 
 Changing the script means keeping `bootstrap-smoke` green: it bootstraps a clone as
 `DemoApp`, asserts no placeholder survives outside the kept passages, asserts those
-passages still name the placeholders, asserts the `CHANGELOG.md` reset, asserts
+passages still name the placeholders, asserts the `CHANGELOG.md` reset, asserts `SECURITY.md` no longer says
+"created from this template", asserts
 `.template-origin` holds a 40-hex commit SHA and a repository line, asserts
 the template-only job was retired (and re-runs `scripts/tests/apply-ruleset_test.sh`
 in the clone), asserts `product-section-filled.sh` now *fails* on the renamed tree —

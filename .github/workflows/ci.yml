@@ -184,6 +184,19 @@ jobs:
             exit 1
           fi
 
+      - name: Assert SECURITY.md lost its template-only passages
+        run: |
+          cd "$RUNNER_TEMP/bootstrap-smoke"
+          # The marker name is split so this file never holds one.
+          if grep -nE 'created from this template|bootstrap:template-only''-' SECURITY.md; then
+            echo "::error file=SECURITY.md::bootstrap left template-only wording on the lines above"
+            exit 1
+          fi
+          grep -qF '## Supply-Chain Posture' SECURITY.md || {
+            echo "::error file=SECURITY.md::bootstrap removed more of SECURITY.md than its template-only passages"
+            exit 1
+          }
+
       - name: Assert the template origin was recorded
         run: |
           cd "$RUNNER_TEMP/bootstrap-smoke"
