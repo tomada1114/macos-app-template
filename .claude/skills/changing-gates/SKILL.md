@@ -83,7 +83,10 @@ is set to agree with SwiftFormat; the two tools must never disagree about one fi
 (`swiftformat --lint`), so a formatting change surfaces in `just lint`, the hook, and
 CI, never as a silent rewrite. Changing an option reformats the whole tree: land the
 option and the resulting reformat in the same commit, and check that the output still
-passes `swiftlint --strict`. `--swiftversion` follows the package's tools version.
+passes `swiftlint --strict`. `--decimalgrouping 3,4` groups integers from 4 digits
+(`3_600`) because SwiftLint's `number_separator` demands that; SwiftFormat's default
+`3,6` left no 4- or 5-digit spelling passing both, and `scripts/tests/lint_test.sh`
+fails if they drift apart again. `--swiftversion` follows the package's tools version.
 
 ## `Package.swift`'s `strictSettings`
 

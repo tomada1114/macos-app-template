@@ -186,6 +186,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 EOF
 fi
 
+# Strip SECURITY.md's template-only passages: they address a repository created from
+# the template, a reader an app repository does not have. Each sits between the
+# marker lines below (split so replace() never sees one here), which go with it.
+# Guarded by their presence, so a re-run is a no-op.
+TPL_ONLY_BEGIN='bootstrap:template-only''-begin'
+TPL_ONLY_END='bootstrap:template-only''-end'
+if grep -qF "${TPL_ONLY_BEGIN}" SECURITY.md 2>/dev/null; then
+    echo "==> Removing SECURITY.md's template-only passages"
+    # The block, its marker lines, and the blank line before it.
+    TB="${TPL_ONLY_BEGIN}" TE="${TPL_ONLY_END}" perl -0pi -e 's/\n?[^\n]*\Q$ENV{TB}\E.*?\Q$ENV{TE}\E[^\n]*\n//gs' SECURITY.md
+fi
+
 # Retire the template-only CI job. bootstrap-smoke renames a pristine copy of the
 # template; once this rename has run there is nothing left for it to rename, so it
 # can only fail. Remove the job and its required-check entry together. Guarded by
@@ -244,6 +256,17 @@ elif command -v mise >/dev/null 2>&1; then
     mise exec -- xcodegen generate
 else
     echo "warning: xcodegen not found — run 'just generate' after installing tools" >&2
+fi
+
+# A longer name moves line widths and import order, so the renamed tree must be
+# re-formatted or the pre-commit hook refuses the bootstrap commit (issue #204).
+echo "==> Formatting the renamed tree"
+if command -v swiftformat >/dev/null 2>&1; then
+    swiftformat --quiet .
+elif command -v mise >/dev/null 2>&1; then
+    mise exec -- swiftformat --quiet .
+else
+    echo "warning: swiftformat not found — run 'just fmt' after installing tools" >&2
 fi
 
 echo
