@@ -535,6 +535,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pre-commit hook to refuse the bootstrap commit. CI's `bootstrap-smoke` job now
   bootstraps as `ClaudeUsageBar` and runs `scripts/lint.sh` on the result.
 
+- `.swiftformat` sets `--decimalgrouping 3,4`, so SwiftFormat groups integer literals
+  from 4 digits (`3_600`, `36_000`) as SwiftLint's `number_separator` requires; before,
+  no 4- or 5-digit literal passed `just lint`. A case in `scripts/tests/lint_test.sh`
+  fails if the two tools disagree again (#205).
+
 - `pr-label.yml`'s job now has `contents: read`, so its base-SHA checkout works in a
   private repository cut from the template, not only a public one (#196).
 
