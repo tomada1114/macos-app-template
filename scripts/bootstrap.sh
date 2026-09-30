@@ -246,6 +246,17 @@ else
     echo "warning: xcodegen not found — run 'just generate' after installing tools" >&2
 fi
 
+# A longer name moves line widths and import order, so the renamed tree must be
+# re-formatted or the pre-commit hook refuses the bootstrap commit (issue #204).
+echo "==> Formatting the renamed tree"
+if command -v swiftformat >/dev/null 2>&1; then
+    swiftformat --quiet .
+elif command -v mise >/dev/null 2>&1; then
+    mise exec -- swiftformat --quiet .
+else
+    echo "warning: swiftformat not found — run 'just fmt' after installing tools" >&2
+fi
+
 echo
 echo "Bootstrap complete: ${PH_NAME} -> ${NEW_NAME} (repo slug: ${REPO_SLUG})"
 [ -n "${BUNDLE_ID_PREFIX}" ] && echo "  bundle-id prefix: ${BUNDLE_ID_PREFIX}"
