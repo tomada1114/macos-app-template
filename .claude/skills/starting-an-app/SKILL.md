@@ -99,14 +99,15 @@ replace cannot see — fix those by hand. `README.md`'s own leftover command spe
 for the same reason the script quote-splits them.
 
 Changing the script means keeping `bootstrap-smoke` green: it bootstraps a clone as
-`DemoApp`, asserts no placeholder survives outside the kept passages, asserts those
-passages still name the placeholders, asserts the `CHANGELOG.md` reset, asserts `SECURITY.md` no longer says
-"created from this template", asserts
-`.template-origin` holds a 40-hex commit SHA and a repository line, asserts
-the template-only job was retired (and re-runs `scripts/tests/apply-ruleset_test.sh`
-in the clone), asserts `product-section-filled.sh` now *fails* on the renamed tree —
-the smoke proves the check fires rather than inventing a product for the clone — then
-runs `swift test` and an `xcodebuild` on the renamed tree. Its
+`ClaudeUsageBar` (long enough to cross SwiftFormat's max width), asserts no placeholder
+survives outside the kept passages, asserts those passages still name the
+placeholders, asserts the `CHANGELOG.md` reset, asserts `SECURITY.md` no longer says
+"created from this template", asserts `.template-origin` holds a 40-hex commit SHA and
+a repository line, asserts the template-only job was retired (and re-runs
+`scripts/tests/apply-ruleset_test.sh` in the clone), asserts
+`product-section-filled.sh` now *fails* on the renamed tree — the smoke proves the
+check fires rather than inventing a product for the clone — then runs
+`scripts/lint.sh`, `swift test`, and an `xcodebuild` on the renamed tree. Its
 leftover grep is case-insensitive and allows a missing hyphen, so a new mention of the
 app name in a spelling the literal replace does not cover (all lowercase, say) fails
 that job.
