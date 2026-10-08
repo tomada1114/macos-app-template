@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A read-only `scout` sub-agent tier; `.claude/agents/` tier files are now generated
+  by the `syncing-agent-tiers` skill, and docs no longer name models or effort levels.
 - `scripts/checks/labels-declared.sh` (`just check-harness`) now also reads
   `scripts/label-pr.sh`'s type-to-label mapping, so a PR type mapped to a label
   `.github/labels.yml` does not declare fails the harness instead of a live PR.
