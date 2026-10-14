@@ -73,7 +73,7 @@ coverage floor sees it: Core view models return `LocalizedStringResource`
 their own, because a SwiftUI literal is looked up in the app's main bundle, not
 the package's. The template ships English alone — `defaultLocalization: "en"`
 and one catalog — since a second language makes every later string owe a
-translation and a reviewer; an app that wants one records it as an ADR. The
+translation and a reviewer; an app that wants one makes it a design change. The
 `localizing-the-app` skill holds the rules, including one that shapes the
 tests: `swift test` copies the catalog uncompiled (only `xcodebuild` compiles
 it), so `LocalizationTests` scans Core's sources for `LocalizedStringResource`
@@ -107,17 +107,17 @@ path-scoped rules give LLMs the project's standards, architecture, and hard
 prohibitions (never lower the coverage floor, never disable safety lint
 rules) — reducing review cycles.
 
-### Why an ADR tree that ships empty?
+### Why present-state design docs instead of decision records?
 
 The template's own decisions are the ones above, and this section is where
 they live. An app cut from the template makes decisions of a different kind —
 its shape, its sandbox posture, where it keeps state, how it ships, which
-permissions it asks for — and records each as an Architecture Decision Record
-under `docs/architecture/`, whose index the template ships empty. `AGENTS.md`'s
-"Before changing the architecture" names the changes that owe one. An accepted
-ADR takes small corrections in place, dated; a replaced decision gets a new
-ADR rather than a rewrite, so the reasoning that held at the time stays
-readable.
+permissions it asks for — and states each as it stands now, with its reasoning,
+in `AGENTS.md`'s Architecture section and `docs/architecture.md`. `AGENTS.md`'s
+"Before changing the architecture" names these design changes; the pull request
+that makes one rewrites the description in place, and git history keeps what it
+used to say. No numbered records or statuses stand between an idea and changing
+a feature.
 
 ### Why secret-gated notarization?
 
@@ -234,7 +234,6 @@ ad-hoc-signed Debug builds lose the grant on every rebuild.
 
 - [Getting Started](docs/getting-started.md)
 - [Architecture](docs/architecture.md)
-- [Architecture Decisions](docs/architecture/README.md)
 - [Distribution & Signing](docs/distribution.md)
 - [Adding iOS Later](docs/adding-ios.md)
 

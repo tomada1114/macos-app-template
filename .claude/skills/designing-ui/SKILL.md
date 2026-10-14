@@ -4,21 +4,21 @@ description: >
   Covers how this macOS app looks and feels: craft rules grounded in Apple's Human
   Interface Guidelines (system text styles, semantic and accent colors, light and dark
   appearance, contrast, SF Symbols, window sizing, the menu bar and keyboard shortcuts,
-  motion) and the per-app design lock, recorded as an ADR under docs/architecture/, that
+  motion) and the per-app design lock, the Design lock section of docs/architecture.md, that
   fixes the accent color, type, spacing, density, iconography, and copy style every
   screen obeys. Use when choosing a color, font, spacing value, icon, or window size,
   touching AccentColor.colorset or AppIcon.appiconset, adding a menu command, reviewing
-  a screen's visual design, or writing or amending the app's design-lock ADR.
+  a screen's visual design, or writing or changing the app's design lock.
 ---
 
 # Designing UI
 
 **Owns:** what a screen in this app looks like and how it behaves to the eye and hand —
 the craft rules below, and the app's design lock: the short set of visual decisions
-every screen obeys, and where they are recorded. **Does not own:** how a view is written
+every screen obeys, and the `docs/architecture.md` › Design lock section that holds them. **Does not own:** how a view is written
 in SwiftUI, its previews, and its accessibility wiring (`building-swiftui-screens`); the
-app shape, windowed or menu-bar agent (`starting-an-app`); an ADR's shape, numbering,
-and statuses (`recording-architecture-decisions`); where user-visible wording lives —
+app shape, windowed or menu-bar agent (`starting-an-app`); how a design change is
+written down (`AGENTS.md`'s "Before changing the architecture"); where user-visible wording lives —
 a Core view model and its String Catalog (`localizing-the-app`).
 
 Apple's Human Interface Guidelines (HIG) are the baseline and are not restated here: this
@@ -108,23 +108,23 @@ reinvented. It is small on purpose: accent color, type scale, spacing scale, den
 corner radius, symbol rendering, window sizing, motion policy, and copy style, each either
 a value or an explicit "system default".
 
-- **It is an ADR.** Later screens build on it, which is the test
-  `recording-architecture-decisions` applies. Write it as that skill says, with the next
-  free number in `docs/architecture/adr/` — do not assume one; `starting-an-app`'s first
-  decisions may already hold the low numbers — status Proposed, and a row in
-  `docs/architecture/README.md`. Only the owner accepts it. Until then screens may be
-  built against it only as an experiment.
+- **It lives in `docs/architecture.md` › Design lock**, as present state: the values and
+  one reason each, in the present tense. Later screens build on it, so writing or
+  changing it is a design change (`AGENTS.md`'s "Before changing the architecture"): the
+  pull request rewrites the section in place and the owner reviews it with the change.
+  Until the owner has approved the section, screens may be built against it only as an
+  experiment.
 - **When:** after the app shape is decided (a menu-bar agent's lock differs from a
   windowed app's) and before the second screen. The first screen can be the probe that
   surfaces what the lock needs to say.
 - **What it holds and how to fill it:** [references/design-lock.md](references/design-lock.md)
   — the fields, what "decided" looks like for each, and where each value lands in code.
-- **Changing it:** a corrected value in an Accepted lock is an amendment; changing the
-  direction (a new accent, a denser layout, custom type) is a new ADR that supersedes it.
+- **Changing it:** a corrected value or a new direction (a new accent, a denser layout,
+  custom type) is an edit to the section in place, never a second lock beside the first.
   Screens already built are then brought into line in their own change.
-- **In the template itself** there is no lock: the template ships no ADRs and its UI is
-  the system default. A change to the template's own visual defaults updates README's
-  Design Philosophy (`updating-docs`) instead.
+- **In the template itself** the section says "system default" for every field. An app
+  rewrites it for itself after the bootstrap; a change to the template's own visual
+  defaults updates that section and README's Design Philosophy (`updating-docs`).
 
 ## Reviewing a screen's design
 

@@ -61,11 +61,10 @@ another's content.
 - `docs/architecture.md` — the layer diagram, "Where new code goes", and the optional
   dependencies worth reaching for. It covers the same ground as `AGENTS.md`'s
   Architecture section, so a moved boundary updates both in the same pull request.
-- `docs/architecture/` — an app's Architecture Decision Records and their index, which
-  the template ships empty. `recording-architecture-decisions` owns whether a change
-  owes an ADR and how one is written; a moved boundary it records still updates
-  `docs/architecture.md` and `AGENTS.md`'s Architecture section to match. Its
-  `roadmap.md`, the app's direction and not an ADR, is `steering-the-roadmap`'s.
+- `docs/architecture.md` is also where an app's design decisions live, as present state
+  (`AGENTS.md`'s "Before changing the architecture"): a design change rewrites the
+  passage it changes, in place, together with `AGENTS.md`'s Architecture section.
+  `docs/architecture/roadmap.md`, the app's direction, is `steering-the-roadmap`'s.
 - `docs/getting-started.md`, `docs/adding-ios.md`, `docs/distribution.md` — single-topic
   how-tos: first setup and everyday commands, the runbook for adding an iOS target, and
   the release, signing, and notarization flow. Each owns its one topic; a change to that
@@ -110,6 +109,23 @@ Document non-obvious behavior, architecture decisions, and trade-offs. Do not re
 what the code or the type system already says — the same principle `///` comments follow
 in `Packages/MyAppKit/Sources/**`. If a reader could get the fact from the signature or
 from running the code, it does not need a sentence here.
+
+## Fact discipline
+
+Keep three kinds of statement apart in a design description, a skill, or a doc:
+
+- **Verified fact** — every external claim carries a primary-source URL and
+  "checked YYYY-MM-DD". Check it against the source itself, never from memory: Apple's
+  developer documentation or App Review Guidelines for an API, an availability, an
+  entitlement, or a review rule; a package's own repository, release page, and
+  `Package.swift` for its version, license, and platform floor.
+- **Decision or recommendation** — its reason and the alternative it beat.
+- **Unverified** — prefixed `Unverified:`. It stays only until it is verified (and
+  cited) or the claim that needed it is deleted. Never fill a gap from memory.
+
+These facts move: the macOS version an API needs, what the App Sandbox allows, a review
+guideline, the Developer Program fee, a package's latest release. A price carries its
+unit and date; availability and deprecation carry the OS version and date.
 
 ## Nothing verifies a fenced example
 

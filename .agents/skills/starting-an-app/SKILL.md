@@ -162,14 +162,12 @@ what stays on either way (Hardened Runtime, Developer ID signing, notarization),
 
 ## Recording both decisions
 
-Both steps end in the new app's first two ADRs, written after the rename in the tree
-`recording-architecture-decisions` owns: copy `docs/architecture/adr/template.md` to
-`docs/architecture/adr/0001-app-shape.md` (windowed or menu-bar agent, and why) and
-`0002-sandbox-posture.md` (sandboxed or not, naming any capability that forces the
-flip), each with status Proposed — only the owner accepts — and add both rows to
-`docs/architecture/README.md`'s Decisions table in the same change. Every external claim
-in them (an App Store rule, an API's sandbox behavior) carries its URL and checked date.
-The template itself ships no ADRs; these belong to the app.
+Both steps end as present state, written after the rename: `AGENTS.md`'s Architecture
+section and `docs/architecture.md` say which shape the app has (windowed or menu-bar
+agent) and whether it is sandboxed (naming any capability that forces the flip), each
+with its reason, in the present tense. The owner reviews them with the change that
+writes them. Every external claim in them (an App Store rule, an API's sandbox
+behavior) carries its URL and checked date (`updating-docs` › "Fact discipline").
 
 ## What the new app keeps
 
