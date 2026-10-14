@@ -1,9 +1,11 @@
 # Architecture
 
-This page describes the layers every app cut from this template starts with. What an
-app decides on top of them — its shape, sandbox posture, persistence, dependencies,
-distribution, macOS floor, and permissions — is recorded as ADRs under
-[`docs/architecture/`](architecture/README.md), whose `README.md` is the index.
+This page describes the layers every app cut from this template starts with, and what an
+app has decided on top of them — its shape, sandbox posture, persistence, dependencies,
+distribution, macOS floor, permissions, and design lock — as they stand now, with the
+reasoning, in the present tense. A design change (`AGENTS.md`'s "Before changing the
+architecture") rewrites the passage it changes in the same pull request; git history
+holds what it used to say.
 
 ## Layers
 
@@ -161,13 +163,13 @@ else is private.
 
 | Contract | What depends on it | What changing it requires |
 |---|---|---|
-| **Core's public API** — every `public` declaration in `MyAppCore` | `MyAppUI`, `MyAppPlatform`, `App/`, and the tests, which all import `MyAppCore` as a separate module; `Package.swift` declares the library products so `App/` can link them, and nothing outside this repository does | Update every caller in the same pull request — the compiler finds them (`just build`, `just test`). A new public declaration carries a `///` saying why (the Review Checklist in `AGENTS.md`); a new port is an ADR (`AGENTS.md` › "Before changing the architecture") |
-| **The bundle identifier** — `PRODUCT_BUNDLE_IDENTIFIER` in `project.yml`, set by `scripts/bootstrap.sh` | Everything macOS keys by it on a user's Mac: the sandbox container that holds the app's `UserDefaults` and Application Support files, and its permission (TCC) grants; the log subsystem (`AppLog.subsystem`); and `just run`, `just logs`, and `just reset-permissions`, which read it through `scripts/bundle-id.sh` | Treat it as fixed once a build has left your machine: a new identifier is a new app to macOS, so the user's settings, files, and grants stay behind under the old one. Changing it is a human's decision, recorded as an ADR; `project.yml` and `AppLog.subsystem` change together (`AppLogTests` fails otherwise), and a signing or entitlements change that goes with it needs the sign-off in `AGENTS.md` › "Security and human approval" |
-| **`UserDefaults` keys** — each key the app stores, and the type of its value | A user's saved preferences, read back by every later version | Renaming, removing, or retyping a key silently resets the user's value, because the old one is left unread. Read the old key and migrate it in Core, with a test that starts from the old value. Choosing `UserDefaults` at all is the persistence ADR |
-| **File formats** — anything the app writes and reads back in a later version: a config file, saved state, a document | Files already on a user's disk, and for a hand-edited config ("A human-editable config file" below), the user who edits it | A new version still reads the old format — a version field and a migration in Core, with a test that decodes a sample of the previous format. The format and where it lives are the persistence ADR. A cache the app can rebuild from scratch is private |
+| **Core's public API** — every `public` declaration in `MyAppCore` | `MyAppUI`, `MyAppPlatform`, `App/`, and the tests, which all import `MyAppCore` as a separate module; `Package.swift` declares the library products so `App/` can link them, and nothing outside this repository does | Update every caller in the same pull request — the compiler finds them (`just build`, `just test`). A new public declaration carries a `///` saying why (the Review Checklist in `AGENTS.md`); a new port is a design change (`AGENTS.md` › "Before changing the architecture") |
+| **The bundle identifier** — `PRODUCT_BUNDLE_IDENTIFIER` in `project.yml`, set by `scripts/bootstrap.sh` | Everything macOS keys by it on a user's Mac: the sandbox container that holds the app's `UserDefaults` and Application Support files, and its permission (TCC) grants; the log subsystem (`AppLog.subsystem`); and `just run`, `just logs`, and `just reset-permissions`, which read it through `scripts/bundle-id.sh` | Treat it as fixed once a build has left your machine: a new identifier is a new app to macOS, so the user's settings, files, and grants stay behind under the old one. Changing it is a human's decision, written into this page as a design change; `project.yml` and `AppLog.subsystem` change together (`AppLogTests` fails otherwise), and a signing or entitlements change that goes with it needs the sign-off in `AGENTS.md` › "Security and human approval" |
+| **`UserDefaults` keys** — each key the app stores, and the type of its value | A user's saved preferences, read back by every later version | Renaming, removing, or retyping a key silently resets the user's value, because the old one is left unread. Read the old key and migrate it in Core, with a test that starts from the old value. Choosing `UserDefaults` at all is a persistence design change, written into this page |
+| **File formats** — anything the app writes and reads back in a later version: a config file, saved state, a document | Files already on a user's disk, and for a hand-edited config ("A human-editable config file" below), the user who edits it | A new version still reads the old format — a version field and a migration in Core, with a test that decodes a sample of the previous format. The format and where it lives are a persistence design change, written into this page. A cache the app can rebuild from scratch is private |
 
 The template ships no `UserDefaults` key and no file format; the first one an app adds
-is where its persistence ADR starts (`AGENTS.md` › "Before changing the architecture").
+is where its persistence design change starts (`AGENTS.md` › "Before changing the architecture").
 
 **Private** is everything else: `internal` and `private` declarations, how an adapter
 talks to the OS behind its port, view structure, file and type layout, test helpers, and
@@ -178,6 +180,20 @@ No gate notices a broken contract item except where one is named above — the c
 for Core's public API, `AppLogTests` for the log subsystem. A renamed key or a changed
 format passes every check and fails on the user's Mac, so review is what catches it, and
 a user-visible change to any of the four owes a `CHANGELOG.md` entry.
+
+## Design lock
+
+The design lock is the short set of visual decisions every screen obeys — accent color,
+type, spacing scale, density, corner radius, symbols, materials, window sizing, motion,
+copy style, and app icon — each a value or an explicit "system default".
+`designing-ui` owns it, and its `references/design-lock.md` lists the fields and where
+each lands in code.
+
+In the template every field is "system default": the UI uses the system font, semantic
+system colors, standard controls, and system transitions only, so an app cut from it
+starts from no visual opinion. An app rewrites this section for itself after the
+bootstrap, before its second screen; changing a value later is an edit to this section,
+in place, in the pull request that changes the screens.
 
 ## Recommended optional dependencies
 

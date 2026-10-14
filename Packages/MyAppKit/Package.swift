@@ -11,7 +11,7 @@ let strictSettings: [SwiftSetting] = [
 let package = Package(
     name: "MyAppKit",
     // The language the String Catalog is written in, and the one a reader falls back to
-    // when the catalog lacks theirs. A second language is an ADR (`localizing-the-app`).
+    // when the catalog lacks theirs. A second language is a design change (`localizing-the-app`).
     defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     products: [

@@ -41,10 +41,10 @@ answer to "is this in scope?". Fill in every `TODO:` below right after the renam
   easy. A first version's cut list is longer than its feature list, and this is the
   line an eager implementer crosses first: moving anything from here to a goal is a
   human's decision, not an implementer's.
-- **Where these decisions are recorded** — TODO: where the reasoning behind the three
-  entries above lives — an ADR under `docs/architecture/` (see "Before changing the
-  architecture"), a design issue, or another decision log — so a reader can find why
-  and not only what.
+- **Why it is shaped this way** — TODO: the reasoning behind the three entries above,
+  in the present tense — why this audience, why this interaction comes first, and why
+  each non-goal stays out — so a reader finds why and not only what. It is rewritten
+  when the reasoning changes, not appended to ("Before changing the architecture").
 
 ## Quick Reference
 
@@ -179,11 +179,14 @@ Config/Debug.xcconfig       # Debug-only build settings project.yml cannot expre
 
 ## Before changing the architecture
 
-An app cut from this template records its architecture decisions as ADRs under
-`docs/architecture/` — start at its `README.md`, the index, whose statuses say what is
-decided and what is only proposed. `docs/architecture.md` describes the layers every app
-starts with; the ADRs record what the app decided on top of them. A change to any of
-these owes an ADR, as `recording-architecture-decisions` sets out:
+The design is recorded as it stands now, never as a log of decisions: this file's
+Architecture and Product sections, `docs/architecture.md`, and the skill that owns the
+subject say together how the app is built and why, and git history holds what it used
+to be. The changes below, which the skills call design changes, are hard to reverse, so
+the pull request that makes one also rewrites that description: the current design and
+the reasoning behind it (what it protects and, where it matters, the alternative it
+rules out and why), in the present tense, in place of the sentences it replaces, never
+as a dated entry beside them:
 
 - a new target (`project.yml`, `Package.swift`) or a new Core port;
 - the app shape — a windowed app or a menu-bar agent;
@@ -194,13 +197,15 @@ these owes an ADR, as `recording-architecture-decisions` sets out:
 - `deploymentTarget` in `project.yml`, with `platforms:` in `Package.swift`;
 - a TCC permission — Accessibility, Input Monitoring, Screen Recording, or any other
   privacy grant;
-- a shipped language beyond English, the `defaultLocalization` the template sets.
+- a shipped language beyond English, the `defaultLocalization` the template sets;
+- the design lock (`docs/architecture.md` › Design lock, owned by `designing-ui`).
 
-An agent writes an ADR as Proposed; only a human accepts it. An ADR records reasoning and
-grants nothing: an entitlement, a signing change, or a new dependency still needs the
-sign-off "Security and human approval" asks for. The template repository ships the index
-empty — its own reasoning lives in `README.md`'s Design Philosophy, and ADRs belong to
-the apps cut from it.
+Writing the reasoning down grants nothing: an entitlement, a signing change, or a new
+dependency still needs the sign-off "Security and human approval" asks for, and the
+owner reviews the rewritten description with the change. The reasoning behind the
+layers every app starts with lives in `README.md`'s Design Philosophy; a change that
+replaces one of them rewrites that entry too, rather than leaving the old reason beside
+the new one.
 
 ## Skills
 
@@ -230,12 +235,11 @@ tool that sees the generated copy rather than the authored one:
 | `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, the `Depends on #N` convention, and routing a request from daily use (file, park as `on hold`, or drop) |
 | `authoring-skills` | adding, editing, or reviewing a skill: authoring under `.agents/skills/`, the `just agents-sync` mirror, frontmatter, layout, and size limits |
 | `updating-docs` | deciding whether a change owes a documentation update and which surface it lands on: `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/*.md`, a skill, or a `///` comment |
-| `recording-architecture-decisions` | the ADR tree under `docs/architecture/`: whether a change owes an ADR (a target or port, app shape, sandbox posture, persistence, a dependency, distribution, `deploymentTarget`, a TCC permission), an ADR's statuses, amending versus superseding, and fact discipline — every external claim with a URL and a checked date |
 | `writing-repo-scripts` | writing or testing a shell script under `scripts/`, `.githooks/pre-commit`, or `scripts/tests/`: why bash, refusing or skipping outside a git checkout, the stderr contract by example, and `scripts/tests/lib.sh` |
 | `running-the-app` | seeing a change work in the real app: `just run` and confirming the running process is the fresh build, reading `just logs`, screenshotting a window, a throwaway XCUITest, the human hand-off for a TCC prompt, and the evidence a PR then carries |
 | `integrating-system-apis` | calling a macOS system API from `MyAppPlatform`: choosing the mechanism (`CGEventTap`, `AXObserver`, a Carbon hotkey), a C callback's refcon and teardown under Swift 6 strict concurrency, TCC-gated permissions (Accessibility, Input Monitoring, Screen Recording), and what can be tested where |
 | `designing-core-logic` | shaping logic in `MyAppCore`: injecting time (`Clock`, a `() -> Date`), `Locale`, and a `RandomNumberGenerator`; one `Tuning` type for tunables; action-shaped `@Observable` view models; and the patterns deliberately not adopted |
-| `designing-ui` | how a screen looks: HIG-based craft rules (system text styles, semantic and accent colors, light and dark, contrast, SF Symbols, window sizing, menu commands and shortcuts, motion, copy) and the app's design lock, recorded as an ADR under `docs/architecture/` |
+| `designing-ui` | how a screen looks: HIG-based craft rules (system text styles, semantic and accent colors, light and dark, contrast, SF Symbols, window sizing, menu commands and shortcuts, motion, copy) and the app's design lock, held in `docs/architecture.md` › Design lock |
 | `building-swiftui-screens` | a view in `MyAppUI`: a thin renderer over a `MyAppCore` `@Observable` view model (how it holds its model, what `body` may contain), `#Preview` per state, accessibility identifiers and labels, Reduce Motion, keyboard reachability, and verifying a screen |
 | `starting-an-app` | turning this template into a new app: `scripts/bootstrap.sh`'s rename, what the new repository keeps, its `just labels` and `just ruleset` setup, choosing the app shape (windowed or menu-bar agent), and deciding the sandbox posture |
 | `shipping-issues` | shipping the open issue backlog: ranking issues by `priority: P0`-`P3`, implementing the top one, reviewing it with `/code-review`, and taking its PR through CI to merge |

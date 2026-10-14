@@ -520,6 +520,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The Architecture Decision Record mechanism: `docs/architecture/README.md` (the index),
+  `docs/architecture/adr/template.md`, and the `recording-architecture-decisions` skill.
+  An app's design now lives only as present state in `AGENTS.md`'s Architecture and
+  Product sections, `docs/architecture.md` (including a new Design lock section), and
+  the owning skill; a design change rewrites them in place. The `## Product` section's
+  fourth bullet is now "Why it is shaped this way". No gate was relaxed.
 - The committed `.claude/settings.json` no longer registers the owner's personal
   plugin marketplace or enables a plugin from it for everyone who opens the
   repository; it keeps only `permissions` and `hooks`, and `AGENTS.md`'s Enforcement

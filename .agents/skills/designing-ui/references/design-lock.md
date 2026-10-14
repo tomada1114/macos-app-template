@@ -1,15 +1,14 @@
 # The design lock: fields and where they land
 
-The design lock is one ADR (see the `designing-ui` skill for when it is written and how
-it changes; `recording-architecture-decisions` for its shape, number, and status). This
-file lists what its **Decision** section fixes. Copy `docs/architecture/adr/template.md`
-as usual; the fields below go in the Decision section, and the alternatives that were
-weighed for each go in Considered options.
+The design lock is the `## Design lock` section of `docs/architecture.md` (see the
+`designing-ui` skill for when it is written and how it changes). This file lists what
+that section fixes, as present state: the value of each field below and the reason for
+it, and, where it matters, the alternative it rules out and why.
 
 Every field is either a value or the words "system default". "System default" is a real
 decision — often the right one for a first version — and saying it explicitly stops the
-next implementer from inventing a value. A field left out is a gap, not a default: list
-it under Open questions until it is decided.
+next implementer from inventing a value. A field left out is a gap, not a default: say
+so in the section ("not decided yet") until it is.
 
 ## Fields
 
@@ -34,14 +33,14 @@ The template keeps each view's metrics in a `private enum Layout` beside the vie
 (`ContentView`), because `no_magic_numbers` — on through `.swiftlint.yml`'s
 `opt_in_rules: all` — rejects a bare number in a view body. That stays the rule while
 only one view uses a value. Once a second view needs the same spacing or radius, move
-the lock's values into one internal type in `MyAppUI` — the ADR names it — and have each
+the lock's values into one internal type in `MyAppUI` — the lock names it — and have each
 `Layout` enum refer to it. They never go in `MyAppCore`: they are presentation, and Core
 does not import SwiftUI.
 
-## A Decision section, sketched
+## The section, sketched
 
 ```markdown
-## Decision
+## Design lock
 
 - Accent color: system default. Nothing in the app depends on its hue.
 - Custom colors: none; semantic system colors only.
@@ -59,12 +58,13 @@ does not import SwiftUI.
 ```
 
 Keep the sketch's level of detail: values and one reason each, not a style guide. The
-reasoning that beat the alternatives belongs in Considered options, and anything the
-owner has not settled goes under Open questions, never filled in from habit.
+alternative a value beat goes in the same sentence as that value, and anything the
+owner has not settled is marked "not decided yet", never filled in from habit.
 
 ## What does not belong in the lock
 
-- The app shape and the scenes it has — `starting-an-app` and its own ADR.
+- The app shape and the scenes it has — `starting-an-app`, written in `AGENTS.md`'s Architecture
+  section and `docs/architecture.md`.
 - A single screen's layout — that is the screen's own pull request, built against the
   lock.
 - Anything the HIG already fixes for every Mac app (standard shortcuts, the menu order);

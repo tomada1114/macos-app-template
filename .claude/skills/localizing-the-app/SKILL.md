@@ -18,14 +18,14 @@ translated, keeping the String Catalog and the code in step, and what adding a l
 involves. **Does not own:** a view model's shape and injecting a `Locale` to format a
 number or date (`designing-core-logic`); how a view is wired to its model
 (`building-swiftui-screens`); capitalization and voice (`designing-ui`'s copy rules and
-design lock); the ADR a second language owes (`recording-architecture-decisions`); the
+design lock); the design change a second language is (`AGENTS.md`'s "Before changing the architecture"); the
 English-only rule and its one exception (`AGENTS.md`'s "Important Reminders").
 
 ## What the template decides
 
 - **English only.** `Package.swift` sets `defaultLocalization: "en"`, and the one catalog's
-  source language is `en`. Shipping a second language is an app's decision, recorded as
-  an ADR: every later string then owes a translation, and every translation owes a reviewer.
+  source language is `en`. Shipping a second language is an app's decision, written as
+  present state in `docs/architecture.md`: every later string then owes a translation, and every translation owes a reviewer.
 - **Core owns the wording.** A Core view model returns `LocalizedStringResource`
   (Foundation, which Core may import) and a view renders it. The wording then sits under
   the coverage floor, where a test asserts it; a Core API that handed out bare keys would
@@ -130,9 +130,10 @@ forms.
 
 ## Adding a language
 
-In an app cut from the template, a second language is an ADR the owner accepts before
-any translation lands (`recording-architecture-decisions`): which language, who
-translates, and who reviews. Then:
+In an app cut from the template, a second language is a design change the owner approves
+before any translation lands (`AGENTS.md`'s "Before changing the architecture"): the
+pull request rewrites `docs/architecture.md` and `AGENTS.md`'s Architecture section to
+say which language, who translates, and who reviews. Then:
 
 - Add the language in Xcode's catalog editor, or import a translated `.xcloc` with
   `xcodebuild -importLocalizations`. Keys, comments, and the English stay English; the
@@ -140,6 +141,6 @@ translates, and who reviews. Then:
 - Unverified: whether macOS offers the app in that language from the package bundle's
   new `.lproj` alone, or the app target also needs `CFBundleLocalizations` or
   `developmentLanguage` in `project.yml`. Check it in the running app (`running-the-app`)
-  and record the answer in the ADR.
-- Unverified: how `typos` (`just lint`) treats translated values; the ADR decides whether
+  and write the answer into `docs/architecture.md`.
+- Unverified: how `typos` (`just lint`) treats translated values; the design change decides whether
   an exclusion is warranted, which is a gate change (`changing-gates`).
