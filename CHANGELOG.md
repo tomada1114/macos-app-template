@@ -543,6 +543,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- CI's `lint` job runs on `ubuntu-24.04` instead of `ubuntu-latest`, so SwiftLint
+  starts again: `ubuntu-latest` moved to Ubuntu 26.04, whose image ships only
+  `libxml2.so.16`, while the SwiftLint Linux binary mise installs needs
+  `libxml2.so.2` and failed to load. `swiftlint --strict` still runs on every pull
+  request.
+
 - `scripts/bootstrap.sh` now removes `SECURITY.md`'s template-only passages (marked
   `bootstrap:template-only-begin`/`-end`), so an app repository no longer tells its
   reader what "a repository created from this template" should do; CI's
