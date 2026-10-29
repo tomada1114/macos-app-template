@@ -6,7 +6,8 @@ import os
 /// OS-integration frameworks an adapter reaches for; `os` is neither — it is Apple's
 /// logging facility, it pulls in no AppKit, and it works unchanged on every platform
 /// Core is meant to serve, so keeping logging behind a port would buy nothing and cost
-/// every call site an injection (`docs/architecture.md` › Logging). `MyAppUI`,
+/// every call site an injection (`integrating-system-apis` skill,
+/// `references/ports-and-adapters.md` › "Logging is not a port"). `MyAppUI`,
 /// `MyAppPlatform`, and `App/` log through these same loggers, which they already see
 /// by importing `MyAppCore`.
 ///

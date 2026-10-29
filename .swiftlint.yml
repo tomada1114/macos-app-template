@@ -38,8 +38,9 @@ custom_rules:
   # MyAppCore stays free of UI and OS-integration frameworks (AGENTS.md › Architecture):
   # an adapter that needs one belongs in MyAppPlatform, behind a Core-declared port.
   # `os`/`OSLog` are NOT on this list — logging is neither, and Core logs through
-  # AppLog (docs/architecture.md › Logging). Enforced twice: here, and by
-  # ArchitectureBoundaryTests in MyAppCoreTests — change both module lists together.
+  # AppLog (integrating-system-apis' references/ports-and-adapters.md › "Logging is not
+  # a port"). Enforced twice: here, and by ArchitectureBoundaryTests in MyAppCoreTests —
+  # change both module lists together.
   # No match_kinds: the ^\s* anchor already skips `// import …` comments, and a kind
   # filter would drop the attributed-import case.
   no_ui_import_in_core:

@@ -141,9 +141,9 @@ until your first real port exists if you want a pattern to copy):
       WorkspaceFrontmostAppProvider())` argument in `App/MyAppApp.swift`
 - [ ] The mentions that cite it as the worked example: `AGENTS.md` ›
       Architecture ("The worked example is `FrontmostAppProviding` /
-      `WorkspaceFrontmostAppProvider`"), `docs/architecture.md` › Ports and
-      adapters and › Logging, `.claude/rules/testing.md` › Fakes, not mocks and
-      › One Contract Suite per Port, and the skills `integrating-system-apis`,
+      `WorkspaceFrontmostAppProvider`"), `.claude/rules/testing.md` › Fakes, not
+      mocks and › One Contract Suite per Port, and the skills
+      `integrating-system-apis` (with its `references/ports-and-adapters.md`),
       `running-the-app`, and `starting-an-app/references/app-shapes.md` — point
       them at your own port, or reword them (skills are edited under
       `.agents/skills/`, then `just agents-sync`)

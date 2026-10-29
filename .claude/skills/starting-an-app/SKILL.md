@@ -163,9 +163,10 @@ what stays on either way (Hardened Runtime, Developer ID signing, notarization),
 ## Recording both decisions
 
 Both steps end as present state, written after the rename: `AGENTS.md`'s Architecture
-section and `docs/architecture.md` say which shape the app has (windowed or menu-bar
-agent) and whether it is sandboxed (naming any capability that forces the flip), each
-with its reason, in the present tense. The owner reviews them with the change that
+section says which shape the app has (windowed or menu-bar agent) and whether it is
+sandboxed (naming any capability that forces the flip), each with its reason, in the
+present tense. No other document repeats them (`updating-docs` › "Design lives in the
+skills"). The owner reviews them with the change that
 writes them. Every external claim in them (an App Store rule, an API's sandbox
 behavior) carries its URL and checked date (`updating-docs` › "Fact discipline").
 

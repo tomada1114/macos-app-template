@@ -28,7 +28,7 @@ A view renders Core state and forwards user intent to a Core action; it decides 
 only, because SwiftUI layout is not what `swift test` can assert — so any branch that
 lives in a view is a branch no gate tests.
 Keeping it in the view model is what makes the 80% floor on `MyAppCore` honest
-(`docs/architecture.md` › "Where new code goes"). `ContentView` over `CounterViewModel`
+(`AGENTS.md` › Architecture). `ContentView` over `CounterViewModel`
 and `FrontmostAppViewModel` is the worked example; copy its shape.
 
 - A view is a `struct` in `MyAppUI` importing `SwiftUI` and `MyAppCore`, and never

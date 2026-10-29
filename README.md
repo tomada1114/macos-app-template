@@ -29,103 +29,14 @@ just check     # verify-hooks → fmt → lint → test-scripts → check-harnes
 open MyApp.xcodeproj
 ```
 
-## Design Philosophy
+## Layout
 
-Every choice in this template has a reason. If you disagree with a decision,
-you know exactly what to change and why it was there in the first place.
-
-### Why XcodeGen with a gitignored `.xcodeproj`?
-
-`project.yml` is declarative, diffable, and safely editable by both humans and
-AI agents; a raw `pbxproj` is a UUID graph that merge conflicts and agents can
-silently corrupt. The generated project is treated like a lockfile-derived
-artifact: regenerate, never hand-edit. Trade-off: XcodeGen is a third-party
-tool with its own bus factor — but the manifest is simple enough to migrate
-away from if that ever matters.
-
-### Why a thin app shell + local Swift package?
-
-`App/` contains only the `@main` entry point and resources. Everything real
-lives in `Packages/MyAppKit`, so tests run with plain `swift test` — no
-simulator, no signing, no Xcode project required. Precedent: pointfreeco's
-isowords.
-
-### Why the Core/UI/Platform split and a coverage floor on Core only?
-
-`MyAppCore` holds all logic and never imports a UI or OS-integration framework
-(SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon, ServiceManagement —
-a lint rule and a test both enforce it); `MyAppUI` holds thin
-views; `MyAppPlatform` holds the adapters that do talk to the OS, each behind a
-protocol Core declares, so a test can substitute a fake and `App/` decides which
-implementation the app gets (`docs/architecture.md`). The 80% line-coverage and 75%
-function-coverage floors apply to Core only — that is what makes a
-strict numeric gate *honest* for a GUI app instead of an invitation to write
-meaningless view tests. Note: Swift's llvm-cov has no dependable branch
-metric, so the gate uses line coverage, plus function coverage so a Core function
-no test calls cannot hide under the line floor.
-
-### Why one String Catalog in Core, and English only?
-
-User-facing wording is a decision like any other, so it lives where the
-coverage floor sees it: Core view models return `LocalizedStringResource`
-(Foundation, not a UI framework), and the one `Localizable.xcstrings` sits in
-`MyAppCore` beside them. Views render those resources and carry no literal of
-their own, because a SwiftUI literal is looked up in the app's main bundle, not
-the package's. The template ships English alone — `defaultLocalization: "en"`
-and one catalog — since a second language makes every later string owe a
-translation and a reviewer; an app that wants one makes it a design change. The
-`localizing-the-app` skill holds the rules, including one that shapes the
-tests: `swift test` copies the catalog uncompiled (only `xcodebuild` compiles
-it), so `LocalizationTests` scans Core's sources for `LocalizedStringResource`
-calls and checks their keys and English against the catalog's source.
-
-### Why Swift Testing?
-
-`@Test`, `#expect`, and parameterized `@Test(arguments:)` are the modern
-default shipped with the toolchain. XCTest appears exactly once — in the
-XCUITest launch target, because Apple has not ported UI automation to Swift
-Testing.
-
-### Why zero dependencies?
-
-An app template should not impose opinions about networking, persistence, or
-update frameworks. You add what you need; docs/architecture.md lists vetted
-suggestions (ViewInspector, swift-snapshot-testing, Sparkle) and when they
-earn their place.
-
-### Why Just?
-
-One command — `just check` — runs the same gate locally that CI runs. Just has
-cleaner syntax than Make and is a task runner, not a build system, which is
-exactly what an Xcode project needs. Every recipe also works without Just (see
-CONTRIBUTING.md).
-
-### Why AGENTS.md and .claude/rules/?
-
-AI-assisted development is the norm, not the exception. `AGENTS.md` and
-path-scoped rules give LLMs the project's standards, architecture, and hard
-prohibitions (never lower the coverage floor, never disable safety lint
-rules) — reducing review cycles.
-
-### Why present-state design docs instead of decision records?
-
-The template's own decisions are the ones above, and this section is where
-they live. An app cut from the template makes decisions of a different kind —
-its shape, its sandbox posture, where it keeps state, how it ships, which
-permissions it asks for — and states each as it stands now, with its reasoning,
-in `AGENTS.md`'s Architecture section and `docs/architecture.md`. `AGENTS.md`'s
-"Before changing the architecture" names these design changes; the pull request
-that makes one rewrites the description in place, and git history keeps what it
-used to say. No numbered records or statuses stand between an idea and changing
-a feature.
-
-### Why secret-gated notarization?
-
-The release workflow always produces a DMG; when Developer ID secrets are
-configured it signs, notarizes, and staples, otherwise it ad-hoc signs and
-says so loudly. The template works on day one without an Apple Developer
-Program membership, and upgrades to fully trusted distribution by adding
-secrets — no workflow edits. See docs/distribution.md.
+`App/` is a thin `@main` shell; everything real lives in the local Swift package
+`Packages/MyAppKit` — `MyAppCore` (logic, coverage-gated), `MyAppUI` (thin SwiftUI
+views), and `MyAppPlatform` (OS adapters behind Core ports). `AGENTS.md`'s Architecture
+section holds the layer rules, and how each part is built and why lives in the skill
+under `.agents/skills/` that owns it, indexed by `AGENTS.md`'s Skills table. There is no
+separate architecture or roadmap document.
 
 ## Using This Template
 
@@ -152,10 +63,8 @@ secrets — no workflow edits. See docs/distribution.md.
    for, the core interaction, and the **Non-goals** it must not grow — the
    agent instructions have no other in-repo answer to "is this in scope?".
    Delete every `TODO:` marker as you go; `just check` fails while one is left
-   (`scripts/checks/product-section-filled.sh`).
-   Then fill in the `docs/architecture/roadmap.md` skeleton — the Now, Next,
-   and Later outcomes that follow from it (the `steering-the-roadmap` skill);
-   nothing checks that page, so its `TODO:` lines stay until you replace them
+   (`scripts/checks/product-section-filled.sh`). That section and the open
+   issues are the app's whole direction; there is no roadmap file
 4. Verify the rename: `just install && just check`
 5. Create the label set on the new repository: `just labels`
    (`.github/labels.yml`; issue forms rely on these labels existing)
@@ -233,7 +142,6 @@ ad-hoc-signed Debug builds lose the grant on every rebuild.
 ## Documentation
 
 - [Getting Started](docs/getting-started.md)
-- [Architecture](docs/architecture.md)
 - [Distribution & Signing](docs/distribution.md)
 - [Adding iOS Later](docs/adding-ios.md)
 

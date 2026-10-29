@@ -10,13 +10,15 @@ description: >
   permission (Accessibility, Input Monitoring, Screen Recording) is involved -
   AXIsProcessTrustedWithOptions, a prompt that never calls back, a grant lost on every
   rebuild; when "sending value of non-Sendable type" or a capturing C function pointer
-  blocks the build; or when tempted by @unchecked Sendable or nonisolated(unsafe).
+  blocks the build; when tempted by @unchecked Sendable or nonisolated(unsafe); or when
+  weighing a package for hotkeys, launch at login, a config file, or a Settings window.
 ---
 
 # Integrating System APIs
 
 **Owns:** calling a macOS system API from `MyAppPlatform` — which mechanism, how its C
-callback survives Swift 6, how a TCC grant behaves, and what may be tested where.
+callback survives Swift 6, how a TCC grant behaves, what may be tested where, and
+which package, if any, an integration is worth.
 **Does not own:** whether the app may be sandboxed at all or what shape it takes
 (`starting-an-app`); the red-green loop for the Core decision the port serves (`tdd`);
 running and watching the built app (`running-the-app`); changing a lint rule or the
@@ -25,7 +27,8 @@ coverage floor that pushes work into Core (`changing-gates`).
 ## The shape, before any OS code
 
 Every integration is the same five pieces, and the template already ships one of each to
-copy — `docs/architecture.md` › "Ports and adapters" is the full description:
+copy — [references/ports-and-adapters.md](references/ports-and-adapters.md) is the full
+description, including why logging is the one OS facility that is not a port:
 
 | Piece | Where | Worked example |
 |---|---|---|
@@ -118,6 +121,13 @@ document.
   with `AXIsProcessTrustedWithOptions`, why a grant arrives with no callback and what to
   do about it, degraded-state UX, the `Info.plist` usage keys, the rebuild-loses-the-grant
   loop and its fix, and what can and cannot be tested where.
+- [references/ports-and-adapters.md](references/ports-and-adapters.md) when adding a
+  port or deciding whether something needs one — the five pieces in full, the
+  composition root, why `MyAppPlatform` sits outside the coverage floor, and why
+  logging is not a port.
+- [references/optional-dependencies.md](references/optional-dependencies.md) before
+  reaching for a package — why the template ships none, and the vetted verdicts for
+  global hotkeys, launch at login, a human-editable config file, and a Settings window.
 
 ## Before you call it done
 
