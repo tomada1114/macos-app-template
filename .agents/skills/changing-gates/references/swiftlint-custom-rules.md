@@ -11,8 +11,11 @@ ServiceManagement — attributed and kind-qualified spellings included;
 test's `forbiddenModules` change together, in one commit — adding a framework to one
 and not the other leaves the boundary enforced once. Adding to that list strengthens
 the gate and is the routine direction; removing from it is weakening one. `os` and
-`OSLog` are deliberately not on it, so Core can log (`docs/architecture.md` › Logging);
-a test case pins their absence. Its
+`OSLog` are deliberately not on it, so Core can log (`integrating-system-apis`'
+`references/ports-and-adapters.md` › "Logging is not a port"); a test case pins their
+absence. The match is textual: a `//`-commented import is ignored, but one that starts a
+line inside a `/* … */` block or a multi-line string literal is still flagged — delete it
+instead. Its
 `included` regex names the
 package and module, so a new Core-like target means widening it and the test's path.
 The sibling boundary — `MyAppUI` and `MyAppPlatform` never importing each other — is

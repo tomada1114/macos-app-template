@@ -17,7 +17,7 @@ description: >
 deterministic under `swift test` — what it is handed rather than reads, where tunable
 numbers live, what its entry points look like, and which patterns are not adopted.
 **Does not own:** the test-first loop itself (`tdd`); an OS integration behind a port
-(`integrating-system-apis`, `docs/architecture.md` › Ports and adapters); recording a
+(`integrating-system-apis` and its `references/ports-and-adapters.md`); recording a
 decision to adopt a new pattern (`AGENTS.md`'s "Before changing the architecture"); the module
 boundaries and import rules (`AGENTS.md` › Architecture, `.claude/rules/swift.md`).
 
@@ -135,21 +135,22 @@ only when the answer really comes from an OS framework Core may not import.
 
 ## Deliberately not adopted
 
-Each row is a pattern an implementer may reach for out of habit. The template's
-reasoning lives in `README.md` › Design Philosophy; an app's lives in `docs/architecture.md`
-(`README.md` › "Why present-state design docs instead of decision records?").
+Each row is a pattern an implementer may reach for out of habit, with the reason it is
+not adopted and where the reasoning behind that lives. This table is the present-state
+record for these patterns; there is no other one to keep in step (`updating-docs` ›
+"Design lives in the skills").
 
 | Pattern | Why not | Reasoning |
 |---|---|---|
-| A third-party architecture framework (TCA, a Redux store, an MVVM kit) | Zero dependencies; `@Observable` plus actions already gives testable state | `README.md` › "Why zero dependencies?" |
+| A third-party architecture framework (TCA, a Redux store, an MVVM kit) | Zero dependencies; `@Observable` plus actions already gives testable state | `integrating-system-apis`' `references/optional-dependencies.md` |
 | A generic `send(_ action:)` reducer on every view model | Methods are discoverable, typed, and testable one at a time | this skill |
-| Use-case / interactor classes, presenters, per-layer DTOs | The view model's action *is* the use case; copies between layers add no consumer | `README.md` › "Why the Core/UI/Platform split…" |
-| A repository or protocol per type "for testability" | A port exists only where an OS or I/O boundary does; a pure rule is tested directly | `docs/architecture.md` › Ports and adapters |
-| A dependency-injection container or service locator | `App/` is the composition root; initializer parameters with defaults are enough | `README.md` › "Why the Core/UI/Platform split…" |
+| Use-case / interactor classes, presenters, per-layer DTOs | The view model's action *is* the use case; copies between layers add no consumer | `AGENTS.md` › Architecture |
+| A repository or protocol per type "for testability" | A port exists only where an OS or I/O boundary does; a pure rule is tested directly | `integrating-system-apis`' `references/ports-and-adapters.md` |
+| A dependency-injection container or service locator | `App/` is the composition root; initializer parameters with defaults are enough | `integrating-system-apis`' `references/ports-and-adapters.md` › "The composition root" |
 | Coordinators / routers as separate objects | SwiftUI's own navigation state, owned by a view model, suffices at this size | this skill |
 | An event bus or `NotificationCenter` between Core types | Direct calls; an OS notification is observed through a port instead | `FrontmostAppViewModel.refresh()`'s doc comment |
 
-An app cut from this template that adopts one of these rewrites the present-state
-description in the same pull request — `docs/architecture.md`, `AGENTS.md`'s
-Architecture section, and this table — naming the problem the current shape cannot
-solve (`AGENTS.md`'s "Before changing the architecture").
+An app cut from this template that adopts one of these rewrites this table in the same
+pull request — and `AGENTS.md`'s Architecture section if a layer rule moves — naming the
+problem the current shape cannot solve (`AGENTS.md`'s "Before changing the
+architecture").

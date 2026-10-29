@@ -2,11 +2,11 @@
 name: updating-docs
 description: >
   Decides whether a change owes a documentation update and which surface it lands on:
-  README.md, AGENTS.md, CONTRIBUTING.md, CHANGELOG.md, docs/architecture.md,
-  docs/getting-started.md, docs/adding-ios.md, docs/distribution.md, a skill under
-  .agents/skills/, or a /// doc comment in Packages/MyAppKit/Sources. Use when triaging
-  whether a pull request needs a document changed or a CHANGELOG entry, when a rule, a
-  just recipe, or an architecture boundary moved and it is unclear which file owns it,
+  README.md, AGENTS.md, CONTRIBUTING.md, CHANGELOG.md, docs/getting-started.md,
+  docs/adding-ios.md, docs/distribution.md, a skill under .agents/skills/, or a /// doc
+  comment in Packages/MyAppKit/Sources. Use when triaging whether a pull request needs a
+  document changed or a CHANGELOG entry, when a rule, a just recipe, a design decision,
+  or an architecture boundary moved and it is unclear which file owns it,
   when the quickstart or setup steps drifted, or when deciding that an internal refactor
   needs no documentation change.
 ---
@@ -32,25 +32,43 @@ release is built and signed. A change to any of those owes a document; a change 
 them does not.
 
 - `README.md` changes when the first ten minutes with a checkout change — the Quickstart
-  commands, what "Using This Template" asks you to do, or a documented design decision.
+  commands, or what "Using This Template" asks you to do.
 - `CONTRIBUTING.md` changes when setup, the toolchain, or the pull request process
   changes.
 - Neither changes for a refactor, a test, a gate or rule that `AGENTS.md` owns, or an
   edit to a skill.
+
+## Design lives in the skills
+
+How the app is built and why — its layers, ports, data, screens, and the template's own
+choices — is written once, in the skill that owns the subject, so a code change owes at
+most that skill (and `AGENTS.md`'s Architecture section for a layer rule). There is no
+architecture overview, decision record, design-philosophy page, or roadmap to keep in
+step: never create one, and never copy a skill's design into another surface. Direction
+is `AGENTS.md`'s Product section and the open issues (`triaging-issues`).
+
+Each decision is stated as it stands now, with its reasoning, and a change rewrites it in
+place; git history keeps what it used to say. No numbered records or statuses stand
+between an idea and changing a feature, and a reader finds the current answer in the
+one place an agent already loads for that kind of work.
 
 ## Purpose per file
 
 Each surface has one job; do not blur them, and do not let one grow a second copy of
 another's content.
 
-- `README.md` — the tour: what this template is, the Quickstart, "Using This Template"
-  (turning it into a new app and keeping up with template updates), and the Design
-  Philosophy that records why each major decision was made. It links to `docs/`,
-  `AGENTS.md`, and `CONTRIBUTING.md` instead of repeating them.
+- `README.md` — the tour: what this template is, the Quickstart, a pointer to the layout,
+  "Using This Template" (turning it into a new app and keeping up with template
+  updates), and links. It links to `docs/`, `AGENTS.md`, and `CONTRIBUTING.md` instead
+  of repeating them, and records no design reasoning.
 - `AGENTS.md` — the agent-facing guide: the Quick Reference command index, "Validating a
-  change", the Architecture, the Skills and Rules tables, "Security and human approval",
-  "Repository scripts", "Enforcement layers", and the Review Checklist. A changed
-  boundary, gate, `just` recipe, or script rule lands here.
+  change", the Architecture (layer rules and the contract table), the Skills and Rules
+  tables, "Security and human approval", "Repository scripts", "Enforcement layers",
+  and the Review Checklist. A changed boundary, gate, `just` recipe, or script rule
+  lands here. It and the path-scoped `.claude/rules/` exist because agents do much of
+  the work: they hand an agent the standards and hard prohibitions (never lower the
+  coverage floor, never disable a safety lint rule) before it writes anything, which
+  cuts review cycles.
 - `CONTRIBUTING.md` — local setup, the development workflow (with the commands to run
   without Just), the pull request process, Conventional Commits, and the Changelog
   Policy.
@@ -58,19 +76,13 @@ another's content.
   Changelog format (`CONTRIBUTING.md`'s "Changelog Policy"). A user-facing change gets an
   entry under `[Unreleased]` in the same pull request that makes it; GitHub's generated
   release notes are supplementary, never a substitute.
-- `docs/architecture.md` — the layer diagram, "Where new code goes", and the optional
-  dependencies worth reaching for. It covers the same ground as `AGENTS.md`'s
-  Architecture section, so a moved boundary updates both in the same pull request.
-- `docs/architecture.md` is also where an app's design decisions live, as present state
-  (`AGENTS.md`'s "Before changing the architecture"): a design change rewrites the
-  passage it changes, in place, together with `AGENTS.md`'s Architecture section.
-  `docs/architecture/roadmap.md`, the app's direction, is `steering-the-roadmap`'s.
 - `docs/getting-started.md`, `docs/adding-ios.md`, `docs/distribution.md` — single-topic
   how-tos: first setup and everyday commands, the runbook for adding an iOS target, and
   the release, signing, and notarization flow. Each owns its one topic; a change to that
   flow updates that file and nothing else restates it.
-- `.agents/skills/<name>/SKILL.md` — the conventions of one kind of change, loaded on
-  demand. `authoring-skills` owns how one is written, mirrored, and checked.
+- `.agents/skills/<name>/SKILL.md` and its `references/` — the conventions of one kind of
+  change, loaded on demand, and the design of the subject it owns, with the reasoning.
+  `authoring-skills` owns how one is written, mirrored, and checked.
 - `///` doc comments in `Packages/MyAppKit/Sources/**` — a symbol's contract: the "why",
   not what the signature already says (`.claude/rules/swift.md`). Public API carries one
   (`CONTRIBUTING.md`'s "Code Standards"); this skill owns only whether one is owed.
@@ -79,8 +91,7 @@ This repository has both a `CHANGELOG.md` and a `docs/` tree, and both are maint
 surfaces, not leftovers — keep them current rather than folding them into a pull request
 description. `.claude/rules/docs.md` holds the mechanical rules that load whenever one of
 them, `README.md`, or `CONTRIBUTING.md` is touched: the `[Unreleased]` entry, commands
-that match the `justfile`, and keeping README's Design Philosophy in sync with a changed
-decision.
+that match the `justfile`, and keeping design reasoning in the owning skill.
 
 ## A skill is documentation; editing one is usually not a doc change
 

@@ -158,7 +158,7 @@ left-click behavior.
 
 **Where the delegate lives: `MyAppPlatform`, not `App/`.** It imports AppKit, owns
 state, and runs at a lifecycle moment — all three make it OS-integration code, which
-`docs/architecture.md` ("Ports and adapters") puts in `MyAppPlatform`. `App/` keeps the
+`integrating-system-apis`' `references/ports-and-adapters.md` puts in `MyAppPlatform`. `App/` keeps the
 one wiring line that names it, and nothing more; anything the delegate has to *decide*
 moves into `MyAppCore` behind a port, like every other adapter. (`MyAppUI` is the wrong
 home for the same reason it cannot see `MyAppPlatform`: it is the view layer, not the
@@ -173,7 +173,7 @@ import AppKit
 /// view, a drag destination, or a right-click menu distinct from the left-click one.
 ///
 /// It lives in `MyAppPlatform` because it imports AppKit and holds state — the app
-/// shell stays wiring only (`docs/architecture.md` › Layers) and declares it with a
+/// shell stays wiring only (`AGENTS.md` › Architecture) and declares it with a
 /// single `@NSApplicationDelegateAdaptor` line. Anything it has to decide belongs in
 /// `MyAppCore` behind a port, the same as any other adapter.
 @MainActor

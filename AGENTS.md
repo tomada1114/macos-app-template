@@ -23,6 +23,10 @@ Xcode project from `project.yml`, all real code lives in a local Swift package
 language mode, an 80% line-coverage and a 75% function-coverage floor on the Core
 module) are enforced from day one.
 
+How the app is built and why lives in the skills that own each subject (the
+[Skills](#skills) table) and this file's [Architecture](#architecture) section; there
+is no separate architecture or roadmap document (`updating-docs`).
+
 ## Product
 
 **TODO: in the template this section is a placeholder.** It is the one part of this
@@ -142,7 +146,14 @@ Config/Debug.xcconfig       # Debug-only build settings project.yml cannot expre
                             #   Config/Local.xcconfig (a local signing identity)
 ```
 
-- New logic goes in `MyAppCore` with tests; views only render Core state
+- All real code lives in `Packages/MyAppKit`, so its tests run with plain `swift test` —
+  no simulator, no signing, no Xcode project (precedent: pointfreeco's isowords). `App/`
+  holds only the `@main` entry point, resources, and the wiring
+- New logic goes in `MyAppCore` with tests; views only render Core state. Keeping logic
+  out of views is what makes the coverage floor honest: it measures the code that can
+  regress silently, not SwiftUI layout
+- Words a person reads come from a Core view model as a `LocalizedStringResource`, with
+  the key in `MyAppCore`'s `Localizable.xcstrings` (`localizing-the-app`)
 - The dependency direction is one-way: Core ← UI and Core ← Platform, both ← App.
   `MyAppUI` and `MyAppPlatform` are siblings and never import each other
 - OS integration goes in `MyAppPlatform` as an adapter behind a `Sendable` port Core
@@ -150,7 +161,7 @@ Config/Debug.xcconfig       # Debug-only build settings project.yml cannot expre
   Adapters translate and never decide — a decision belongs in Core, which is why
   Platform stays outside the coverage floor (`scripts/coverage.sh` measures Core only).
   The worked example is `FrontmostAppProviding` / `WorkspaceFrontmostAppProvider`
-  (`docs/architecture.md` › Ports and adapters)
+  (`integrating-system-apis`' `references/ports-and-adapters.md`)
 - The translation an adapter does *is* checked, just not by a gate: `Tests/MyAppPlatformTests`
   runs it against the real OS behind the `.requiresLocalMachine` opt-in, so a human runs
   it with `just test-local` and puts the output in the PR, while `just test` and CI
@@ -163,49 +174,96 @@ Config/Debug.xcconfig       # Debug-only build settings project.yml cannot expre
   `ArchitectureBoundaryTests` enforces
 - `MyAppCore` never imports SwiftUI, AppKit, UIKit, Cocoa, ApplicationServices, Carbon,
   or ServiceManagement — in any spelling, including `@preconcurrency import AppKit` and
-  `import struct SwiftUI.Color`. SwiftPM cannot block a
+  `import struct SwiftUI.Color` — so it also serves an iOS target (`docs/adding-ios.md`).
+  "Platform-agnostic" means free of those frameworks, not buildable on Linux: Foundation
+  and Apple-only frameworks such as Combine stay allowed. SwiftPM cannot block a
   system framework, so this is enforced twice: `.swiftlint.yml`'s `no_ui_import_in_core`
   and the `ArchitectureBoundaryTests` suite; their module lists change together, and
   `scripts/checks/core-ban-lists-agree.sh` (`just check-harness`) fails when they differ.
   `os`/`OSLog` are deliberately *not* on that list — logging is neither a UI nor an
-  OS-integration framework, so Core logs directly (`docs/architecture.md` › Logging)
+  OS-integration framework, so Core logs directly (`integrating-system-apis`'
+  `references/ports-and-adapters.md` › "Logging is not a port")
 - Shipped code logs through `os.Logger`, declared once in `MyAppCore`'s `AppLog`;
   `print`, `debugPrint`, and `NSLog` are rejected under `Packages/*/Sources/` and `App/`
   by `.swiftlint.yml`'s `no_print_in_sources` (`.claude/rules/swift.md` › Logging)
-- `MyApp.xcodeproj` is generated — edit `project.yml` instead
-- Four things are contract rather than private — Core's public API, the bundle
-  identifier, `UserDefaults` keys, and file formats — and each changes only as
-  `docs/architecture.md` › What is contract and what is private says
+- `MyApp.xcodeproj` is generated — edit `project.yml` instead. `project.yml` is
+  declarative, diffable, and safe for a human or an agent to edit, where a raw
+  `pbxproj` is a UUID graph that merge conflicts and agents silently corrupt; the
+  generated project is treated like a lockfile-derived artifact. XcodeGen is a
+  third-party tool with its own bus factor, but the manifest is simple enough to
+  migrate away from
+- The template ships a windowed app — `WindowGroup`, a Dock tile, a launch test that
+  waits for a window — with the App Sandbox on. A menu-bar agent changes `project.yml`,
+  `App/MyAppApp.swift`, and `LaunchUITests/LaunchTests.swift`, and nothing below them
+  (`starting-an-app`'s `references/app-shapes.md`). An app states its shape, sandbox
+  posture, TCC permissions, distribution, and macOS floor here, each with its reason
+
+### What is contract and what is private
+
+Nothing here is published, so the contract is not a package's export list. It is what
+something outside the change can observe: another module of this package, a user's Mac
+that ran an earlier build, or the user themselves. Four things are contract; everything
+else is private.
+
+| Contract | What depends on it | What changing it requires |
+|---|---|---|
+| **Core's public API** — every `public` declaration in `MyAppCore` | `MyAppUI`, `MyAppPlatform`, `App/`, and the tests, which all import `MyAppCore` as a separate module; `Package.swift` declares the library products so `App/` can link them, and nothing outside this repository does | Update every caller in the same pull request — the compiler finds them (`just build`, `just test`). A new public declaration carries a `///` saying why (the Review Checklist); a new port is a design change ("Before changing the architecture") |
+| **The bundle identifier** — `PRODUCT_BUNDLE_IDENTIFIER` in `project.yml`, set by `scripts/bootstrap.sh` | Everything macOS keys by it on a user's Mac: the sandbox container that holds the app's `UserDefaults` and Application Support files, and its permission (TCC) grants; the log subsystem (`AppLog.subsystem`); and `just run`, `just logs`, and `just reset-permissions`, which read it through `scripts/bundle-id.sh` | Treat it as fixed once a build has left your machine: a new identifier is a new app to macOS, so the user's settings, files, and grants stay behind under the old one. Changing it is a human's decision and a design change; `project.yml` and `AppLog.subsystem` change together (`AppLogTests` fails otherwise), and a signing or entitlements change that goes with it needs the sign-off in "Security and human approval" |
+| **`UserDefaults` keys** — each key the app stores, and the type of its value | A user's saved preferences, read back by every later version | Renaming, removing, or retyping a key silently resets the user's value, because the old one is left unread. Read the old key and migrate it in Core, with a test that starts from the old value. Choosing `UserDefaults` at all is a persistence design change, written into the skill that owns persistence |
+| **File formats** — anything the app writes and reads back in a later version: a config file, saved state, a document | Files already on a user's disk, and for a hand-edited config (`integrating-system-apis`' `references/optional-dependencies.md` › "A human-editable config file"), the user who edits it | A new version still reads the old format — a version field and a migration in Core, with a test that decodes a sample of the previous format. The format and where it lives are a persistence design change, written into the skill that owns persistence. A cache the app can rebuild from scratch is private |
+
+The template ships no `UserDefaults` key, no file format, and so no persistence skill;
+the first key or format an app adds is where its persistence design change starts, and
+that change creates the skill that owns it (for example `persisting-data`).
+
+**Private** is everything else: `internal` and `private` declarations, how an adapter
+talks to the OS behind its port, view structure, file and type layout, test helpers, and
+log categories and messages. Changing any of it needs only the gates that already run
+("Validating a change").
+
+No gate notices a broken contract item except where one is named above — the compiler
+for Core's public API, `AppLogTests` for the log subsystem. A renamed key or a changed
+format passes every check and fails on the user's Mac, so review is what catches it, and
+a user-visible change to any of the four owes a `CHANGELOG.md` entry.
 
 ## Before changing the architecture
 
-The design is recorded as it stands now, never as a log of decisions: this file's
-Architecture and Product sections, `docs/architecture.md`, and the skill that owns the
-subject say together how the app is built and why, and git history holds what it used
-to be. The changes below, which the skills call design changes, are hard to reverse, so
-the pull request that makes one also rewrites that description: the current design and
+The design is recorded in one place per subject, as it stands now, never as a log of
+decisions: the skill that owns the subject (the Skills table), with this file's
+Architecture section for the layer rules and its Product section for scope. Git history
+holds what it used to be. Keeping those current is the whole obligation: no other
+document repeats the design, so no other document needs rewriting with it. The changes
+below, which the skills call design changes, are hard to reverse, so the pull request
+that makes one also rewrites the owning skill (or that section): the current design and
 the reasoning behind it (what it protects and, where it matters, the alternative it
 rules out and why), in the present tense, in place of the sentences it replaces, never
-as a dated entry beside them:
+as a dated entry beside them. Each names where it is written:
 
-- a new target (`project.yml`, `Package.swift`) or a new Core port;
-- the app shape — a windowed app or a menu-bar agent;
-- the sandbox posture — the App Sandbox on or off, or a new entitlement;
-- persistence — where and in what format the app keeps state;
-- a new dependency;
-- distribution — the Mac App Store, Developer ID with notarization, an in-app updater;
-- `deploymentTarget` in `project.yml`, with `platforms:` in `Package.swift`;
+- a new target (`project.yml`, `Package.swift`) or a new Core port — the Architecture
+  section; a port also in the skill that owns what it serves;
+- the app shape — a windowed app or a menu-bar agent — the Architecture section;
+- the sandbox posture — the App Sandbox on or off, or a new entitlement — the
+  Architecture section;
+- persistence — where and in what format the app keeps state — the skill that owns
+  persistence, which the first such change creates, and the contract table above;
+- a new dependency — the skill that owns what it is for (an OS-integration package:
+  `integrating-system-apis`' `references/optional-dependencies.md`);
+- distribution — the Mac App Store, Developer ID with notarization, an in-app updater —
+  the Architecture section;
+- `deploymentTarget` in `project.yml`, with `platforms:` in `Package.swift` — the
+  Architecture section;
 - a TCC permission — Accessibility, Input Monitoring, Screen Recording, or any other
-  privacy grant;
-- a shipped language beyond English, the `defaultLocalization` the template sets;
-- the design lock (`docs/architecture.md` › Design lock, owned by `designing-ui`).
+  privacy grant — the Architecture section, beside the sandbox posture it constrains;
+- a shipped language beyond English, the `defaultLocalization` the template sets —
+  `localizing-the-app`;
+- the design lock — `designing-ui`'s `references/design-lock.md`.
 
 Writing the reasoning down grants nothing: an entitlement, a signing change, or a new
 dependency still needs the sign-off "Security and human approval" asks for, and the
 owner reviews the rewritten description with the change. The reasoning behind the
-layers every app starts with lives in `README.md`'s Design Philosophy; a change that
-replaces one of them rewrites that entry too, rather than leaving the old reason beside
-the new one.
+layers every app starts with is in the Architecture section and the skills it points
+to; a change that replaces one of them rewrites that reason in place, rather than
+leaving the old one beside the new one.
 
 ## Skills
 
@@ -232,18 +290,17 @@ tool that sees the generated copy rather than the authored one:
 | `tdd` | a behavior change in `MyAppCore`: writing a failing Swift Testing test before the implementation |
 | `designing-errors` | an `Error` type, a `throws`/`throws(E)` signature, a `do`/`catch`, or cancellation: Core error enums, typed throws, no user data in errors or logs, `CancellationError`, and mapping `OSStatus`/`NSError`/`AXError` in an adapter |
 | `changing-gates` | a file that enforces rather than implements: `.swiftlint.yml`, `.swiftformat`, `Package.swift`'s `strictSettings`, `mise.toml`, `.githooks/pre-commit`, `scripts/lint.sh`, `scripts/coverage.sh`, the `scripts/guard/` commit-time guard, or a workflow — and which gate would catch a change |
-| `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, the `Depends on #N` convention, and routing a request from daily use (file, park as `on hold`, or drop) |
+| `triaging-issues` | filing or triaging an issue: the labels in `.github/labels.yml` (`just labels`), priority tiers, the `Depends on #N` convention, routing a request from daily use (file, park as `on hold`, or drop), and answering "what is next?" from the open issues before `shipping-issues` |
 | `authoring-skills` | adding, editing, or reviewing a skill: authoring under `.agents/skills/`, the `just agents-sync` mirror, frontmatter, layout, and size limits |
 | `updating-docs` | deciding whether a change owes a documentation update and which surface it lands on: `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/*.md`, a skill, or a `///` comment |
 | `writing-repo-scripts` | writing or testing a shell script under `scripts/`, `.githooks/pre-commit`, or `scripts/tests/`: why bash, refusing or skipping outside a git checkout, the stderr contract by example, and `scripts/tests/lib.sh` |
 | `running-the-app` | seeing a change work in the real app: `just run` and confirming the running process is the fresh build, reading `just logs`, screenshotting a window, a throwaway XCUITest, the human hand-off for a TCC prompt, and the evidence a PR then carries |
-| `integrating-system-apis` | calling a macOS system API from `MyAppPlatform`: choosing the mechanism (`CGEventTap`, `AXObserver`, a Carbon hotkey), a C callback's refcon and teardown under Swift 6 strict concurrency, TCC-gated permissions (Accessibility, Input Monitoring, Screen Recording), and what can be tested where |
+| `integrating-system-apis` | calling a macOS system API from `MyAppPlatform`: the port-and-adapter shape, choosing the mechanism (`CGEventTap`, `AXObserver`, a Carbon hotkey), a C callback's refcon and teardown under Swift 6 strict concurrency, TCC-gated permissions (Accessibility, Input Monitoring, Screen Recording), what can be tested where, and the vetted optional packages |
 | `designing-core-logic` | shaping logic in `MyAppCore`: injecting time (`Clock`, a `() -> Date`), `Locale`, and a `RandomNumberGenerator`; one `Tuning` type for tunables; action-shaped `@Observable` view models; and the patterns deliberately not adopted |
-| `designing-ui` | how a screen looks: HIG-based craft rules (system text styles, semantic and accent colors, light and dark, contrast, SF Symbols, window sizing, menu commands and shortcuts, motion, copy) and the app's design lock, held in `docs/architecture.md` › Design lock |
+| `designing-ui` | how a screen looks: HIG-based craft rules (system text styles, semantic and accent colors, light and dark, contrast, SF Symbols, window sizing, menu commands and shortcuts, motion, copy) and the app's design lock, held in its `references/design-lock.md` |
 | `building-swiftui-screens` | a view in `MyAppUI`: a thin renderer over a `MyAppCore` `@Observable` view model (how it holds its model, what `body` may contain), `#Preview` per state, accessibility identifiers and labels, Reduce Motion, keyboard reachability, and verifying a screen |
 | `starting-an-app` | turning this template into a new app: `scripts/bootstrap.sh`'s rename, what the new repository keeps, its `just labels` and `just ruleset` setup, choosing the app shape (windowed or menu-bar agent), and deciding the sandbox posture |
 | `shipping-issues` | shipping the open issue backlog: ranking issues by `priority: P0`-`P3`, implementing the top one, reviewing it with `/code-review`, and taking its PR through CI to merge |
-| `steering-the-roadmap` | the app's direction in `docs/architecture/roadmap.md`: its Now / Next / Later horizons, who changes it and when, how the backlog and parked `on hold` issues feed it, and answering "what is next?" before `shipping-issues` |
 | `localizing-the-app` | a string a person reads: the String Catalog `Localizable.xcstrings` in `MyAppCore`, `defaultLocalization`, Core view models returning `LocalizedStringResource` (`bundle: .module`), `Text(verbatim:)` in `MyAppUI`, keeping the catalog and `LocalizationTests` in step, `xcodebuild -exportLocalizations`, plurals, and what adding a language involves |
 | `merging-dependency-prs` | landing open Dependabot (SwiftPM, GitHub Actions) and Renovate (`mise.toml`) PRs: the security checklist, one human approval for a listed batch of passing PRs, and a combined branch for conflicting bumps |
 

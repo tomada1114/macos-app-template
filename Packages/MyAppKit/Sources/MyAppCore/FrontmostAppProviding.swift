@@ -18,10 +18,10 @@ public struct FrontmostApp: Equatable, Sendable {
 /// A port: "which application is frontmost right now?", asked in Core's own vocabulary.
 ///
 /// This is the template's worked example of the ports-and-adapters boundary
-/// (`docs/architecture.md`). Core declares the protocol, `MyAppPlatform` holds the
-/// adapter that answers it with `NSWorkspace`, tests substitute a fake, and `App/` —
-/// the composition root — decides which one a view model gets. Nothing below `App/`
-/// knows which implementation it is talking to.
+/// (`integrating-system-apis` skill, `references/ports-and-adapters.md`). Core declares
+/// the protocol, `MyAppPlatform` holds the adapter that answers it with `NSWorkspace`,
+/// tests substitute a fake, and `App/` — the composition root — decides which one a view
+/// model gets. Nothing below `App/` knows which implementation it is talking to.
 ///
 /// Ports are `Sendable` and take and return value types, so an adapter can be handed
 /// across actors and a Core caller never has to reason about the OS object behind it.

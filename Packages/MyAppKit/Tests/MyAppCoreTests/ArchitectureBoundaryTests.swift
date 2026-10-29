@@ -23,7 +23,8 @@ struct ArchitectureBoundaryTests {
     ///
     /// `os` and `OSLog` are deliberately absent: logging is not a UI or OS-integration
     /// framework, so Core logs directly through ``MyAppCore/AppLog``
-    /// (`docs/architecture.md` › Logging). The "ignores other modules" case below pins
+    /// (`integrating-system-apis` skill, `references/ports-and-adapters.md` › "Logging is
+    /// not a port"). The "ignores other modules" case below pins
     /// that, so narrowing the list to ban them would fail a test rather than pass.
     ///
     /// Must match `.swiftlint.yml`'s `no_ui_import_in_core`: change both lists together.

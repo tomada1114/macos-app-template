@@ -526,6 +526,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Product sections, `docs/architecture.md` (including a new Design lock section), and
   the owning skill; a design change rewrites them in place. The `## Product` section's
   fourth bullet is now "Why it is shaped this way". No gate was relaxed.
+- `docs/architecture.md`, the `docs/architecture/roadmap.md` skeleton, the
+  `steering-the-roadmap` skill, and README's Design Philosophy. How the app is built and
+  why now lives only in the skill that owns each subject and `AGENTS.md`'s Architecture
+  section: ports and adapters (with why logging is not a port) and the vetted optional
+  dependencies move to `integrating-system-apis`' references, the design lock to
+  `designing-ui`'s `references/design-lock.md`, the contract table to `AGENTS.md`, and
+  each template-level "why" to its owning skill (`changing-gates`' new
+  `references/design-reasons.md`, `tdd`, `updating-docs`). An app's direction is its
+  `## Product` section and the open issues; "what is next?" is answered by
+  `triaging-issues`. No gate was relaxed.
 - The committed `.claude/settings.json` no longer registers the owner's personal
   plugin marketplace or enables a plugin from it for everyone who opens the
   repository; it keeps only `permissions` and `hooks`, and `AGENTS.md`'s Enforcement

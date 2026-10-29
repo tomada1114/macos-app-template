@@ -1,16 +1,27 @@
-# The design lock: fields and where they land
+# The design lock
 
-The design lock is the `## Design lock` section of `docs/architecture.md` (see the
-`designing-ui` skill for when it is written and how it changes). This file lists what
-that section fixes, as present state: the value of each field below and the reason for
-it, and, where it matters, the alternative it rules out and why.
+This file holds the app's design lock — the short set of visual decisions every screen
+obeys — as present state: the value of each field and the reason for it, and, where it
+matters, the alternative it rules out and why. `designing-ui` says when it is written and
+how it changes. Below the lock: what each field means and where its value lands in code.
+
+## The lock
+
+In the template every field is "system default": the UI uses the system font, semantic
+system colors, standard controls, and system transitions only, so an app cut from it
+starts from no visual opinion. An app replaces this section with its own values after the
+bootstrap, before its second screen; changing a value later is an edit to this section,
+in place, in the pull request that changes the screens.
+
+Accent color, custom colors, type, spacing scale, density, corner radius, symbols,
+materials, window sizing, motion, copy style, app icon: system default.
+
+## Fields
 
 Every field is either a value or the words "system default". "System default" is a real
 decision — often the right one for a first version — and saying it explicitly stops the
 next implementer from inventing a value. A field left out is a gap, not a default: say
 so in the section ("not decided yet") until it is.
-
-## Fields
 
 | Field | What "decided" looks like | Where it lands in code |
 |---|---|---|
@@ -37,10 +48,13 @@ the lock's values into one internal type in `MyAppUI` — the lock names it — 
 `Layout` enum refer to it. They never go in `MyAppCore`: they are presentation, and Core
 does not import SwiftUI.
 
-## The section, sketched
+## An app's lock, sketched
+
+What `## The lock` looks like once an app has decided its values — an example, not
+this app's lock:
 
 ```markdown
-## Design lock
+## The lock
 
 - Accent color: system default. Nothing in the app depends on its hue.
 - Custom colors: none; semantic system colors only.
@@ -63,8 +77,8 @@ owner has not settled is marked "not decided yet", never filled in from habit.
 
 ## What does not belong in the lock
 
-- The app shape and the scenes it has — `starting-an-app`, written in `AGENTS.md`'s Architecture
-  section and `docs/architecture.md`.
+- The app shape and the scenes it has — `starting-an-app`, written in `AGENTS.md`'s
+  Architecture section.
 - A single screen's layout — that is the screen's own pull request, built against the
   lock.
 - Anything the HIG already fixes for every Mac app (standard shortcuts, the menu order);

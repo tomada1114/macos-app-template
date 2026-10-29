@@ -4,7 +4,7 @@ description: >
   Covers how this macOS app looks and feels: craft rules grounded in Apple's Human
   Interface Guidelines (system text styles, semantic and accent colors, light and dark
   appearance, contrast, SF Symbols, window sizing, the menu bar and keyboard shortcuts,
-  motion) and the per-app design lock, the Design lock section of docs/architecture.md, that
+  motion) and the per-app design lock, held in references/design-lock.md, that
   fixes the accent color, type, spacing, density, iconography, and copy style every
   screen obeys. Use when choosing a color, font, spacing value, icon, or window size,
   touching AccentColor.colorset or AppIcon.appiconset, adding a menu command, reviewing
@@ -15,7 +15,8 @@ description: >
 
 **Owns:** what a screen in this app looks like and how it behaves to the eye and hand —
 the craft rules below, and the app's design lock: the short set of visual decisions
-every screen obeys, and the `docs/architecture.md` › Design lock section that holds them. **Does not own:** how a view is written
+every screen obeys, held in [references/design-lock.md](references/design-lock.md).
+**Does not own:** how a view is written
 in SwiftUI, its previews, and its accessibility wiring (`building-swiftui-screens`); the
 app shape, windowed or menu-bar agent (`starting-an-app`); how a design change is
 written down (`AGENTS.md`'s "Before changing the architecture"); where user-visible wording lives —
@@ -91,7 +92,8 @@ per-screen one.
   and never repurposes a standard one.
 - A menu item that cannot act right now is disabled, not hidden.
 - Preferences live in SwiftUI's `Settings` scene, which gives the ⌘, item and the
-  standard window (`docs/architecture.md`'s "Settings window" paragraph).
+  standard window, so no package is needed for it (`integrating-system-apis`'
+  `references/optional-dependencies.md` › "Settings window").
 
 ## Copy
 
@@ -108,23 +110,24 @@ reinvented. It is small on purpose: accent color, type scale, spacing scale, den
 corner radius, symbol rendering, window sizing, motion policy, and copy style, each either
 a value or an explicit "system default".
 
-- **It lives in `docs/architecture.md` › Design lock**, as present state: the values and
-  one reason each, in the present tense. Later screens build on it, so writing or
-  changing it is a design change (`AGENTS.md`'s "Before changing the architecture"): the
-  pull request rewrites the section in place and the owner reviews it with the change.
+- **It lives in [references/design-lock.md](references/design-lock.md) › "The lock"**, as
+  present state: the values and one reason each, in the present tense. Later screens
+  build on it, so writing or changing it is a design change (`AGENTS.md`'s "Before
+  changing the architecture"): the pull request rewrites the section in place and the
+  owner reviews it with the change.
   Until the owner has approved the section, screens may be built against it only as an
   experiment.
 - **When:** after the app shape is decided (a menu-bar agent's lock differs from a
   windowed app's) and before the second screen. The first screen can be the probe that
   surfaces what the lock needs to say.
-- **What it holds and how to fill it:** [references/design-lock.md](references/design-lock.md)
-  — the fields, what "decided" looks like for each, and where each value lands in code.
+- **What it holds and how to fill it:** the same file's "Fields" — what "decided" looks
+  like for each field, and where each value lands in code.
 - **Changing it:** a corrected value or a new direction (a new accent, a denser layout,
   custom type) is an edit to the section in place, never a second lock beside the first.
   Screens already built are then brought into line in their own change.
 - **In the template itself** the section says "system default" for every field. An app
   rewrites it for itself after the bootstrap; a change to the template's own visual
-  defaults updates that section and README's Design Philosophy (`updating-docs`).
+  defaults rewrites that section and nothing else repeats it.
 
 ## Reviewing a screen's design
 

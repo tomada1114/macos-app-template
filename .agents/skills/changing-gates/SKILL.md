@@ -25,7 +25,9 @@ in `.github/labels.yml` (`triaging-issues`).
 Never weaken a gate to make a check pass: that rule is stated in `AGENTS.md`'s
 "Security and human approval" and "Important Reminders" sections, and this skill does
 not restate or relax it. A change that lowers, disables, or widens a gate needs a
-human's sign-off, and its PR says why the removed protection no longer applies.
+human's sign-off, and its PR says why the removed protection no longer applies. Why
+`just check`, the Core-only coverage floor, and the secret-gated release are shaped as
+they are: [references/design-reasons.md](references/design-reasons.md).
 
 ## The one rule every gate change shares
 
@@ -113,7 +115,7 @@ entry on that PR, never to skip the bump silently. The Xcode pin lives in
 
 It gates on line and function coverage of `Sources/MyAppCore/` only, by filtering
 llvm-cov's report to that path. `MyAppUI` and `MyAppPlatform` are outside it because an adapter or a view
-holds translation rather than a decision (`docs/architecture.md` › Ports and adapters) —
+holds translation rather than a decision (`integrating-system-apis`' `references/ports-and-adapters.md`) —
 not because nothing links them: `MyAppPlatformTests` links `MyAppPlatform`, and its
 tests are skipped unless `RUN_LOCAL_MACHINE_TESTS=1` (`just test-local`), so they add no
 coverage under `just test` either way. Measuring Platform would therefore gate on

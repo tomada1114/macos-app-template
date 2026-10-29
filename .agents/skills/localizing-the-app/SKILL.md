@@ -25,7 +25,8 @@ English-only rule and its one exception (`AGENTS.md`'s "Important Reminders").
 
 - **English only.** `Package.swift` sets `defaultLocalization: "en"`, and the one catalog's
   source language is `en`. Shipping a second language is an app's decision, written as
-  present state in `docs/architecture.md`: every later string then owes a translation, and every translation owes a reviewer.
+  present state in this section: every later string then owes a translation, and every
+  translation owes a reviewer.
 - **Core owns the wording.** A Core view model returns `LocalizedStringResource`
   (Foundation, which Core may import) and a view renders it. The wording then sits under
   the coverage floor, where a test asserts it; a Core API that handed out bare keys would
@@ -132,8 +133,8 @@ forms.
 
 In an app cut from the template, a second language is a design change the owner approves
 before any translation lands (`AGENTS.md`'s "Before changing the architecture"): the
-pull request rewrites `docs/architecture.md` and `AGENTS.md`'s Architecture section to
-say which language, who translates, and who reviews. Then:
+pull request rewrites this skill's "What the template decides" to say which language,
+who translates, and who reviews. Then:
 
 - Add the language in Xcode's catalog editor, or import a translated `.xcloc` with
   `xcodebuild -importLocalizations`. Keys, comments, and the English stay English; the
@@ -141,6 +142,6 @@ say which language, who translates, and who reviews. Then:
 - Unverified: whether macOS offers the app in that language from the package bundle's
   new `.lproj` alone, or the app target also needs `CFBundleLocalizations` or
   `developmentLanguage` in `project.yml`. Check it in the running app (`running-the-app`)
-  and write the answer into `docs/architecture.md`.
+  and write the answer into this skill.
 - Unverified: how `typos` (`just lint`) treats translated values; the design change decides whether
   an exclusion is warranted, which is a gate change (`changing-gates`).

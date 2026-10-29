@@ -42,6 +42,11 @@ Add the test to `Packages/MyAppKit/Tests/MyAppCoreTests` using Swift Testing:
 - Cover the edge-case checklist: boundaries (at / just inside / just outside),
   repeated operations, both branches of every conditional
 
+Swift Testing is the default because `@Test`, `#expect`, and parameterized
+`@Test(arguments:)` ship with the toolchain and need no dependency. XCTest appears
+exactly once — the `LaunchUITests` target — because Apple has not ported UI automation
+to Swift Testing.
+
 ## Step 2: Prove It Fails
 
 ```bash

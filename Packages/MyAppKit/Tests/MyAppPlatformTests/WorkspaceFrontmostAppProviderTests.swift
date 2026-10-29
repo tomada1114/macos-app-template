@@ -5,7 +5,7 @@ import MyAppTestSupport
 import Testing
 
 /// The worked example of a local-machine adapter test, and the shape every other one
-/// copies (`docs/architecture.md` › Ports and adapters).
+/// copies (`integrating-system-apis` skill, `references/ports-and-adapters.md`).
 ///
 /// It asks the real `NSWorkspace` the one question a Core test with a fake cannot:
 /// does the adapter's translation survive contact with the OS? Everything *around*
